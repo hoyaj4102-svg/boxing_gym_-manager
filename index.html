@@ -1,1 +1,977 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="shortcut icon" href="./favicon.ico"/><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/><meta http-equiv="Pragma" content="no-cache"/><meta http-equiv="Expires" content="0"/><meta http-equiv="Content-Security-Policy" content="navigate-to 'none'"/><meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"/><meta name="theme-color" content="#000000"/><title>Office Scripts</title><script>var url=window.location.href,isLocal=0===url.indexOf("https://localhost:3003/");window.OsfOptOut=isLocal,window.useAssociatedActionsOnly=!0</script><style>*,::after,::before{padding:0;margin:0;-webkit-box-sizing:inherit;box-sizing:inherit}html{font-size:62.5%}body{font-family:"Segoe UI Web (Arabic)","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif!important;color:#323b3a;font-size:14px;-webkit-box-sizing:border-box;box-sizing:border-box;overscroll-behavior-y:none;background-color:#fff;overflow:hidden}#loadingWrapper{background:#f5f5f5;width:100%;height:100%;position:absolute}#loading{position:absolute;z-index:2000000;color:#212121;background:#f5f5f5;height:100%;width:100%;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-orient:vertical;-webkit-box-direction:normal;-ms-flex-direction:column;flex-direction:column;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center}#loading>img{height:120px;margin-bottom:15px}#loading>h1{color:#666;margin-top:10px;margin-bottom:10px;margin-left:8px}#loading>h2{color:#999;max-width:250px;text-align:center}#loading>a{color:#999!important;margin-top:10px}@media only screen and (max-width:500px){#loading>pre{padding:0 30px}}#loading>.loading-indicator{-webkit-box-sizing:border-box;box-sizing:border-box;text-align:center;border:2px solid #9fcdb3;border-top:2px solid #217346;border-radius:50%;width:30px;height:30px;animation:loading-animation 1s linear infinite}@-webkit-keyframes loading-animation{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}@keyframes loading-animation{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}#errorRoot{height:100%;width:100%;display:block;padding:0 1.6rem 1.6rem;background:#f5f5f5;height:100vh;min-height:100vh;width:100%;display:flex;flex-direction:column}#errorRoot label{display:block;padding-top:5px;padding-bottom:5px}#errorRoot #errorHeader{font-size:15px;font-weight:600}#errorRoot #errorDescription{font-size:12px}#errorRoot #errorFooter{font-size:12px}#errorRoot .endJustifiedFlexWrapper{width:100%;display:flex;justify-content:flex-end}#errorRoot button{background-color:#217346;color:#fff;font-size:12px;font-weight:600;min-width:80px;height:2.6rem;border-color:transparent;outline:transparent;border-width:1px;border-radius:2px;margin-top:2.4rem}#errorRoot button:hover{background-color:#0f522d}#errorRoot button:active{background-color:#084121}#errorRoot pre{font-size:100%;color:#999;margin-top:10px;max-height:50%;max-width:100%;padding:0 80px;word-break:break-all;white-space:pre-wrap;overflow-y:auto}</style><script>!function(){"use strict";var e={},t={};function r(n){var o=t[n];if(void 0!==o)return o.exports;var a=t[n]={id:n,loaded:!1,exports:{}};return e[n].call(a.exports,a,a.exports,r),a.loaded=!0,a.exports}r.m=e,function(){var e=[];r.O=function(t,n,o,a){if(!n){var c=1/0;for(u=0;u<e.length;u++){n=e[u][0],o=e[u][1],a=e[u][2];for(var f=!0,i=0;i<n.length;i++)(!1&a||c>=a)&&Object.keys(r.O).every((function(e){return r.O[e](n[i])}))?n.splice(i--,1):(f=!1,a<c&&(c=a));if(f){e.splice(u--,1);var d=o();void 0!==d&&(t=d)}}return t}a=a||0;for(var u=e.length;u>0&&e[u-1][2]>a;u--)e[u]=e[u-1];e[u]=[n,o,a]}}(),r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,{a:t}),t},function(){var e,t=Object.getPrototypeOf?function(e){return Object.getPrototypeOf(e)}:function(e){return e.__proto__};r.t=function(n,o){if(1&o&&(n=this(n)),8&o)return n;if("object"==typeof n&&n){if(4&o&&n.__esModule)return n;if(16&o&&"function"==typeof n.then)return n}var a=Object.create(null);r.r(a);var c={};e=e||[null,t({}),t([]),t(t)];for(var f=2&o&&n;"object"==typeof f&&!~e.indexOf(f);f=t(f))Object.getOwnPropertyNames(f).forEach((function(e){c[e]=function(){return n[e]}}));return c.default=function(){return n},r.d(a,c),a}}(),r.d=function(e,t){for(var n in t)r.o(t,n)&&!r.o(e,n)&&Object.defineProperty(e,n,{enumerable:!0,get:t[n]})},r.f={},r.e=function(e){return Promise.all(Object.keys(r.f).reduce((function(t,n){return r.f[n](e,t),t}),[]))},r.u=function(e){return 8614===e?"8614.5b9b1d54.js":8488===e?"8488.4f8acd67.js":2090===e?"2090.a47d062b.js":1592===e?"1592.0245eb3f.js":2345===e?"2345.abedcd24.js":({1189:"editor",1239:"office.script.synchronous.library",1737:"formatter",1854:"LocalStorageUsers",1875:"run-from-button",2181:"LocalStorageScript",2245:"notfound",2443:"about",3456:"office.script.synchronous.intellisense.batch",4827:"power-automate",5230:"LocalStorageWorkbook",5781:"LocalStorageVersion",6325:"office.script.sync",7330:"parser",7454:"instruct",7538:"recorder",7690:"office.script.synchronous.intellisense.types",7858:"office.script.synchronous.intellisense.synchronous",9455:"LocalStorageAdmin",9889:"LocalStorageConsent"}[e]||e)+"."+{140:"1a8065af",246:"498c9a22",298:"f4c48ff6",409:"6ce61690",481:"527c91f0",802:"0d3ceecf",808:"ce4460cc",1042:"a0bcdd47",1189:"475489ea",1206:"4e6a1903",1239:"348a96e9",1554:"af281f1d",1593:"0da4b2f0",1737:"75743d2b",1745:"84b192b5",1794:"b7fa97bf",1854:"2f916068",1866:"196def03",1875:"53c58826",2009:"0dac44c9",2126:"d313989a",2181:"26d11f7f",2218:"d4c94ae5",2245:"d9bcca2f",2246:"48a9f1c5",2390:"292a98bb",2396:"716c1f68",2409:"5d0882e6",2443:"fc7af166",2478:"986de75c",2485:"80873969",2492:"7712cf5e",2566:"a181ffc4",2634:"de05791c",2714:"c65ac08a",2921:"261a428a",2971:"088f06f3",2996:"fae4b6a1",3064:"d7e30ba4",3068:"1761e801",3416:"832c06d0",3456:"547037f9",3668:"58afbb66",3847:"a1c12e58",3965:"e6b54acb",3996:"7f7a898c",4151:"53ff4493",4399:"5c844011",4432:"2cf98309",4438:"ac9bab8c",4447:"406e1a56",4512:"6900139e",4581:"b4d03f2f",4661:"49ae497f",4811:"0326a9f2",4827:"beb7f87d",4840:"5147f98b",5210:"c149b18e",5230:"bcd3b621",5337:"ea092cd6",5413:"c88e52fe",5446:"f106d38f",5679:"aee836be",5734:"479e16e2",5758:"02c56ffb",5781:"c885f92e",5945:"0f8842ce",5946:"dd026c9e",6106:"1e6fefb4",6325:"d00d51e8",6332:"1df5161d",6354:"29912dc9",6358:"68bfc09f",6479:"4949927b",6543:"dadd1ec1",6553:"89a33ec5",6632:"297efce0",6813:"8b3d111a",7e3:"f1453bb4",7085:"dce0e117",7159:"f8114d9b",7251:"46a7ec38",7330:"9dc80741",7339:"055905d2",7351:"11c0eb4d",7361:"91832dd6",7378:"ae21bd00",7423:"ce0514ca",7454:"b9658dc1",7482:"e5864d74",7538:"6beeca57",7539:"11b9a3f9",7555:"800fcc5a",7690:"3d5896d3",7790:"506d312b",7823:"c24eafed",7858:"5e6bcea6",7905:"621c7b4d",7961:"f1c34205",7979:"9e6b9d85",8006:"3787d721",8024:"16a36df0",8040:"eede2ae7",8236:"96a8bbc7",8257:"afab3bce",8305:"b4ccddd3",8509:"c9771c98",8555:"1b73271c",8642:"9199a82f",8846:"9894613c",8857:"cacf6357",8894:"d902acfc",9034:"129145d9",9064:"3fa83c1d",9097:"04b00f44",9198:"d0a9257c",9218:"119c8831",9455:"d4f07ae7",9487:"edb45cf2",9681:"5175b000",9753:"a633bf7b",9889:"957a5785",9935:"a8ee0fd9"}[e]+".chunk.js"},r.miniCssF=function(e){},r.g=function(){if("object"==typeof globalThis)return globalThis;try{return this||new Function("return this")()}catch(e){if("object"==typeof window)return window}}(),r.hmd=function(e){return(e=Object.create(e)).children||(e.children=[]),Object.defineProperty(e,"exports",{enumerable:!0,set:function(){throw new Error("ES Modules may not assign module.exports or exports.*, Use ESM export syntax, instead: "+e.id)}}),e},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},function(){var e={},t="maker-code-editor:";r.l=function(n,o,a,c){if(e[n])e[n].push(o);else{var f,i;if(void 0!==a)for(var d=document.getElementsByTagName("script"),u=0;u<d.length;u++){var b=d[u];if(b.getAttribute("src")==n||b.getAttribute("data-webpack")==t+a){f=b;break}}f||(i=!0,(f=document.createElement("script")).charset="utf-8",f.timeout=120,r.nc&&f.setAttribute("nonce",r.nc),f.setAttribute("data-webpack",t+a),f.src=n),e[n]=[o];var s=function(t,r){f.onerror=f.onload=null,clearTimeout(l);var o=e[n];if(delete e[n],f.parentNode&&f.parentNode.removeChild(f),o&&o.forEach((function(e){return e(r)})),t)return t(r)},l=setTimeout(s.bind(null,void 0,{type:"timeout",target:f}),12e4);f.onerror=s.bind(null,f.onerror),f.onload=s.bind(null,f.onload),i&&document.head.appendChild(f)}}}(),r.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.nmd=function(e){return e.paths=[],e.children||(e.children=[]),e},r.p="./",function(){r.b=document.baseURI||self.location.href;var e={7252:0};r.f.j=function(t,n){var o=r.o(e,t)?e[t]:void 0;if(0!==o)if(o)n.push(o[2]);else if(7252!=t){var a=new Promise((function(r,n){o=e[t]=[r,n]}));n.push(o[2]=a);var c=r.p+r.u(t),f=new Error;r.l(c,(function(n){if(r.o(e,t)&&(0!==(o=e[t])&&(e[t]=void 0),o)){var a=n&&("load"===n.type?"missing":n.type),c=n&&n.target&&n.target.src;f.message="Loading chunk "+t+" failed.\n("+a+": "+c+")",f.name="ChunkLoadError",f.type=a,f.request=c,o[1](f)}}),"chunk-"+t,t)}else e[t]=0},r.O.j=function(t){return 0===e[t]};var t=function(t,n){var o,a,c=n[0],f=n[1],i=n[2],d=0;if(c.some((function(t){return 0!==e[t]}))){for(o in f)r.o(f,o)&&(r.m[o]=f[o]);if(i)var u=i(r)}for(t&&t(n);d<c.length;d++)a=c[d],r.o(e,a)&&e[a]&&e[a][0](),e[c[d]]=0;return r.O(u)},n=self.webpackChunkmaker_code_editor=self.webpackChunkmaker_code_editor||[];n.forEach(t.bind(null,0)),n.push=t.bind(null,n.push.bind(n))}()}()</script><script defer="defer" src="./1945.2f95b198.js"></script><script defer="defer" src="./6901.06e51092.js"></script><script defer="defer" src="./138.24b58ce5.js"></script><script defer="defer" src="./1067.e7a5e174.js"></script><script defer="defer" src="./main.cd150065.js"></script><link href="./static/css/main.b58f4b5e.css" rel="stylesheet"></head><body class="ms-Fabric"><noscript>You need to enable JavaScript to enable this functionality.</noscript><div id="errorRoot" style="display:none"><label id="errorHeader" class="ms-label">Error</label> <label id="errorDescription" class="ms-label">An unexpected error occurred.</label> <label id="errorFooter" class="ms-label"></label><div class="endJustifiedFlexWrapper"><button id="refreshButton" class="ms-button" onclick="location.reload(!0)">Refresh</button></div></div><div id="loadingWrapper"><div id="loading" style="visibility:hidden"><div class="loading-indicator"></div><h2 class="ms-font-m"></h2></div></div><script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/beta/hosted/office.js" data-is-sdx="true"></script><div id="root"></div></body></html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>복싱장 회원관리</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #242836;
+      --border: #2e3348;
+      --text: #e8eaef;
+      --text-muted: #8b92a8;
+      --accent: #e63946;
+      --accent-hover: #c1121f;
+      --success: #2dc653;
+      --warning: #f4a261;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,.35);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-card .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel h2::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 120px auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .form-grid .form-full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color .15s;
+      font-family: inherit;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .field input:focus,
+    .field textarea:focus { border-color: var(--accent); }
+
+    .search-bar {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 12px 16px 12px 40px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .search-bar input:focus { border-color: var(--accent); }
+
+    .search-bar svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover { background: #1fa040; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 6px 12px;
+      font-size: 0.75rem;
+    }
+
+    .btn-danger:hover { background: rgba(230,57,70,.15); }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+    }
+
+    .backup-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .member-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .member-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      transition: border-color .15s;
+    }
+
+    .member-card:hover { border-color: #3d4460; }
+
+    .member-card.absent {
+      border-color: var(--accent);
+      background: rgba(230, 57, 70, 0.08);
+    }
+
+    .member-card.absent .member-info h3,
+    .member-card.absent .last-visit {
+      color: var(--accent);
+    }
+
+    .member-info h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .member-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .member-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .last-visit.absent-text { color: var(--accent); font-weight: 600; }
+
+    .member-memo {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border-left: 3px solid var(--border);
+    }
+
+    .pt-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(230,57,70,.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .pt-badge.low {
+      background: rgba(244,162,97,.15);
+      color: var(--warning);
+    }
+
+    .member-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: .4;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 { font-size: 1rem; }
+
+    .modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .edit-form .btn-primary { align-self: flex-end; }
+
+    .attendance-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .attendance-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .attendance-item .date { font-weight: 500; }
+
+    .attendance-item .pt-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .attendance-item .pt-tag.deducted { color: var(--accent); }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      z-index: 200;
+      transition: transform .3s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); }
+    .toast.warning { border-color: var(--warning); }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats { grid-template-columns: 1fr; }
+
+      .member-card {
+        grid-template-columns: 1fr;
+      }
+
+      .member-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🥊 <span>복싱장</span> 회원관리</h1>
+      <p>회원 등록 · 출석 체크 · PT 관리</p>
+    </header>
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <div class="value" id="statMembers">0</div>
+        <div class="label">전체 회원</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statToday">0</div>
+        <div class="label">오늘 출석</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statPt">0</div>
+        <div class="label">총 PT 잔여</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>회원 등록</h2>
+      <form id="registerForm" class="form-grid">
+        <div class="field">
+          <label for="name">이름</label>
+          <input type="text" id="name" placeholder="홍길동" required>
+        </div>
+        <div class="field">
+          <label for="phone">연락처</label>
+          <input type="tel" id="phone" placeholder="010-1234-5678" required>
+        </div>
+        <div class="field">
+          <label for="ptCount">PT 횟수</label>
+          <input type="number" id="ptCount" min="0" value="10" required>
+        </div>
+        <button type="submit" class="btn btn-primary">등록</button>
+        <div class="field form-full">
+          <label for="memo">메모 (선택)</label>
+          <input type="text" id="memo" placeholder="특이사항, 메모...">
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>회원 목록</h2>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="이름, 연락처, 메모로 검색...">
+      </div>
+      <div class="member-list" id="memberList"></div>
+    </div>
+
+    <div class="panel">
+      <h2>데이터 관리</h2>
+      <div class="backup-actions">
+        <button type="button" class="btn btn-ghost" onclick="exportData()">JSON 백업</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()">JSON 복원</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="attendanceModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">출석 기록</h3>
+        <button class="btn btn-ghost btn-sm" id="closeModal">닫기</button>
+      </div>
+      <div class="modal-body">
+        <div class="attendance-list" id="attendanceList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="editModalTitle">회원 정보 수정</h3>
+        <button class="btn btn-ghost btn-sm" id="closeEditModal">닫기</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" class="edit-form">
+          <input type="hidden" id="editId">
+          <div class="field">
+            <label for="editName">이름</label>
+            <input type="text" id="editName" required>
+          </div>
+          <div class="field">
+            <label for="editPhone">연락처</label>
+            <input type="tel" id="editPhone" required>
+          </div>
+          <div class="field">
+            <label for="editPt">PT 잔여횟수</label>
+            <input type="number" id="editPt" min="0" required>
+          </div>
+          <div class="field">
+            <label for="editMemo">메모</label>
+            <textarea id="editMemo" placeholder="특이사항, 메모..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'boxing_gym_members';
+
+    let members = loadMembers();
+    let searchQuery = '';
+
+    function loadMembers() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        return migrateMembers(raw);
+      } catch {
+        return [];
+      }
+    }
+
+    function migrateMembers(data) {
+      return data.map(m => {
+        const attendance = Array.isArray(m.attendance) ? m.attendance : [];
+        let lastVisit = m.lastVisit || null;
+
+        if (!lastVisit && attendance.length > 0) {
+          const latest = attendance.reduce((a, b) =>
+            new Date(a.date) > new Date(b.date) ? a : b
+          );
+          lastVisit = toDateOnly(latest.date);
+        }
+
+        return {
+          id: m.id || generateId(),
+          name: m.name || '',
+          phone: m.phone || '',
+          ptRemaining: typeof m.ptRemaining === 'number' ? m.ptRemaining : 0,
+          memo: m.memo || '',
+          lastVisit,
+          createdAt: m.createdAt || new Date().toISOString(),
+          attendance
+        };
+      });
+    }
+
+    function saveMembers() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function toDateOnly(iso) {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getTodayDateOnly() {
+      return toDateOnly(new Date().toISOString());
+    }
+
+    function formatPhone(value) {
+      const digits = value.replace(/\D/g, '');
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 7) return digits.slice(0, 3) + '-' + digits.slice(3);
+      return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7, 11);
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${y}.${m}.${day} ${h}:${min}`;
+    }
+
+    function formatLastVisit(lastVisit) {
+      if (!lastVisit) return '방문 없음';
+      const [y, m, d] = lastVisit.split('-');
+      return `${y}.${m}.${d}`;
+    }
+
+    function getDaysSinceLastVisit(member) {
+      const reference = member.lastVisit
+        ? new Date(member.lastVisit + 'T00:00:00')
+        : new Date(member.createdAt);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      reference.setHours(0, 0, 0, 0);
+      return Math.floor((today - reference) / 86400000);
+    }
+
+    function isAbsent(member) {
+      return getDaysSinceLastVisit(member) >= 14;
+    }
+
+    function isToday(iso) {
+      return toDateOnly(iso) === getTodayDateOnly();
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function updateStats() {
+      const todayCount = members.reduce((sum, m) => {
+        return sum + m.attendance.filter(a => isToday(a.date)).length;
+      }, 0);
+      const totalPt = members.reduce((sum, m) => sum + m.ptRemaining, 0);
+
+      document.getElementById('statMembers').textContent = members.length;
+      document.getElementById('statToday').textContent = todayCount;
+      document.getElementById('statPt').textContent = totalPt;
+    }
+
+    function getFilteredMembers() {
+      if (!searchQuery) return members;
+      const q = searchQuery.toLowerCase();
+      return members.filter(m =>
+        m.name.toLowerCase().includes(q) ||
+        m.phone.includes(q) ||
+        (m.memo && m.memo.toLowerCase().includes(q))
+      );
+    }
+
+    function renderMembers() {
+      const list = document.getElementById('memberList');
+      const filtered = getFilteredMembers();
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <p>${searchQuery ? '검색 결과가 없습니다.' : '등록된 회원이 없습니다.'}</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(m => {
+        const absent = isAbsent(m);
+        const ptClass = m.ptRemaining <= 3 ? 'low' : '';
+        const todayChecked = m.attendance.some(a => isToday(a.date));
+        const checkLabel = todayChecked ? '재출석' : '출석 체크';
+        const daysSince = getDaysSinceLastVisit(m);
+        const lastVisitText = formatLastVisit(m.lastVisit);
+        const lastVisitLabel = m.lastVisit
+          ? `마지막 방문: ${lastVisitText}`
+          : `마지막 방문: 없음 (${daysSince}일)`;
+
+        return `
+          <div class="member-card${absent ? ' absent' : ''}" data-id="${m.id}">
+            <div class="member-info">
+              <h3>${escapeHtml(m.name)}</h3>
+              <div class="member-meta">
+                <span>📞 ${escapeHtml(m.phone)}</span>
+                <span class="pt-badge ${ptClass}">PT ${m.ptRemaining}회</span>
+                <span>출석 ${m.attendance.length}회</span>
+                <span class="last-visit${absent ? ' absent-text' : ''}">${lastVisitLabel}${absent ? ' · 14일+ 미방문' : ''}</span>
+              </div>
+              ${m.memo ? `<div class="member-memo">📝 ${escapeHtml(m.memo)}</div>` : ''}
+            </div>
+            <div class="member-actions">
+              <button class="btn btn-success btn-sm" onclick="checkIn('${m.id}')">${checkLabel}</button>
+              <button class="btn btn-ghost btn-sm" onclick="showAttendance('${m.id}')">출석 기록</button>
+              <button class="btn btn-ghost btn-sm" onclick="openEditModal('${m.id}')">수정</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">삭제</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function registerMember(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const ptCount = parseInt(document.getElementById('ptCount').value, 10);
+      const memo = document.getElementById('memo').value.trim();
+
+      if (!name || !phone) {
+        showToast('이름과 연락처를 입력해주세요.', 'warning');
+        return;
+      }
+
+      if (ptCount < 0 || isNaN(ptCount)) {
+        showToast('PT 횟수를 올바르게 입력해주세요.', 'warning');
+        return;
+      }
+
+      members.unshift({
+        id: generateId(),
+        name,
+        phone,
+        ptRemaining: ptCount,
+        memo,
+        lastVisit: null,
+        createdAt: new Date().toISOString(),
+        attendance: []
+      });
+
+      saveMembers();
+      document.getElementById('registerForm').reset();
+      document.getElementById('ptCount').value = '10';
+      showToast(`${name} 회원이 등록되었습니다.`);
+      updateStats();
+      renderMembers();
+    }
+
+    function checkIn(id) {
+      const member = members.find(m => m.id === id);
+      if (!member) return;
+
+      const ptDeducted = member.ptRemaining > 0;
+      if (ptDeducted) {
+        member.ptRemaining -= 1;
+      }
+
+      const today = getTodayDateOnly();
+      member.lastVisit = today;
+
+      member.attendance.unshift({
+        date: new Date().toISOString(),
+        visitDate: today,
+        ptDeducted
+      });
+
+      saveMembers();
+
+      if (ptDeducted) {
+        showToast(`${member.name} 출석 완료! PT 1회 차감 (잔여 ${member.ptRemaining}회)`);
+      } else {
+        showToast(`${member.name} 출석 완료! PT 잔여 없음`, 'warning');
+      }
+
+      updateStats();
+      renderMembers();
+    }
+
+    function showAttendance(id) {
+      const member = members.find(m => m.id === id);
+      if (!member) return;
+
+      document.getElementById('modalTitle').textContent = `${member.name} — 출석 기록`;
+      const list = document.getElementById('attendanceList');
+
+      if (member.attendance.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>출석 기록이 없습니다.</p></div>';
+      } else {
+        list.innerHTML = member.attendance.map(a => {
+          const visitDate = a.visitDate || toDateOnly(a.date);
+          const [y, m, d] = visitDate.split('-');
+          return `
+            <div class="attendance-item">
+              <span class="date">${y}.${m}.${d} ${formatDate(a.date).split(' ')[1] || ''}</span>
+              <span class="pt-tag ${a.ptDeducted ? 'deducted' : ''}">
+                ${a.ptDeducted ? 'PT 1회 차감' : 'PT 미차감'}
+              </span>
+            </div>`;
+        }).join('');
+      }
+
+      document.getElementById('attendanceModal').classList.add('active');
+    }
+
+    function openEditModal(id) {
+      const member = members.find(m => m.id === id);
+      if (!member) return;
+
+      document.getElementById('editId').value = member.id;
+      document.getElementById('editName').value = member.name;
+      document.getElementById('editPhone').value = member.phone;
+      document.getElementById('editPt').value = member.ptRemaining;
+      document.getElementById('editMemo').value = member.memo || '';
+      document.getElementById('editModalTitle').textContent = `${member.name} — 정보 수정`;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function saveEditMember(e) {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const member = members.find(m => m.id === id);
+      if (!member) return;
+
+      const name = document.getElementById('editName').value.trim();
+      const phone = document.getElementById('editPhone').value.trim();
+      const ptRemaining = parseInt(document.getElementById('editPt').value, 10);
+      const memo = document.getElementById('editMemo').value.trim();
+
+      if (!name || !phone) {
+        showToast('이름과 연락처를 입력해주세요.', 'warning');
+        return;
+      }
+
+      if (ptRemaining < 0 || isNaN(ptRemaining)) {
+        showToast('PT 잔여횟수를 올바르게 입력해주세요.', 'warning');
+        return;
+      }
+
+      member.name = name;
+      member.phone = phone;
+      member.ptRemaining = ptRemaining;
+      member.memo = memo;
+
+      saveMembers();
+      document.getElementById('editModal').classList.remove('active');
+      showToast(`${name} 회원 정보가 수정되었습니다.`);
+      updateStats();
+      renderMembers();
+    }
+
+    function deleteMember(id) {
+      const member = members.find(m => m.id === id);
+      if (!member) return;
+      if (!confirm(`${member.name} 회원을 삭제하시겠습니까?`)) return;
+
+      members = members.filter(m => m.id !== id);
+      saveMembers();
+      showToast(`${member.name} 회원이 삭제되었습니다.`);
+      updateStats();
+      renderMembers();
+    }
+
+    function exportData() {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        members
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `boxing-gym-backup-${getTodayDateOnly()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('백업 파일이 다운로드되었습니다.');
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const imported = Array.isArray(data) ? data : data.members;
+          if (!Array.isArray(imported)) throw new Error('invalid format');
+
+          if (!confirm(`기존 ${members.length}명 데이터를 ${imported.length}명 데이터로 교체하시겠습니까?`)) {
+            return;
+          }
+
+          members = migrateMembers(imported);
+          saveMembers();
+          updateStats();
+          renderMembers();
+          showToast('데이터가 복원되었습니다.');
+        } catch {
+          showToast('올바른 JSON 파일이 아닙니다.', 'warning');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', registerMember);
+    document.getElementById('editForm').addEventListener('submit', saveEditMember);
+
+    document.getElementById('phone').addEventListener('input', (e) => {
+      e.target.value = formatPhone(e.target.value);
+    });
+
+    document.getElementById('editPhone').addEventListener('input', (e) => {
+      e.target.value = formatPhone(e.target.value);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      renderMembers();
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('attendanceModal').classList.remove('active');
+    });
+
+    document.getElementById('closeEditModal').addEventListener('click', () => {
+      document.getElementById('editModal').classList.remove('active');
+    });
+
+    document.getElementById('attendanceModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.remove('active');
+      }
+    });
+
+    document.getElementById('editModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.remove('active');
+      }
+    });
+
+    document.getElementById('importFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) importData(file);
+      e.target.value = '';
+    });
+
+    updateStats();
+    renderMembers();
+  </script>
+</body>
+</html>
