@@ -1135,9 +1135,9 @@
     }
 
     function getTodayCount() {
-      return members.reduce((sum, member) =>
-        sum + member.attendance.filter(a => isToday(a.date)).length, 0
-      );
+      return members.filter(member =>
+        member.attendance.some(attendance => isToday(attendance.date))
+      ).length;
     }
 
     function compareMembersByPriority(a, b) {
