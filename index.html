@@ -2,192 +2,357 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>복싱장 회원관리</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>복싱장 재등록 운영 관리</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #242836;
-      --border: #2e3348;
-      --text: #e8eaef;
-      --text-muted: #8b92a8;
-      --accent: #e63946;
-      --accent-hover: #c1121f;
-      --success: #2dc653;
-      --warning: #f4a261;
-      --radius: 12px;
-      --shadow: 0 4px 24px rgba(0,0,0,.35);
+      color-scheme: dark;
+      --bg: #0a0d14;
+      --bg-soft: #101522;
+      --surface: #151b29;
+      --surface-strong: #1d2637;
+      --surface-card: #202a3c;
+      --border: #2d3950;
+      --border-strong: #40506c;
+      --text: #f4f6fb;
+      --text-muted: #9aa6bd;
+      --accent: #ef4444;
+      --accent-hover: #dc2626;
+      --success: #22c55e;
+      --warning: #facc15;
+      --orange: #fb923c;
+      --danger: #f43f5e;
+      --info: #38bdf8;
+      --radius: 16px;
+      --shadow: 0 14px 40px rgba(0, 0, 0, .32);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
-      background: var(--bg);
-      color: var(--text);
       min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(239, 68, 68, .16), transparent 32rem),
+        linear-gradient(180deg, #0a0d14 0%, #0d111b 42%, #080b11 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
     }
 
     .app {
-      max-width: 960px;
+      width: min(1120px, 100%);
       margin: 0 auto;
-      padding: 24px 20px 48px;
+      padding: 22px max(16px, env(safe-area-inset-left)) calc(48px + var(--safe-bottom)) max(16px, env(safe-area-inset-right));
     }
 
     header {
-      text-align: center;
-      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 18px;
     }
 
-    header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+    .eyebrow {
+      color: var(--accent);
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
     }
 
-    header h1 span { color: var(--accent); }
+    h1 {
+      font-size: clamp(1.65rem, 7vw, 2.8rem);
+      line-height: 1.05;
+      letter-spacing: -.055em;
+    }
 
     header p {
+      margin-top: 8px;
       color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-top: 4px;
+      font-size: .92rem;
     }
 
-    .stats {
+    .today-pill {
+      flex: 0 0 auto;
+      padding: 10px 13px;
+      border: 1px solid rgba(255, 255, 255, .09);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .04);
+      color: var(--text-muted);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .dashboard {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
     .stat-card {
-      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      min-height: 112px;
+      padding: 16px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px;
-      text-align: center;
+      background: linear-gradient(145deg, rgba(32, 42, 60, .98), rgba(18, 24, 36, .98));
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
     }
 
-    .stat-card .value {
-      font-size: 1.5rem;
-      font-weight: 700;
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      inset: auto -30px -38px auto;
+      width: 92px;
+      height: 92px;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: .08;
+    }
+
+    .stat-card.priority {
       color: var(--accent);
+      border-color: rgba(239, 68, 68, .56);
+      background: linear-gradient(145deg, rgba(77, 29, 36, .92), rgba(32, 42, 60, .95));
+    }
+
+    .stat-card.warning { color: var(--warning); }
+    .stat-card.expired { color: var(--danger); }
+    .stat-card.absent { color: var(--info); }
+    .stat-card.today { color: var(--success); }
+
+    .stat-card .value {
+      color: currentColor;
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
     }
 
     .stat-card .label {
-      font-size: 0.75rem;
+      margin-top: 8px;
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .stat-card .hint {
+      margin-top: 3px;
       color: var(--text-muted);
-      margin-top: 2px;
+      font-size: .72rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .panel {
-      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 20px;
+      background: rgba(21, 27, 41, .92);
       box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 16px 0;
     }
 
     .panel h2 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
+      font-size: 1.02rem;
+      letter-spacing: -.02em;
     }
 
     .panel h2::before {
       content: '';
       width: 4px;
-      height: 16px;
+      height: 18px;
+      border-radius: 10px;
       background: var(--accent);
-      border-radius: 2px;
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 120px auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .form-grid .form-full {
-      grid-column: 1 / -1;
-    }
-
-    .field label {
-      display: block;
-      font-size: 0.75rem;
+    .panel-subtitle {
+      margin-top: 4px;
       color: var(--text-muted);
+      font-size: .78rem;
+    }
+
+    .panel-body { padding: 16px; }
+
+    .renewal-panel {
+      border-color: rgba(239, 68, 68, .42);
+      background: linear-gradient(180deg, rgba(42, 25, 36, .96), rgba(21, 27, 41, .94));
+    }
+
+    .renewal-list,
+    .member-list,
+    .mini-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .renewal-card,
+    .member-card,
+    .mini-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(32, 42, 60, .9);
+    }
+
+    .renewal-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+    }
+
+    .renewal-card.due-soon {
+      border-color: rgba(148, 163, 184, .48);
+    }
+
+    .renewal-card.due-week {
+      border-color: rgba(250, 204, 21, .78);
+      background: rgba(83, 68, 18, .42);
+    }
+
+    .renewal-card.due-three {
+      border-color: rgba(251, 146, 60, .82);
+      background: rgba(83, 50, 24, .48);
+    }
+
+    .renewal-card.due-today,
+    .renewal-card.expired {
+      border-color: rgba(244, 63, 94, .9);
+      background: rgba(88, 28, 45, .58);
+    }
+
+    .renewal-name {
+      font-size: 1rem;
+      font-weight: 900;
       margin-bottom: 4px;
     }
 
-    .field input,
-    .field textarea {
-      width: 100%;
-      padding: 10px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 0.9rem;
-      outline: none;
-      transition: border-color .15s;
-      font-family: inherit;
-    }
-
-    .field textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    .field input:focus,
-    .field textarea:focus { border-color: var(--accent); }
-
-    .search-bar {
-      position: relative;
-      margin-bottom: 16px;
-    }
-
-    .search-bar input {
-      width: 100%;
-      padding: 12px 16px 12px 40px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    .search-bar input:focus { border-color: var(--accent); }
-
-    .search-bar svg {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
+    .meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
       color: var(--text-muted);
-      width: 18px;
-      height: 18px;
+      font-size: .78rem;
     }
 
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .15s, transform .1s;
+    .status-badge,
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: rgba(148, 163, 184, .13);
+      color: var(--text-muted);
+      font-size: .72rem;
+      font-weight: 800;
       white-space: nowrap;
     }
 
-    .btn:active { transform: scale(0.97); }
+    .status-badge.due-soon { color: #cbd5e1; background: rgba(148, 163, 184, .15); }
+    .status-badge.due-week { color: var(--warning); background: rgba(250, 204, 21, .15); }
+    .status-badge.due-three { color: var(--orange); background: rgba(251, 146, 60, .16); }
+    .status-badge.due-today,
+    .status-badge.expired { color: var(--danger); background: rgba(244, 63, 94, .17); }
+    .tag.success { color: var(--success); background: rgba(34, 197, 94, .14); }
+    .tag.info { color: var(--info); background: rgba(56, 189, 248, .14); }
+    .tag.warning { color: var(--warning); background: rgba(250, 204, 21, .14); }
+    .tag.danger { color: var(--danger); background: rgba(244, 63, 94, .14); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .form-grid .form-full { grid-column: 1 / -1; }
+
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-muted);
+      font-size: .75rem;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      min-height: 44px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      background: var(--surface-strong);
+      color: var(--text);
+      transition: border-color .16s, box-shadow .16s;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      border-color: rgba(239, 68, 68, .8);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, .13);
+    }
+
+    .field textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .btn {
+      min-height: 40px;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 11px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 900;
+      transition: transform .1s, background .16s, border-color .16s;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active { transform: scale(.98); }
 
     .btn-primary {
       background: var(--accent);
@@ -198,174 +363,269 @@
 
     .btn-success {
       background: var(--success);
-      color: #fff;
+      color: #052e16;
     }
 
-    .btn-success:hover { background: #1fa040; }
-
     .btn-ghost {
-      background: transparent;
-      color: var(--text-muted);
       border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .03);
+      color: var(--text-muted);
     }
 
     .btn-ghost:hover {
-      background: var(--surface2);
+      border-color: var(--border-strong);
       color: var(--text);
+      background: rgba(255, 255, 255, .06);
     }
 
     .btn-danger {
-      background: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 6px 12px;
-      font-size: 0.75rem;
+      border: 1px solid rgba(244, 63, 94, .65);
+      background: rgba(244, 63, 94, .08);
+      color: var(--danger);
     }
-
-    .btn-danger:hover { background: rgba(230,57,70,.15); }
 
     .btn-sm {
-      padding: 6px 12px;
-      font-size: 0.75rem;
+      min-height: 34px;
+      padding: 7px 10px;
+      border-radius: 9px;
+      font-size: .75rem;
     }
 
+    .form-actions,
     .backup-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
     }
 
-    .member-list { display: flex; flex-direction: column; gap: 10px; }
+    .search-bar {
+      position: relative;
+      margin-bottom: 12px;
+    }
 
-    .member-card {
-      background: var(--surface2);
+    .search-bar input {
+      width: 100%;
+      min-height: 46px;
+      padding: 12px 14px 12px 42px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
+      border-radius: 13px;
+      outline: none;
+      background: var(--surface-strong);
+      color: var(--text);
+    }
+
+    .search-bar svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .member-toolbar {
       display: grid;
       grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .member-toolbar select {
+      min-height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--surface-strong);
+      color: var(--text);
+      padding: 0 11px;
+    }
+
+    .member-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 12px;
-      align-items: center;
-      transition: border-color .15s;
+      padding: 14px;
+      align-items: start;
     }
 
-    .member-card:hover { border-color: #3d4460; }
-
-    .member-card.absent {
-      border-color: var(--accent);
-      background: rgba(230, 57, 70, 0.08);
-    }
-
-    .member-card.absent .member-info h3,
-    .member-card.absent .last-visit {
-      color: var(--accent);
-    }
+    .member-card.due-week { border-color: rgba(250, 204, 21, .62); }
+    .member-card.due-three { border-color: rgba(251, 146, 60, .7); }
+    .member-card.due-today,
+    .member-card.expired { border-color: rgba(244, 63, 94, .78); }
+    .member-card.absent { box-shadow: inset 3px 0 0 rgba(56, 189, 248, .74); }
 
     .member-info h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .member-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+      font-size: 1.02rem;
+      font-weight: 900;
     }
-
-    .member-meta span { display: flex; align-items: center; gap: 4px; }
-
-    .last-visit.absent-text { color: var(--accent); font-weight: 600; }
 
     .member-memo {
-      margin-top: 8px;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      background: rgba(0, 0, 0, 0.2);
-      padding: 6px 10px;
-      border-radius: 6px;
-      border-left: 3px solid var(--border);
-    }
-
-    .pt-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(230,57,70,.15);
-      color: var(--accent);
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.8rem;
-    }
-
-    .pt-badge.low {
-      background: rgba(244,162,97,.15);
-      color: var(--warning);
+      margin-top: 10px;
+      padding: 10px 11px;
+      border-left: 3px solid rgba(239, 68, 68, .75);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, .18);
+      color: #d7dce8;
+      font-size: .78rem;
+      white-space: pre-wrap;
     }
 
     .member-actions {
       display: flex;
       flex-direction: column;
+      gap: 7px;
+      align-items: stretch;
+    }
+
+    .mini-card {
+      padding: 12px;
+    }
+
+    .mini-card-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: .9rem;
+      font-weight: 900;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .calendar-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .calendar-controls input {
+      min-height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-strong);
+      color: var(--text);
+      padding: 0 10px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
       gap: 6px;
-      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .calendar-weekday {
+      color: var(--text-muted);
+      font-size: .68rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .calendar-day {
+      min-height: 58px;
+      padding: 6px;
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .025);
+      color: var(--text-muted);
+      font-size: .72rem;
+    }
+
+    .calendar-day.in-month {
+      color: var(--text);
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .calendar-day.today {
+      border-color: rgba(34, 197, 94, .65);
+    }
+
+    .calendar-day.has-expiry {
+      border-color: rgba(239, 68, 68, .7);
+      background: rgba(239, 68, 68, .13);
+    }
+
+    .calendar-day .count {
+      display: inline-flex;
+      margin-top: 6px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 900;
     }
 
     .empty-state {
+      padding: 28px 14px;
       text-align: center;
-      padding: 40px 20px;
       color: var(--text-muted);
+      font-size: .88rem;
     }
 
-    .empty-state svg {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
-      opacity: .4;
+    .empty-state strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+      font-size: 1rem;
     }
 
     .modal-overlay {
-      display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.6);
       z-index: 100;
+      display: none;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 18px;
+      background: rgba(2, 6, 23, .76);
+      backdrop-filter: blur(8px);
     }
 
     .modal-overlay.active { display: flex; }
 
     .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 480px;
-      max-height: 80vh;
-      overflow: hidden;
+      width: min(520px, 100%);
+      max-height: min(82vh, 760px);
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
       box-shadow: var(--shadow);
     }
 
     .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .modal-header h3 { font-size: 1rem; }
+    .modal-header h3 {
+      font-size: 1rem;
+      letter-spacing: -.02em;
+    }
 
     .modal-body {
-      padding: 16px 20px;
-      overflow-y: auto;
       flex: 1;
+      overflow-y: auto;
+      padding: 16px;
     }
 
     .edit-form {
@@ -373,8 +633,6 @@
       flex-direction: column;
       gap: 12px;
     }
-
-    .edit-form .btn-primary { align-self: flex-end; }
 
     .attendance-list {
       display: flex;
@@ -385,57 +643,93 @@
     .attendance-item {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      background: var(--surface2);
-      border-radius: 8px;
-      font-size: 0.85rem;
+      gap: 12px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      background: var(--surface-card);
+      font-size: .84rem;
     }
-
-    .attendance-item .date { font-weight: 500; }
-
-    .attendance-item .pt-tag {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .attendance-item .pt-tag.deducted { color: var(--accent); }
 
     .toast {
       position: fixed;
-      bottom: 24px;
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 0.85rem;
+      bottom: calc(18px + var(--safe-bottom));
       z-index: 200;
-      transition: transform .3s ease;
+      width: min(420px, calc(100% - 32px));
+      padding: 13px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface-card);
+      color: var(--text);
       box-shadow: var(--shadow);
+      font-size: .86rem;
+      text-align: center;
+      transform: translateX(-50%) translateY(90px);
+      transition: transform .28s ease;
     }
 
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.success { border-color: var(--success); }
-    .toast.warning { border-color: var(--warning); }
+    .toast.success { border-color: rgba(34, 197, 94, .7); }
+    .toast.warning { border-color: rgba(250, 204, 21, .8); }
+
+    @media (max-width: 900px) {
+      .dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .dashboard .stat-card.priority {
+        grid-column: 1 / -1;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
 
     @media (max-width: 640px) {
-      .form-grid {
+      .app { padding-top: 16px; }
+
+      header {
+        display: block;
+      }
+
+      .today-pill {
+        display: inline-flex;
+        margin-top: 12px;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stat-card {
+        min-height: 104px;
+        padding: 14px;
+      }
+
+      .stat-card .value {
+        font-size: 1.7rem;
+      }
+
+      .form-grid,
+      .two-column,
+      .member-toolbar {
         grid-template-columns: 1fr;
       }
 
-      .stats { grid-template-columns: 1fr; }
-
-      .member-card {
+      .member-card,
+      .renewal-card {
         grid-template-columns: 1fr;
       }
 
       .member-actions {
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .calendar-day {
+        min-height: 48px;
+        padding: 5px;
       }
     }
   </style>
@@ -443,67 +737,184 @@
 <body>
   <div class="app">
     <header>
-      <h1>🥊 <span>복싱장</span> 회원관리</h1>
-      <p>회원 등록 · 출석 체크 · PT 관리</p>
+      <div>
+        <div class="eyebrow">Renewal First Operation</div>
+        <h1>복싱장 재등록<br>운영 관리</h1>
+        <p>만기 회원을 놓치지 않도록 재등록, 미방문, 출석을 한 화면에서 관리합니다.</p>
+      </div>
+      <div class="today-pill" id="todayLabel">오늘</div>
     </header>
 
-    <div class="stats" id="stats">
-      <div class="stat-card">
-        <div class="value" id="statMembers">0</div>
-        <div class="label">전체 회원</div>
-      </div>
-      <div class="stat-card">
+    <section class="dashboard" aria-label="운영 대시보드">
+      <article class="stat-card priority">
+        <div class="value" id="statRenewal">0</div>
+        <div class="label">재등록 예정 회원</div>
+        <div class="hint">만기 14일 이내</div>
+      </article>
+      <article class="stat-card warning">
+        <div class="value" id="statUrgent">0</div>
+        <div class="label">만기 임박 회원</div>
+        <div class="hint">7일 이내 집중 관리</div>
+      </article>
+      <article class="stat-card expired">
+        <div class="value" id="statExpired">0</div>
+        <div class="label">만기 지난 회원</div>
+        <div class="hint">별도 연락 목록</div>
+      </article>
+      <article class="stat-card absent">
+        <div class="value" id="statAbsent">0</div>
+        <div class="label">장기 미방문</div>
+        <div class="hint">14일 이상 미방문</div>
+      </article>
+      <article class="stat-card today">
         <div class="value" id="statToday">0</div>
-        <div class="label">오늘 출석</div>
-      </div>
-      <div class="stat-card">
-        <div class="value" id="statPt">0</div>
-        <div class="label">총 PT 잔여</div>
-      </div>
-    </div>
+        <div class="label">오늘 출석 인원</div>
+        <div class="hint" id="statTotalMembers">전체 0명</div>
+      </article>
+    </section>
 
-    <div class="panel">
-      <h2>회원 등록</h2>
-      <form id="registerForm" class="form-grid">
-        <div class="field">
-          <label for="name">이름</label>
-          <input type="text" id="name" placeholder="홍길동" required>
-        </div>
-        <div class="field">
-          <label for="phone">연락처</label>
-          <input type="tel" id="phone" placeholder="010-1234-5678" required>
-        </div>
-        <div class="field">
-          <label for="ptCount">PT 횟수</label>
-          <input type="number" id="ptCount" min="0" value="10" required>
-        </div>
-        <button type="submit" class="btn btn-primary">등록</button>
-        <div class="field form-full">
-          <label for="memo">메모 (선택)</label>
-          <input type="text" id="memo" placeholder="특이사항, 메모...">
-        </div>
-      </form>
-    </div>
+    <main class="layout">
+      <div class="stack">
+        <section class="panel renewal-panel">
+          <div class="panel-header">
+            <div>
+              <h2>재등록 관리 최우선</h2>
+              <p class="panel-subtitle">만기 14일 전부터 자동 표시하고 7일/3일/당일은 색상으로 강조합니다.</p>
+            </div>
+            <span class="tag danger" id="renewalSummary">0명 관리</span>
+          </div>
+          <div class="panel-body">
+            <div class="renewal-list" id="renewalList"></div>
+          </div>
+        </section>
 
-    <div class="panel">
-      <h2>회원 목록</h2>
-      <div class="search-bar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-        </svg>
-        <input type="text" id="searchInput" placeholder="이름, 연락처, 메모로 검색...">
-      </div>
-      <div class="member-list" id="memberList"></div>
-    </div>
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>월별 만기 캘린더</h2>
+              <p class="panel-subtitle">선택한 월에 만기되는 회원을 날짜별로 확인합니다.</p>
+            </div>
+            <div class="calendar-controls">
+              <input type="month" id="calendarMonth" aria-label="만기 월 선택">
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="mini-list" id="monthExpiryList"></div>
+          </div>
+        </section>
 
-    <div class="panel">
-      <h2>데이터 관리</h2>
-      <div class="backup-actions">
-        <button type="button" class="btn btn-ghost" onclick="exportData()">JSON 백업</button>
-        <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()">JSON 복원</button>
-        <input type="file" id="importFile" accept=".json,application/json" hidden>
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>회원 목록</h2>
+              <p class="panel-subtitle">출석, PT, 만기, 메모를 빠르게 확인하고 수정합니다.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="member-toolbar">
+              <div class="search-bar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input type="text" id="searchInput" placeholder="이름, 연락처, 메모 검색">
+              </div>
+              <select id="memberFilter" aria-label="회원 필터">
+                <option value="all">전체 회원</option>
+                <option value="renewal">재등록 예정</option>
+                <option value="expired">만기 지난 회원</option>
+                <option value="absent14">14일+ 미방문</option>
+                <option value="absent30">30일+ 미방문</option>
+              </select>
+            </div>
+            <div class="member-list" id="memberList"></div>
+          </div>
+        </section>
       </div>
-    </div>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>회원 등록</h2>
+              <p class="panel-subtitle">등록일과 만기일을 달력에서 선택합니다.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <form id="registerForm" class="form-grid">
+              <div class="field">
+                <label for="name">이름</label>
+                <input type="text" id="name" placeholder="홍길동" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="phone">연락처</label>
+                <input type="tel" id="phone" placeholder="010-1234-5678" autocomplete="tel" required>
+              </div>
+              <div class="field">
+                <label for="startDate">등록일</label>
+                <input type="date" id="startDate" required>
+              </div>
+              <div class="field">
+                <label for="expireDate">만기일</label>
+                <input type="date" id="expireDate" required>
+              </div>
+              <div class="field">
+                <label for="ptTotal">PT 총 횟수</label>
+                <input type="number" id="ptTotal" min="0" value="10" required>
+              </div>
+              <div class="field">
+                <label for="ptRemaining">PT 잔여 횟수</label>
+                <input type="number" id="ptRemaining" min="0" value="10" required>
+              </div>
+              <div class="field form-full">
+                <label for="memo">회원 메모</label>
+                <textarea id="memo" placeholder="어깨 부상, 무릎 통증, 부모님 연락처, 감량 목표, 특이사항 등"></textarea>
+              </div>
+              <div class="form-actions form-full">
+                <button type="submit" class="btn btn-primary">회원 등록</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>장기 미방문 회원</h2>
+              <p class="panel-subtitle">14일 이상과 30일 이상을 별도로 확인합니다.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="two-column">
+              <div>
+                <span class="tag info">14일 이상</span>
+                <div class="mini-list" id="absent14List" style="margin-top:10px;"></div>
+              </div>
+              <div>
+                <span class="tag warning">30일 이상</span>
+                <div class="mini-list" id="absent30List" style="margin-top:10px;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>데이터 관리</h2>
+              <p class="panel-subtitle">localStorage 저장을 유지하고 JSON으로 백업/복원합니다.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="backup-actions">
+              <button type="button" class="btn btn-ghost" onclick="exportData()">JSON 백업</button>
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()">JSON 복원</button>
+              <input type="file" id="importFile" accept=".json,application/json" hidden>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
   </div>
 
   <div class="modal-overlay" id="attendanceModal">
@@ -535,15 +946,33 @@
             <label for="editPhone">연락처</label>
             <input type="tel" id="editPhone" required>
           </div>
-          <div class="field">
-            <label for="editPt">PT 잔여횟수</label>
-            <input type="number" id="editPt" min="0" required>
+          <div class="two-column">
+            <div class="field">
+              <label for="editStartDate">등록일</label>
+              <input type="date" id="editStartDate" required>
+            </div>
+            <div class="field">
+              <label for="editExpireDate">만기일</label>
+              <input type="date" id="editExpireDate" required>
+            </div>
+          </div>
+          <div class="two-column">
+            <div class="field">
+              <label for="editPtTotal">PT 총 횟수</label>
+              <input type="number" id="editPtTotal" min="0" required>
+            </div>
+            <div class="field">
+              <label for="editPtRemaining">PT 잔여 횟수</label>
+              <input type="number" id="editPtRemaining" min="0" required>
+            </div>
           </div>
           <div class="field">
-            <label for="editMemo">메모</label>
-            <textarea id="editMemo" placeholder="특이사항, 메모..."></textarea>
+            <label for="editMemo">회원 메모</label>
+            <textarea id="editMemo" placeholder="특이사항, 부상, 목표, 보호자 연락처 등"></textarea>
           </div>
-          <button type="submit" class="btn btn-primary">저장</button>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">저장</button>
+          </div>
         </form>
       </div>
     </div>
@@ -553,9 +982,12 @@
 
   <script>
     const STORAGE_KEY = 'boxing_gym_members';
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
     let members = loadMembers();
     let searchQuery = '';
+    let memberFilter = 'all';
 
     function loadMembers() {
       try {
@@ -575,32 +1007,52 @@
           const latest = attendance.reduce((a, b) =>
             new Date(a.date) > new Date(b.date) ? a : b
           );
-          lastVisit = toDateOnly(latest.date);
+          lastVisit = latest.visitDate || toDateOnly(latest.date);
         }
+
+        const createdDate = m.createdAt ? toDateOnly(m.createdAt) : getTodayDateOnly();
+        const startDate = m.startDate || m.registeredAt || createdDate;
+        const expireDate = m.expireDate || m.expiryDate || addDays(startDate, 30);
+        const ptRemaining = readNumber(m.ptRemaining, readNumber(m.ptCount, 0));
+        const ptTotal = readNumber(m.ptTotal, Math.max(ptRemaining, readNumber(m.ptCount, ptRemaining)));
 
         return {
           id: m.id || generateId(),
           name: m.name || '',
           phone: m.phone || '',
-          ptRemaining: typeof m.ptRemaining === 'number' ? m.ptRemaining : 0,
+          startDate,
+          expireDate,
+          ptTotal,
+          ptRemaining,
           memo: m.memo || '',
           lastVisit,
           createdAt: m.createdAt || new Date().toISOString(),
+          updatedAt: m.updatedAt || null,
           attendance
         };
-      });
+      }).sort((a, b) => compareMembersByPriority(a, b));
     }
 
     function saveMembers() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
     }
 
+    function readNumber(value, fallback) {
+      const n = Number(value);
+      return Number.isFinite(n) && n >= 0 ? n : fallback;
+    }
+
     function generateId() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
-    function toDateOnly(iso) {
-      const d = new Date(iso);
+    function parseDateOnly(dateOnly) {
+      const [y, m, d] = String(dateOnly).split('-').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1);
+    }
+
+    function toDateOnly(value) {
+      const d = value instanceof Date ? value : new Date(value);
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
@@ -608,7 +1060,57 @@
     }
 
     function getTodayDateOnly() {
-      return toDateOnly(new Date().toISOString());
+      return toDateOnly(new Date());
+    }
+
+    function addDays(dateOnly, days) {
+      const date = parseDateOnly(dateOnly);
+      date.setDate(date.getDate() + days);
+      return toDateOnly(date);
+    }
+
+    function getDaysUntilExpiry(member) {
+      const today = parseDateOnly(getTodayDateOnly());
+      const expiry = parseDateOnly(member.expireDate);
+      return Math.floor((expiry - today) / DAY_MS);
+    }
+
+    function getDaysSinceLastVisit(member) {
+      const referenceDate = member.lastVisit || member.startDate || toDateOnly(member.createdAt);
+      const today = parseDateOnly(getTodayDateOnly());
+      return Math.max(0, Math.floor((today - parseDateOnly(referenceDate)) / DAY_MS));
+    }
+
+    function getRenewalStatus(member) {
+      const days = getDaysUntilExpiry(member);
+      if (days < 0) return { key: 'expired', label: `만기 ${Math.abs(days)}일 지남`, priority: 0 };
+      if (days === 0) return { key: 'due-today', label: '만기 당일', priority: 1 };
+      if (days <= 3) return { key: 'due-three', label: `만기 ${days}일 전`, priority: 2 };
+      if (days <= 7) return { key: 'due-week', label: `만기 ${days}일 전`, priority: 3 };
+      if (days <= 14) return { key: 'due-soon', label: `만기 ${days}일 전`, priority: 4 };
+      return { key: 'normal', label: `만기 ${days}일 남음`, priority: 5 };
+    }
+
+    function isRenewalTarget(member) {
+      const days = getDaysUntilExpiry(member);
+      return days >= 0 && days <= 14;
+    }
+
+    function isUrgentExpiry(member) {
+      const days = getDaysUntilExpiry(member);
+      return days >= 0 && days <= 7;
+    }
+
+    function isExpired(member) {
+      return getDaysUntilExpiry(member) < 0;
+    }
+
+    function isLongAbsent(member, days = 14) {
+      return getDaysSinceLastVisit(member) >= days;
+    }
+
+    function isToday(iso) {
+      return toDateOnly(iso) === getTodayDateOnly();
     }
 
     function formatPhone(value) {
@@ -618,66 +1120,228 @@
       return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7, 11);
     }
 
-    function formatDate(iso) {
-      const d = new Date(iso);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const h = String(d.getHours()).padStart(2, '0');
-      const min = String(d.getMinutes()).padStart(2, '0');
-      return `${y}.${m}.${day} ${h}:${min}`;
-    }
-
-    function formatLastVisit(lastVisit) {
-      if (!lastVisit) return '방문 없음';
-      const [y, m, d] = lastVisit.split('-');
+    function formatDateOnly(dateOnly) {
+      if (!dateOnly) return '없음';
+      const [y, m, d] = dateOnly.split('-');
       return `${y}.${m}.${d}`;
     }
 
-    function getDaysSinceLastVisit(member) {
-      const reference = member.lastVisit
-        ? new Date(member.lastVisit + 'T00:00:00')
-        : new Date(member.createdAt);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      reference.setHours(0, 0, 0, 0);
-      return Math.floor((today - reference) / 86400000);
+    function formatDateTime(iso) {
+      const d = new Date(iso);
+      const date = toDateOnly(d);
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${formatDateOnly(date)} ${h}:${min}`;
     }
 
-    function isAbsent(member) {
-      return getDaysSinceLastVisit(member) >= 14;
+    function getTodayCount() {
+      return members.reduce((sum, member) =>
+        sum + member.attendance.filter(a => isToday(a.date)).length, 0
+      );
     }
 
-    function isToday(iso) {
-      return toDateOnly(iso) === getTodayDateOnly();
+    function compareMembersByPriority(a, b) {
+      const renewalDiff = getRenewalStatus(a).priority - getRenewalStatus(b).priority;
+      if (renewalDiff !== 0) return renewalDiff;
+      return parseDateOnly(a.expireDate) - parseDateOnly(b.expireDate);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
     }
 
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
       toast.textContent = message;
       toast.className = 'toast show ' + type;
-      setTimeout(() => toast.classList.remove('show'), 2500);
+      setTimeout(() => toast.classList.remove('show'), 2600);
     }
 
-    function updateStats() {
-      const todayCount = members.reduce((sum, m) => {
-        return sum + m.attendance.filter(a => isToday(a.date)).length;
-      }, 0);
-      const totalPt = members.reduce((sum, m) => sum + m.ptRemaining, 0);
+    function refreshAll() {
+      members.sort(compareMembersByPriority);
+      updateDashboard();
+      renderRenewalList();
+      renderCalendar();
+      renderAbsenceLists();
+      renderMembers();
+    }
 
-      document.getElementById('statMembers').textContent = members.length;
-      document.getElementById('statToday').textContent = todayCount;
-      document.getElementById('statPt').textContent = totalPt;
+    function updateDashboard() {
+      const renewalTargets = members.filter(isRenewalTarget);
+      const urgentTargets = members.filter(isUrgentExpiry);
+      const expiredTargets = members.filter(isExpired);
+      const absentTargets = members.filter(m => isLongAbsent(m, 14));
+
+      document.getElementById('todayLabel').textContent = `오늘 ${formatDateOnly(getTodayDateOnly())}`;
+      document.getElementById('statRenewal').textContent = renewalTargets.length;
+      document.getElementById('statUrgent').textContent = urgentTargets.length;
+      document.getElementById('statExpired').textContent = expiredTargets.length;
+      document.getElementById('statAbsent').textContent = absentTargets.length;
+      document.getElementById('statToday').textContent = getTodayCount();
+      document.getElementById('statTotalMembers').textContent = `전체 ${members.length}명`;
+      document.getElementById('renewalSummary').textContent = `${renewalTargets.length + expiredTargets.length}명 관리`;
+    }
+
+    function renderRenewalList() {
+      const list = document.getElementById('renewalList');
+      const targets = members
+        .filter(member => isRenewalTarget(member) || isExpired(member))
+        .sort(compareMembersByPriority);
+
+      if (targets.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <strong>현재 재등록 위험 회원이 없습니다.</strong>
+            만기 14일 이내 회원이 생기면 이 영역에 가장 먼저 표시됩니다.
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = targets.map(member => renewalCardTemplate(member)).join('');
+    }
+
+    function renewalCardTemplate(member) {
+      const status = getRenewalStatus(member);
+      return `
+        <article class="renewal-card ${status.key}">
+          <div>
+            <div class="renewal-name">${escapeHtml(member.name)}</div>
+            <div class="meta-line">
+              <span>${escapeHtml(member.phone)}</span>
+              <span>등록 ${formatDateOnly(member.startDate)}</span>
+              <span>만기 ${formatDateOnly(member.expireDate)}</span>
+              <span>PT ${member.ptRemaining}/${member.ptTotal}회</span>
+              <span>마지막 방문 ${formatDateOnly(member.lastVisit)} (${getDaysSinceLastVisit(member)}일 전)</span>
+            </div>
+            ${member.memo ? `<div class="member-memo">${escapeHtml(member.memo)}</div>` : ''}
+          </div>
+          <div class="member-actions">
+            <span class="status-badge ${status.key}">${status.label}</span>
+            <button class="btn btn-success btn-sm" onclick="checkIn('${member.id}')">출석</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${member.id}')">재등록/수정</button>
+          </div>
+        </article>`;
+    }
+
+    function renderCalendar() {
+      const input = document.getElementById('calendarMonth');
+      const monthValue = input.value || getTodayDateOnly().slice(0, 7);
+      input.value = monthValue;
+
+      const [year, month] = monthValue.split('-').map(Number);
+      const first = new Date(year, month - 1, 1);
+      const last = new Date(year, month, 0);
+      const start = new Date(first);
+      start.setDate(first.getDate() - first.getDay());
+      const end = new Date(last);
+      end.setDate(last.getDate() + (6 - last.getDay()));
+
+      const byDate = members.reduce((acc, member) => {
+        if (member.expireDate.slice(0, 7) === monthValue) {
+          acc[member.expireDate] = acc[member.expireDate] || [];
+          acc[member.expireDate].push(member);
+        }
+        return acc;
+      }, {});
+
+      const cells = WEEKDAYS.map(day => `<div class="calendar-weekday">${day}</div>`);
+      const cursor = new Date(start);
+
+      while (cursor <= end) {
+        const dateOnly = toDateOnly(cursor);
+        const inMonth = cursor.getMonth() === month - 1;
+        const expiries = byDate[dateOnly] || [];
+        const classes = [
+          'calendar-day',
+          inMonth ? 'in-month' : '',
+          dateOnly === getTodayDateOnly() ? 'today' : '',
+          expiries.length ? 'has-expiry' : ''
+        ].filter(Boolean).join(' ');
+
+        cells.push(`
+          <div class="${classes}" title="${expiries.map(m => m.name).join(', ')}">
+            <div>${cursor.getDate()}</div>
+            ${expiries.length ? `<span class="count">${expiries.length}명</span>` : ''}
+          </div>`);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      document.getElementById('calendarGrid').innerHTML = cells.join('');
+      renderMonthExpiryList(monthValue);
+    }
+
+    function renderMonthExpiryList(monthValue) {
+      const list = document.getElementById('monthExpiryList');
+      const monthly = members
+        .filter(member => member.expireDate.slice(0, 7) === monthValue)
+        .sort((a, b) => parseDateOnly(a.expireDate) - parseDateOnly(b.expireDate));
+
+      if (monthly.length === 0) {
+        list.innerHTML = '<div class="empty-state">선택한 월에 만기되는 회원이 없습니다.</div>';
+        return;
+      }
+
+      list.innerHTML = monthly.map(member => {
+        const status = getRenewalStatus(member);
+        return `
+          <div class="mini-card">
+            <div class="mini-card-title">
+              <span>${formatDateOnly(member.expireDate)} · ${escapeHtml(member.name)}</span>
+              <span class="status-badge ${status.key}">${status.label}</span>
+            </div>
+            <div class="meta-line">
+              <span>${escapeHtml(member.phone)}</span>
+              <span>PT ${member.ptRemaining}/${member.ptTotal}회</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderAbsenceLists() {
+      renderAbsenceList('absent14List', members.filter(m => isLongAbsent(m, 14) && !isLongAbsent(m, 30)), '14일 이상 미방문 회원 없음');
+      renderAbsenceList('absent30List', members.filter(m => isLongAbsent(m, 30)), '30일 이상 미방문 회원 없음');
+    }
+
+    function renderAbsenceList(elementId, data, emptyText) {
+      const list = document.getElementById(elementId);
+      const sorted = data.sort((a, b) => getDaysSinceLastVisit(b) - getDaysSinceLastVisit(a));
+
+      if (sorted.length === 0) {
+        list.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+        return;
+      }
+
+      list.innerHTML = sorted.map(member => `
+        <div class="mini-card">
+          <div class="mini-card-title">
+            <span>${escapeHtml(member.name)}</span>
+            <span class="tag info">${getDaysSinceLastVisit(member)}일</span>
+          </div>
+          <div class="meta-line">
+            <span>${escapeHtml(member.phone)}</span>
+            <span>마지막 ${formatDateOnly(member.lastVisit)}</span>
+          </div>
+        </div>
+      `).join('');
     }
 
     function getFilteredMembers() {
-      if (!searchQuery) return members;
       const q = searchQuery.toLowerCase();
-      return members.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        m.phone.includes(q) ||
-        (m.memo && m.memo.toLowerCase().includes(q))
-      );
+      return members.filter(member => {
+        const matchesSearch = !q ||
+          member.name.toLowerCase().includes(q) ||
+          member.phone.includes(q) ||
+          (member.memo && member.memo.toLowerCase().includes(q));
+
+        if (!matchesSearch) return false;
+        if (memberFilter === 'renewal') return isRenewalTarget(member);
+        if (memberFilter === 'expired') return isExpired(member);
+        if (memberFilter === 'absent14') return isLongAbsent(member, 14);
+        if (memberFilter === 'absent30') return isLongAbsent(member, 30);
+        return true;
+      });
     }
 
     function renderMembers() {
@@ -687,69 +1351,85 @@
       if (filtered.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <p>${searchQuery ? '검색 결과가 없습니다.' : '등록된 회원이 없습니다.'}</p>
+            <strong>${searchQuery ? '검색 결과가 없습니다.' : '표시할 회원이 없습니다.'}</strong>
+            필터를 변경하거나 새 회원을 등록해 주세요.
           </div>`;
         return;
       }
 
-      list.innerHTML = filtered.map(m => {
-        const absent = isAbsent(m);
-        const ptClass = m.ptRemaining <= 3 ? 'low' : '';
-        const todayChecked = m.attendance.some(a => isToday(a.date));
-        const checkLabel = todayChecked ? '재출석' : '출석 체크';
-        const daysSince = getDaysSinceLastVisit(m);
-        const lastVisitText = formatLastVisit(m.lastVisit);
-        const lastVisitLabel = m.lastVisit
-          ? `마지막 방문: ${lastVisitText}`
-          : `마지막 방문: 없음 (${daysSince}일)`;
-
-        return `
-          <div class="member-card${absent ? ' absent' : ''}" data-id="${m.id}">
-            <div class="member-info">
-              <h3>${escapeHtml(m.name)}</h3>
-              <div class="member-meta">
-                <span>📞 ${escapeHtml(m.phone)}</span>
-                <span class="pt-badge ${ptClass}">PT ${m.ptRemaining}회</span>
-                <span>출석 ${m.attendance.length}회</span>
-                <span class="last-visit${absent ? ' absent-text' : ''}">${lastVisitLabel}${absent ? ' · 14일+ 미방문' : ''}</span>
-              </div>
-              ${m.memo ? `<div class="member-memo">📝 ${escapeHtml(m.memo)}</div>` : ''}
-            </div>
-            <div class="member-actions">
-              <button class="btn btn-success btn-sm" onclick="checkIn('${m.id}')">${checkLabel}</button>
-              <button class="btn btn-ghost btn-sm" onclick="showAttendance('${m.id}')">출석 기록</button>
-              <button class="btn btn-ghost btn-sm" onclick="openEditModal('${m.id}')">수정</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">삭제</button>
-            </div>
-          </div>`;
-      }).join('');
+      list.innerHTML = filtered.map(member => memberCardTemplate(member)).join('');
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+    function memberCardTemplate(member) {
+      const status = getRenewalStatus(member);
+      const absent = isLongAbsent(member, 14);
+      const todayChecked = member.attendance.some(a => isToday(a.date));
+      const classes = ['member-card', status.key, absent ? 'absent' : ''].filter(Boolean).join(' ');
+
+      return `
+        <article class="${classes}" data-id="${member.id}">
+          <div class="member-info">
+            <h3>
+              ${escapeHtml(member.name)}
+              <span class="status-badge ${status.key}">${status.label}</span>
+              ${absent ? `<span class="tag info">${getDaysSinceLastVisit(member)}일 미방문</span>` : ''}
+            </h3>
+            <div class="meta-line">
+              <span>연락처 ${escapeHtml(member.phone)}</span>
+              <span>등록 ${formatDateOnly(member.startDate)}</span>
+              <span>만기 ${formatDateOnly(member.expireDate)}</span>
+              <span>PT ${member.ptRemaining}/${member.ptTotal}회</span>
+              <span>출석 ${member.attendance.length}회</span>
+              <span>마지막 방문 ${formatDateOnly(member.lastVisit)}</span>
+            </div>
+            ${member.memo ? `<div class="member-memo">${escapeHtml(member.memo)}</div>` : ''}
+          </div>
+          <div class="member-actions">
+            <button class="btn btn-success btn-sm" onclick="checkIn('${member.id}')">${todayChecked ? '재출석' : '출석'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="showAttendance('${member.id}')">출석 기록</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${member.id}')">수정</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMember('${member.id}')">삭제</button>
+          </div>
+        </article>`;
+    }
+
+    function resetRegisterDates() {
+      const today = getTodayDateOnly();
+      document.getElementById('startDate').value = today;
+      document.getElementById('expireDate').value = addDays(today, 30);
+      document.getElementById('calendarMonth').value = today.slice(0, 7);
+    }
+
+    function syncPtRemainingDefault() {
+      const total = readNumber(document.getElementById('ptTotal').value, 0);
+      const remaining = document.getElementById('ptRemaining');
+      if (!remaining.value || Number(remaining.value) > total) {
+        remaining.value = String(total);
+      }
     }
 
     function registerMember(e) {
       e.preventDefault();
+
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
-      const ptCount = parseInt(document.getElementById('ptCount').value, 10);
+      const startDate = document.getElementById('startDate').value;
+      const expireDate = document.getElementById('expireDate').value;
+      const ptTotal = parseInt(document.getElementById('ptTotal').value, 10);
+      const ptRemaining = parseInt(document.getElementById('ptRemaining').value, 10);
       const memo = document.getElementById('memo').value.trim();
 
-      if (!name || !phone) {
-        showToast('이름과 연락처를 입력해주세요.', 'warning');
+      if (!name || !phone || !startDate || !expireDate) {
+        showToast('이름, 연락처, 등록일, 만기일을 입력해주세요.', 'warning');
         return;
       }
 
-      if (ptCount < 0 || isNaN(ptCount)) {
+      if (parseDateOnly(expireDate) < parseDateOnly(startDate)) {
+        showToast('만기일은 등록일 이후로 선택해주세요.', 'warning');
+        return;
+      }
+
+      if (ptTotal < 0 || ptRemaining < 0 || Number.isNaN(ptTotal) || Number.isNaN(ptRemaining)) {
         showToast('PT 횟수를 올바르게 입력해주세요.', 'warning');
         return;
       }
@@ -758,19 +1438,24 @@
         id: generateId(),
         name,
         phone,
-        ptRemaining: ptCount,
+        startDate,
+        expireDate,
+        ptTotal,
+        ptRemaining,
         memo,
         lastVisit: null,
         createdAt: new Date().toISOString(),
+        updatedAt: null,
         attendance: []
       });
 
       saveMembers();
       document.getElementById('registerForm').reset();
-      document.getElementById('ptCount').value = '10';
+      document.getElementById('ptTotal').value = '10';
+      document.getElementById('ptRemaining').value = '10';
+      resetRegisterDates();
       showToast(`${name} 회원이 등록되었습니다.`);
-      updateStats();
-      renderMembers();
+      refreshAll();
     }
 
     function checkIn(id) {
@@ -782,48 +1467,39 @@
         member.ptRemaining -= 1;
       }
 
+      const now = new Date();
       const today = getTodayDateOnly();
       member.lastVisit = today;
-
+      member.updatedAt = now.toISOString();
       member.attendance.unshift({
-        date: new Date().toISOString(),
+        date: now.toISOString(),
         visitDate: today,
         ptDeducted
       });
 
       saveMembers();
-
-      if (ptDeducted) {
-        showToast(`${member.name} 출석 완료! PT 1회 차감 (잔여 ${member.ptRemaining}회)`);
-      } else {
-        showToast(`${member.name} 출석 완료! PT 잔여 없음`, 'warning');
-      }
-
-      updateStats();
-      renderMembers();
+      showToast(ptDeducted
+        ? `${member.name} 출석 완료! PT 1회 차감 (잔여 ${member.ptRemaining}회)`
+        : `${member.name} 출석 완료! PT 잔여 없음`, ptDeducted ? 'success' : 'warning');
+      refreshAll();
     }
 
     function showAttendance(id) {
       const member = members.find(m => m.id === id);
       if (!member) return;
 
-      document.getElementById('modalTitle').textContent = `${member.name} — 출석 기록`;
+      document.getElementById('modalTitle').textContent = `${member.name} - 출석 기록`;
       const list = document.getElementById('attendanceList');
 
       if (member.attendance.length === 0) {
-        list.innerHTML = '<div class="empty-state"><p>출석 기록이 없습니다.</p></div>';
+        list.innerHTML = '<div class="empty-state">출석 기록이 없습니다.</div>';
       } else {
-        list.innerHTML = member.attendance.map(a => {
-          const visitDate = a.visitDate || toDateOnly(a.date);
-          const [y, m, d] = visitDate.split('-');
-          return `
-            <div class="attendance-item">
-              <span class="date">${y}.${m}.${d} ${formatDate(a.date).split(' ')[1] || ''}</span>
-              <span class="pt-tag ${a.ptDeducted ? 'deducted' : ''}">
-                ${a.ptDeducted ? 'PT 1회 차감' : 'PT 미차감'}
-              </span>
-            </div>`;
-        }).join('');
+        list.innerHTML = member.attendance.map(attendance => `
+          <div class="attendance-item">
+            <span>${formatDateTime(attendance.date)}</span>
+            <span class="tag ${attendance.ptDeducted ? 'danger' : 'info'}">${attendance.ptDeducted ? 'PT 1회 차감' : 'PT 미차감'}</span>
+          </div>
+        `).join('');
       }
 
       document.getElementById('attendanceModal').classList.add('active');
@@ -836,43 +1512,60 @@
       document.getElementById('editId').value = member.id;
       document.getElementById('editName').value = member.name;
       document.getElementById('editPhone').value = member.phone;
-      document.getElementById('editPt').value = member.ptRemaining;
+      document.getElementById('editStartDate').value = member.startDate;
+      document.getElementById('editExpireDate').value = member.expireDate;
+      document.getElementById('editPtTotal').value = member.ptTotal;
+      document.getElementById('editPtRemaining').value = member.ptRemaining;
       document.getElementById('editMemo').value = member.memo || '';
-      document.getElementById('editModalTitle').textContent = `${member.name} — 정보 수정`;
+      document.getElementById('editModalTitle').textContent = `${member.name} - 회원 정보 수정`;
       document.getElementById('editModal').classList.add('active');
     }
 
     function saveEditMember(e) {
       e.preventDefault();
+
       const id = document.getElementById('editId').value;
       const member = members.find(m => m.id === id);
       if (!member) return;
 
       const name = document.getElementById('editName').value.trim();
       const phone = document.getElementById('editPhone').value.trim();
-      const ptRemaining = parseInt(document.getElementById('editPt').value, 10);
+      const startDate = document.getElementById('editStartDate').value;
+      const expireDate = document.getElementById('editExpireDate').value;
+      const ptTotal = parseInt(document.getElementById('editPtTotal').value, 10);
+      const ptRemaining = parseInt(document.getElementById('editPtRemaining').value, 10);
       const memo = document.getElementById('editMemo').value.trim();
 
-      if (!name || !phone) {
-        showToast('이름과 연락처를 입력해주세요.', 'warning');
+      if (!name || !phone || !startDate || !expireDate) {
+        showToast('필수 회원 정보를 입력해주세요.', 'warning');
         return;
       }
 
-      if (ptRemaining < 0 || isNaN(ptRemaining)) {
-        showToast('PT 잔여횟수를 올바르게 입력해주세요.', 'warning');
+      if (parseDateOnly(expireDate) < parseDateOnly(startDate)) {
+        showToast('만기일은 등록일 이후로 선택해주세요.', 'warning');
         return;
       }
 
-      member.name = name;
-      member.phone = phone;
-      member.ptRemaining = ptRemaining;
-      member.memo = memo;
+      if (ptTotal < 0 || ptRemaining < 0 || Number.isNaN(ptTotal) || Number.isNaN(ptRemaining)) {
+        showToast('PT 횟수를 올바르게 입력해주세요.', 'warning');
+        return;
+      }
+
+      Object.assign(member, {
+        name,
+        phone,
+        startDate,
+        expireDate,
+        ptTotal,
+        ptRemaining,
+        memo,
+        updatedAt: new Date().toISOString()
+      });
 
       saveMembers();
       document.getElementById('editModal').classList.remove('active');
       showToast(`${name} 회원 정보가 수정되었습니다.`);
-      updateStats();
-      renderMembers();
+      refreshAll();
     }
 
     function deleteMember(id) {
@@ -883,12 +1576,13 @@
       members = members.filter(m => m.id !== id);
       saveMembers();
       showToast(`${member.name} 회원이 삭제되었습니다.`);
-      updateStats();
-      renderMembers();
+      refreshAll();
     }
 
     function exportData() {
       const data = {
+        app: 'boxing-gym-renewal-manager',
+        version: 2,
         exportedAt: new Date().toISOString(),
         members
       };
@@ -896,17 +1590,17 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `boxing-gym-backup-${getTodayDateOnly()}.json`;
+      a.download = `boxing-gym-renewal-backup-${getTodayDateOnly()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('백업 파일이 다운로드되었습니다.');
+      showToast('JSON 백업 파일이 다운로드되었습니다.');
     }
 
     function importData(file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         try {
           const data = JSON.parse(e.target.result);
           const imported = Array.isArray(data) ? data : data.members;
@@ -918,9 +1612,8 @@
 
           members = migrateMembers(imported);
           saveMembers();
-          updateStats();
-          renderMembers();
           showToast('데이터가 복원되었습니다.');
+          refreshAll();
         } catch {
           showToast('올바른 JSON 파일이 아닙니다.', 'warning');
         }
@@ -931,18 +1624,31 @@
     document.getElementById('registerForm').addEventListener('submit', registerMember);
     document.getElementById('editForm').addEventListener('submit', saveEditMember);
 
-    document.getElementById('phone').addEventListener('input', (e) => {
+    document.getElementById('phone').addEventListener('input', e => {
       e.target.value = formatPhone(e.target.value);
     });
 
-    document.getElementById('editPhone').addEventListener('input', (e) => {
+    document.getElementById('editPhone').addEventListener('input', e => {
       e.target.value = formatPhone(e.target.value);
     });
 
-    document.getElementById('searchInput').addEventListener('input', (e) => {
+    document.getElementById('ptTotal').addEventListener('input', syncPtRemainingDefault);
+
+    document.getElementById('startDate').addEventListener('change', e => {
+      document.getElementById('expireDate').value = addDays(e.target.value || getTodayDateOnly(), 30);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', e => {
       searchQuery = e.target.value.trim();
       renderMembers();
     });
+
+    document.getElementById('memberFilter').addEventListener('change', e => {
+      memberFilter = e.target.value;
+      renderMembers();
+    });
+
+    document.getElementById('calendarMonth').addEventListener('change', renderCalendar);
 
     document.getElementById('closeModal').addEventListener('click', () => {
       document.getElementById('attendanceModal').classList.remove('active');
@@ -952,26 +1658,23 @@
       document.getElementById('editModal').classList.remove('active');
     });
 
-    document.getElementById('attendanceModal').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) {
-        e.currentTarget.classList.remove('active');
-      }
+    document.getElementById('attendanceModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
     });
 
-    document.getElementById('editModal').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) {
-        e.currentTarget.classList.remove('active');
-      }
+    document.getElementById('editModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
     });
 
-    document.getElementById('importFile').addEventListener('change', (e) => {
+    document.getElementById('importFile').addEventListener('change', e => {
       const file = e.target.files[0];
       if (file) importData(file);
       e.target.value = '';
     });
 
-    updateStats();
-    renderMembers();
+    resetRegisterDates();
+    saveMembers();
+    refreshAll();
   </script>
 </body>
 </html>
