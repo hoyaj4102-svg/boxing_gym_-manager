@@ -83,6 +83,27 @@
       font-size: .92rem;
     }
 
+    .header-actions {
+      display: flex;
+      flex: 0 0 auto;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .language-select {
+      min-height: 38px;
+      min-width: 150px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, .09);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .04);
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 800;
+      outline: none;
+    }
+
     .today-pill {
       flex: 0 0 auto;
       padding: 10px 13px;
@@ -738,9 +759,13 @@
         display: block;
       }
 
+      .header-actions {
+        align-items: flex-start;
+        margin-top: 12px;
+      }
+
       .today-pill {
         display: inline-flex;
-        margin-top: 12px;
       }
 
       .dashboard {
@@ -783,37 +808,46 @@
   <div class="app">
     <header>
       <div>
-        <div class="eyebrow">Renewal First Operation</div>
-        <h1>복싱장 재등록<br>운영 관리</h1>
-        <p>만기 회원을 놓치지 않도록 재등록, 미방문, 출석을 한 화면에서 관리합니다.</p>
+        <div class="eyebrow" data-i18n="eyebrow">Renewal First Operation</div>
+        <h1 data-i18n="appTitle">복싱장 재등록<br>운영 관리</h1>
+        <p data-i18n="appSubtitle">만기 회원을 놓치지 않도록 재등록, 미방문, 출석을 한 화면에서 관리합니다.</p>
       </div>
-      <div class="today-pill" id="todayLabel">오늘</div>
+      <div class="header-actions">
+        <select class="language-select" id="languageSelect" aria-label="Language">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="ru">Русский</option>
+          <option value="mn">Монгол</option>
+        </select>
+        <div class="today-pill" id="todayLabel">오늘</div>
+      </div>
     </header>
 
-    <section class="dashboard" aria-label="운영 대시보드">
+    <section class="dashboard" aria-label="운영 대시보드" data-i18n-aria-label="dashboardAria">
       <article class="stat-card priority">
         <div class="value" id="statRenewal">0</div>
-        <div class="label">재등록 예정 회원</div>
-        <div class="hint">만기 14일 이내</div>
+        <div class="label" data-i18n="statRenewalLabel">재등록 예정 회원</div>
+        <div class="hint" data-i18n="statRenewalHint">만기 14일 이내</div>
       </article>
       <article class="stat-card warning">
         <div class="value" id="statUrgent">0</div>
-        <div class="label">만기 임박 회원</div>
-        <div class="hint">7일 이내 집중 관리</div>
+        <div class="label" data-i18n="statUrgentLabel">만기 임박 회원</div>
+        <div class="hint" data-i18n="statUrgentHint">7일 이내 집중 관리</div>
       </article>
       <article class="stat-card expired">
         <div class="value" id="statExpired">0</div>
-        <div class="label">만기 지난 회원</div>
-        <div class="hint">별도 연락 목록</div>
+        <div class="label" data-i18n="statExpiredLabel">만기 지난 회원</div>
+        <div class="hint" data-i18n="statExpiredHint">별도 연락 목록</div>
       </article>
       <article class="stat-card absent">
         <div class="value" id="statAbsent">0</div>
-        <div class="label">장기 미방문</div>
-        <div class="hint">14일 이상 미방문</div>
+        <div class="label" data-i18n="statAbsentLabel">장기 미방문</div>
+        <div class="hint" data-i18n="statAbsentHint">14일 이상 미방문</div>
       </article>
       <article class="stat-card today">
         <div class="value" id="statToday">0</div>
-        <div class="label">오늘 출석 인원</div>
+        <div class="label" data-i18n="statTodayLabel">오늘 출석 인원</div>
         <div class="hint" id="statTotalMembers">전체 0명</div>
       </article>
     </section>
@@ -823,8 +857,8 @@
         <section class="panel renewal-panel">
           <div class="panel-header">
             <div>
-              <h2>재등록 관리 최우선</h2>
-              <p class="panel-subtitle">만기 14일 전부터 자동 표시하고 7일/3일/당일은 색상으로 강조합니다.</p>
+              <h2 data-i18n="renewalPanelTitle">재등록 관리 최우선</h2>
+              <p class="panel-subtitle" data-i18n="renewalPanelSubtitle">만기 14일 전부터 자동 표시하고 7일/3일/당일은 색상으로 강조합니다.</p>
             </div>
             <span class="tag danger" id="renewalSummary">0명 관리</span>
           </div>
@@ -836,11 +870,11 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <h2>월별 만기 캘린더</h2>
-              <p class="panel-subtitle">선택한 월에 만기되는 회원을 날짜별로 확인합니다.</p>
+              <h2 data-i18n="calendarPanelTitle">월별 만기 캘린더</h2>
+              <p class="panel-subtitle" data-i18n="calendarPanelSubtitle">선택한 월에 만기되는 회원을 날짜별로 확인합니다.</p>
             </div>
             <div class="calendar-controls">
-              <input type="month" id="calendarMonth" aria-label="만기 월 선택">
+              <input type="month" id="calendarMonth" aria-label="만기 월 선택" data-i18n-aria-label="calendarMonthAria">
             </div>
           </div>
           <div class="panel-body">
@@ -852,8 +886,8 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <h2>회원 목록</h2>
-              <p class="panel-subtitle">출석, PT, 만기, 메모를 빠르게 확인하고 수정합니다.</p>
+              <h2 data-i18n="memberListTitle">회원 목록</h2>
+              <p class="panel-subtitle" data-i18n="memberListSubtitle">출석, PT, 만기, 메모를 빠르게 확인하고 수정합니다.</p>
             </div>
           </div>
           <div class="panel-body">
@@ -862,14 +896,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchInput" placeholder="이름, 연락처, 메모 검색">
+                <input type="text" id="searchInput" placeholder="이름, 연락처, 메모 검색" data-i18n-placeholder="searchPlaceholder">
               </div>
-              <select id="memberFilter" aria-label="회원 필터">
-                <option value="all">전체 회원</option>
-                <option value="renewal">재등록 예정</option>
-                <option value="expired">만기 지난 회원</option>
-                <option value="absent14">14일+ 미방문</option>
-                <option value="absent30">30일+ 미방문</option>
+              <select id="memberFilter" aria-label="회원 필터" data-i18n-aria-label="memberFilterAria">
+                <option value="all" data-i18n="filterAll">전체 회원</option>
+                <option value="renewal" data-i18n="filterRenewal">재등록 예정</option>
+                <option value="expired" data-i18n="filterExpired">만기 지난 회원</option>
+                <option value="absent14" data-i18n="filterAbsent14">14일+ 미방문</option>
+                <option value="absent30" data-i18n="filterAbsent30">30일+ 미방문</option>
               </select>
             </div>
             <div class="member-list" id="memberList"></div>
@@ -881,42 +915,42 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <h2>회원 등록</h2>
-              <p class="panel-subtitle">등록일과 만기일을 달력에서 선택합니다.</p>
+              <h2 data-i18n="registerTitle">회원 등록</h2>
+              <p class="panel-subtitle" data-i18n="registerSubtitle">등록일과 만기일을 달력에서 선택합니다.</p>
             </div>
           </div>
           <div class="panel-body">
             <form id="registerForm" class="form-grid">
               <div class="field">
-                <label for="name">이름</label>
-                <input type="text" id="name" placeholder="홍길동" autocomplete="name" required>
+                <label for="name" data-i18n="nameLabel">이름</label>
+                <input type="text" id="name" placeholder="홍길동" data-i18n-placeholder="namePlaceholder" autocomplete="name" required>
               </div>
               <div class="field">
-                <label for="phone">연락처</label>
+                <label for="phone" data-i18n="phoneLabel">연락처</label>
                 <input type="tel" id="phone" placeholder="010-1234-5678" autocomplete="tel" required>
               </div>
               <div class="field">
-                <label for="startDate">등록일</label>
+                <label for="startDate" data-i18n="startDateLabel">등록일</label>
                 <input type="date" id="startDate" required>
               </div>
               <div class="field">
-                <label for="expireDate">만기일</label>
+                <label for="expireDate" data-i18n="expireDateLabel">만기일</label>
                 <input type="date" id="expireDate" required>
               </div>
               <div class="field">
-                <label for="ptTotal">PT 총 횟수</label>
+                <label for="ptTotal" data-i18n="ptTotalLabel">PT 총 횟수</label>
                 <input type="number" id="ptTotal" min="0" value="10" required>
               </div>
               <div class="field">
-                <label for="ptRemaining">PT 잔여 횟수</label>
+                <label for="ptRemaining" data-i18n="ptRemainingLabel">PT 잔여 횟수</label>
                 <input type="number" id="ptRemaining" min="0" value="10" required>
               </div>
               <div class="field form-full">
-                <label for="memo">회원 메모</label>
-                <textarea id="memo" placeholder="어깨 부상, 무릎 통증, 부모님 연락처, 감량 목표, 특이사항 등"></textarea>
+                <label for="memo" data-i18n="memoLabel">회원 메모</label>
+                <textarea id="memo" placeholder="어깨 부상, 무릎 통증, 부모님 연락처, 감량 목표, 특이사항 등" data-i18n-placeholder="memoPlaceholder"></textarea>
               </div>
               <div class="form-actions form-full">
-                <button type="submit" class="btn btn-primary">회원 등록</button>
+                <button type="submit" class="btn btn-primary" data-i18n="registerButton">회원 등록</button>
               </div>
             </form>
           </div>
@@ -925,18 +959,18 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <h2>장기 미방문 회원</h2>
-              <p class="panel-subtitle">14일 이상과 30일 이상을 별도로 확인합니다.</p>
+              <h2 data-i18n="absenceTitle">장기 미방문 회원</h2>
+              <p class="panel-subtitle" data-i18n="absenceSubtitle">14일 이상과 30일 이상을 별도로 확인합니다.</p>
             </div>
           </div>
           <div class="panel-body">
             <div class="two-column">
               <div>
-                <span class="tag info">14일 이상</span>
+                <span class="tag info" data-i18n="absent14Tag">14일 이상</span>
                 <div class="mini-list" id="absent14List" style="margin-top:10px;"></div>
               </div>
               <div>
-                <span class="tag warning">30일 이상</span>
+                <span class="tag warning" data-i18n="absent30Tag">30일 이상</span>
                 <div class="mini-list" id="absent30List" style="margin-top:10px;"></div>
               </div>
             </div>
@@ -946,15 +980,15 @@
         <section class="panel">
           <div class="panel-header">
             <div>
-              <h2>데이터 관리</h2>
-              <p class="panel-subtitle">localStorage 저장을 유지하고 JSON으로 백업/복원합니다.</p>
+              <h2 data-i18n="dataTitle">데이터 관리</h2>
+              <p class="panel-subtitle" data-i18n="dataSubtitle">localStorage 저장을 유지하고 JSON으로 백업/복원합니다.</p>
             </div>
           </div>
           <div class="panel-body">
             <div class="backup-actions">
-              <button type="button" class="btn btn-ghost" onclick="openStorageInfoModal()">저장 방식 안내</button>
-              <button type="button" class="btn btn-ghost" onclick="exportData()">JSON 백업</button>
-              <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()">JSON 복원</button>
+              <button type="button" class="btn btn-ghost" onclick="openStorageInfoModal()" data-i18n="storageInfoButton">저장 방식 안내</button>
+              <button type="button" class="btn btn-ghost" onclick="exportData()" data-i18n="jsonBackupButton">JSON 백업</button>
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()" data-i18n="jsonRestoreButton">JSON 복원</button>
               <input type="file" id="importFile" accept=".json,application/json" hidden>
             </div>
           </div>
@@ -966,8 +1000,8 @@
   <div class="modal-overlay" id="attendanceModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">출석 기록</h3>
-        <button class="btn btn-ghost btn-sm" id="closeModal">닫기</button>
+        <h3 id="modalTitle" data-i18n="attendanceModalTitle">출석 기록</h3>
+        <button class="btn btn-ghost btn-sm" id="closeModal" data-i18n="closeButton">닫기</button>
       </div>
       <div class="modal-body">
         <div class="attendance-list" id="attendanceList"></div>
@@ -978,46 +1012,46 @@
   <div class="modal-overlay" id="editModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="editModalTitle">회원 정보 수정</h3>
-        <button class="btn btn-ghost btn-sm" id="closeEditModal">닫기</button>
+        <h3 id="editModalTitle" data-i18n="editModalTitle">회원 정보 수정</h3>
+        <button class="btn btn-ghost btn-sm" id="closeEditModal" data-i18n="closeButton">닫기</button>
       </div>
       <div class="modal-body">
         <form id="editForm" class="edit-form">
           <input type="hidden" id="editId">
           <div class="field">
-            <label for="editName">이름</label>
+            <label for="editName" data-i18n="nameLabel">이름</label>
             <input type="text" id="editName" required>
           </div>
           <div class="field">
-            <label for="editPhone">연락처</label>
+            <label for="editPhone" data-i18n="phoneLabel">연락처</label>
             <input type="tel" id="editPhone" required>
           </div>
           <div class="two-column">
             <div class="field">
-              <label for="editStartDate">등록일</label>
+              <label for="editStartDate" data-i18n="startDateLabel">등록일</label>
               <input type="date" id="editStartDate" required>
             </div>
             <div class="field">
-              <label for="editExpireDate">만기일</label>
+              <label for="editExpireDate" data-i18n="expireDateLabel">만기일</label>
               <input type="date" id="editExpireDate" required>
             </div>
           </div>
           <div class="two-column">
             <div class="field">
-              <label for="editPtTotal">PT 총 횟수</label>
+              <label for="editPtTotal" data-i18n="ptTotalLabel">PT 총 횟수</label>
               <input type="number" id="editPtTotal" min="0" required>
             </div>
             <div class="field">
-              <label for="editPtRemaining">PT 잔여 횟수</label>
+              <label for="editPtRemaining" data-i18n="ptRemainingLabel">PT 잔여 횟수</label>
               <input type="number" id="editPtRemaining" min="0" required>
             </div>
           </div>
           <div class="field">
-            <label for="editMemo">회원 메모</label>
-            <textarea id="editMemo" placeholder="특이사항, 부상, 목표, 보호자 연락처 등"></textarea>
+            <label for="editMemo" data-i18n="memoLabel">회원 메모</label>
+            <textarea id="editMemo" placeholder="특이사항, 부상, 목표, 보호자 연락처 등" data-i18n-placeholder="editMemoPlaceholder"></textarea>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">저장</button>
+            <button type="submit" class="btn btn-primary" data-i18n="saveButton">저장</button>
           </div>
         </form>
       </div>
@@ -1027,38 +1061,38 @@
   <div class="modal-overlay" id="storageInfoModal">
     <div class="modal">
       <div class="modal-header">
-        <h3>데이터 저장 방식 안내</h3>
-        <button class="btn btn-ghost btn-sm" id="closeStorageInfoModal">닫기</button>
+        <h3 data-i18n="storageModalTitle">데이터 저장 방식 안내</h3>
+        <button class="btn btn-ghost btn-sm" id="closeStorageInfoModal" data-i18n="closeButton">닫기</button>
       </div>
       <div class="modal-body">
         <div class="storage-notice">
           <div class="notice-card">
-            <strong>이 앱은 로그인 없이 사용하는 로컬 저장 방식입니다.</strong>
-            <p>회원 정보는 서버가 아니라 현재 사용 중인 기기와 브라우저의 localStorage에 저장됩니다.</p>
+            <strong data-i18n="storageNotice1Title">이 앱은 로그인 없이 사용하는 로컬 저장 방식입니다.</strong>
+            <p data-i18n="storageNotice1Body">회원 정보는 서버가 아니라 현재 사용 중인 기기와 브라우저의 localStorage에 저장됩니다.</p>
           </div>
           <div class="notice-card">
-            <strong>같은 주소라도 기기/브라우저가 다르면 데이터가 자동 공유되지 않습니다.</strong>
+            <strong data-i18n="storageNotice2Title">같은 주소라도 기기/브라우저가 다르면 데이터가 자동 공유되지 않습니다.</strong>
             <ul>
-              <li>아이폰 Safari에 입력한 데이터는 아이폰 Safari에만 남습니다.</li>
-              <li>PC, 다른 휴대폰, 다른 브라우저에서는 JSON 복원이 필요합니다.</li>
-              <li>브라우저 데이터 삭제 또는 기기 변경 시 데이터가 사라질 수 있습니다.</li>
+              <li data-i18n="storageNotice2Item1">아이폰 Safari에 입력한 데이터는 아이폰 Safari에만 남습니다.</li>
+              <li data-i18n="storageNotice2Item2">PC, 다른 휴대폰, 다른 브라우저에서는 JSON 복원이 필요합니다.</li>
+              <li data-i18n="storageNotice2Item3">브라우저 데이터 삭제 또는 기기 변경 시 데이터가 사라질 수 있습니다.</li>
             </ul>
           </div>
           <div class="notice-card">
-            <strong>데이터 보전을 위해 JSON 백업을 꼭 사용해 주세요.</strong>
+            <strong data-i18n="storageNotice3Title">데이터 보전을 위해 JSON 백업을 꼭 사용해 주세요.</strong>
             <ul>
-              <li><b>JSON 백업</b>: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.</li>
-              <li><b>JSON 복원</b>: 저장해 둔 백업 파일을 다시 불러옵니다.</li>
-              <li>백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하는 것을 권장합니다.</li>
+              <li data-i18n="storageNotice3Item1"><b>JSON 백업</b>: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.</li>
+              <li data-i18n="storageNotice3Item2"><b>JSON 복원</b>: 저장해 둔 백업 파일을 다시 불러옵니다.</li>
+              <li data-i18n="storageNotice3Item3">백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하는 것을 권장합니다.</li>
             </ul>
           </div>
           <label class="notice-check">
             <input type="checkbox" id="dontShowStorageInfo">
-            다음 접속부터 이 안내를 자동으로 띄우지 않기
+            <span data-i18n="dontShowStorageInfo">다음 접속부터 이 안내를 자동으로 띄우지 않기</span>
           </label>
           <div class="form-actions">
-            <button type="button" class="btn btn-ghost" onclick="exportData()">지금 JSON 백업</button>
-            <button type="button" class="btn btn-primary" id="confirmStorageInfo">확인했습니다</button>
+            <button type="button" class="btn btn-ghost" onclick="exportData()" data-i18n="backupNowButton">지금 JSON 백업</button>
+            <button type="button" class="btn btn-primary" id="confirmStorageInfo" data-i18n="confirmStorageInfo">확인했습니다</button>
           </div>
         </div>
       </div>
@@ -1070,9 +1104,623 @@
   <script>
     const STORAGE_KEY = 'boxing_gym_members';
     const STORAGE_INFO_DISMISSED_KEY = 'boxing_gym_storage_notice_dismissed';
+    const LANGUAGE_KEY = 'boxing_gym_language';
     const DAY_MS = 24 * 60 * 60 * 1000;
-    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+    const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn'];
+    const TRANSLATIONS = {
+      ko: {
+        documentTitle: '복싱장 재등록 운영 관리',
+        eyebrow: 'Renewal First Operation',
+        appTitle: '복싱장 재등록<br>운영 관리',
+        appSubtitle: '만기 회원을 놓치지 않도록 재등록, 미방문, 출석을 한 화면에서 관리합니다.',
+        dashboardAria: '운영 대시보드',
+        statRenewalLabel: '재등록 예정 회원',
+        statRenewalHint: '만기 14일 이내',
+        statUrgentLabel: '만기 임박 회원',
+        statUrgentHint: '7일 이내 집중 관리',
+        statExpiredLabel: '만기 지난 회원',
+        statExpiredHint: '별도 연락 목록',
+        statAbsentLabel: '장기 미방문',
+        statAbsentHint: '14일 이상 미방문',
+        statTodayLabel: '오늘 출석 인원',
+        renewalPanelTitle: '재등록 관리 최우선',
+        renewalPanelSubtitle: '만기 14일 전부터 자동 표시하고 7일/3일/당일은 색상으로 강조합니다.',
+        calendarPanelTitle: '월별 만기 캘린더',
+        calendarPanelSubtitle: '선택한 월에 만기되는 회원을 날짜별로 확인합니다.',
+        calendarMonthAria: '만기 월 선택',
+        memberListTitle: '회원 목록',
+        memberListSubtitle: '출석, PT, 만기, 메모를 빠르게 확인하고 수정합니다.',
+        searchPlaceholder: '이름, 연락처, 메모 검색',
+        memberFilterAria: '회원 필터',
+        filterAll: '전체 회원',
+        filterRenewal: '재등록 예정',
+        filterExpired: '만기 지난 회원',
+        filterAbsent14: '14일+ 미방문',
+        filterAbsent30: '30일+ 미방문',
+        registerTitle: '회원 등록',
+        registerSubtitle: '등록일과 만기일을 달력에서 선택합니다.',
+        nameLabel: '이름',
+        namePlaceholder: '홍길동',
+        phoneLabel: '연락처',
+        startDateLabel: '등록일',
+        expireDateLabel: '만기일',
+        ptTotalLabel: 'PT 총 횟수',
+        ptRemainingLabel: 'PT 잔여 횟수',
+        memoLabel: '회원 메모',
+        memoPlaceholder: '어깨 부상, 무릎 통증, 부모님 연락처, 감량 목표, 특이사항 등',
+        editMemoPlaceholder: '특이사항, 부상, 목표, 보호자 연락처 등',
+        registerButton: '회원 등록',
+        absenceTitle: '장기 미방문 회원',
+        absenceSubtitle: '14일 이상과 30일 이상을 별도로 확인합니다.',
+        absent14Tag: '14일 이상',
+        absent30Tag: '30일 이상',
+        dataTitle: '데이터 관리',
+        dataSubtitle: 'localStorage 저장을 유지하고 JSON으로 백업/복원합니다.',
+        storageInfoButton: '저장 방식 안내',
+        jsonBackupButton: 'JSON 백업',
+        jsonRestoreButton: 'JSON 복원',
+        attendanceModalTitle: '출석 기록',
+        editModalTitle: '회원 정보 수정',
+        closeButton: '닫기',
+        saveButton: '저장',
+        storageModalTitle: '데이터 저장 방식 안내',
+        storageNotice1Title: '이 앱은 로그인 없이 사용하는 로컬 저장 방식입니다.',
+        storageNotice1Body: '회원 정보는 서버가 아니라 현재 사용 중인 기기와 브라우저의 localStorage에 저장됩니다.',
+        storageNotice2Title: '같은 주소라도 기기/브라우저가 다르면 데이터가 자동 공유되지 않습니다.',
+        storageNotice2Item1: '아이폰 Safari에 입력한 데이터는 아이폰 Safari에만 남습니다.',
+        storageNotice2Item2: 'PC, 다른 휴대폰, 다른 브라우저에서는 JSON 복원이 필요합니다.',
+        storageNotice2Item3: '브라우저 데이터 삭제 또는 기기 변경 시 데이터가 사라질 수 있습니다.',
+        storageNotice3Title: '데이터 보전을 위해 JSON 백업을 꼭 사용해 주세요.',
+        storageNotice3Item1: 'JSON 백업: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.',
+        storageNotice3Item2: 'JSON 복원: 저장해 둔 백업 파일을 다시 불러옵니다.',
+        storageNotice3Item3: '백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하는 것을 권장합니다.',
+        dontShowStorageInfo: '다음 접속부터 이 안내를 자동으로 띄우지 않기',
+        backupNowButton: '지금 JSON 백업',
+        confirmStorageInfo: '확인했습니다',
+        todayPrefix: '오늘',
+        totalMembers: '전체 {count}명',
+        manageCount: '{count}명 관리',
+        noDate: '없음',
+        expiredDays: '만기 {count}일 지남',
+        dueToday: '만기 당일',
+        dueDaysBefore: '만기 {count}일 전',
+        daysRemaining: '만기 {count}일 남음',
+        noRenewalTitle: '현재 재등록 위험 회원이 없습니다.',
+        noRenewalBody: '만기 14일 이내 회원이 생기면 이 영역에 가장 먼저 표시됩니다.',
+        registrationPrefix: '등록',
+        expiryPrefix: '만기',
+        ptShort: 'PT {remaining}/{total}회',
+        lastVisitWithDays: '마지막 방문 {date} ({days}일 전)',
+        checkInButton: '출석',
+        renewEditButton: '재등록/수정',
+        weekdayNames: ['일', '월', '화', '수', '목', '금', '토'],
+        countPeople: '{count}명',
+        noMonthlyExpiry: '선택한 월에 만기되는 회원이 없습니다.',
+        noAbsent14: '14일 이상 미방문 회원 없음',
+        noAbsent30: '30일 이상 미방문 회원 없음',
+        daysOnly: '{count}일',
+        lastPrefix: '마지막',
+        noSearchResults: '검색 결과가 없습니다.',
+        noMembersToShow: '표시할 회원이 없습니다.',
+        memberEmptyHelp: '필터를 변경하거나 새 회원을 등록해 주세요.',
+        absentDaysLabel: '{count}일 미방문',
+        contactPrefix: '연락처',
+        attendanceCount: '출석 {count}회',
+        repeatCheckInButton: '재출석',
+        attendanceHistoryButton: '출석 기록',
+        editButton: '수정',
+        deleteButton: '삭제',
+        noAttendance: '출석 기록이 없습니다.',
+        ptDeducted: 'PT 1회 차감',
+        ptNotDeducted: 'PT 미차감',
+        requiredMemberFields: '이름, 연락처, 등록일, 만기일을 입력해주세요.',
+        requiredEditFields: '필수 회원 정보를 입력해주세요.',
+        invalidExpiryDate: '만기일은 등록일 이후로 선택해주세요.',
+        invalidPt: 'PT 횟수를 올바르게 입력해주세요.',
+        memberRegistered: '{name} 회원이 등록되었습니다.',
+        checkInDeducted: '{name} 출석 완료! PT 1회 차감 (잔여 {count}회)',
+        checkInNoPt: '{name} 출석 완료! PT 잔여 없음',
+        attendanceTitle: '{name} - 출석 기록',
+        editTitle: '{name} - 회원 정보 수정',
+        memberUpdated: '{name} 회원 정보가 수정되었습니다.',
+        confirmDelete: '{name} 회원을 삭제하시겠습니까?',
+        memberDeleted: '{name} 회원이 삭제되었습니다.',
+        backupDownloaded: 'JSON 백업 파일이 다운로드되었습니다.',
+        importConfirm: '기존 {oldCount}명 데이터를 {newCount}명 데이터로 교체하시겠습니까?',
+        importDone: '데이터가 복원되었습니다.',
+        importInvalid: '올바른 JSON 파일이 아닙니다.'
+      },
+      en: {
+        documentTitle: 'Boxing Gym Renewal Manager',
+        eyebrow: 'Renewal First Operation',
+        appTitle: 'Boxing Gym<br>Renewal Manager',
+        appSubtitle: 'Manage renewals, absences, and attendance in one place so no expiring member is missed.',
+        dashboardAria: 'Operations dashboard',
+        statRenewalLabel: 'Renewal candidates',
+        statRenewalHint: 'Expiring within 14 days',
+        statUrgentLabel: 'Urgent expiries',
+        statUrgentHint: 'Focus within 7 days',
+        statExpiredLabel: 'Expired members',
+        statExpiredHint: 'Separate follow-up list',
+        statAbsentLabel: 'Long absence',
+        statAbsentHint: 'No visit for 14+ days',
+        statTodayLabel: "Today's check-ins",
+        renewalPanelTitle: 'Renewal Management First',
+        renewalPanelSubtitle: 'Members appear 14 days before expiry, with 7-day, 3-day, and today highlights.',
+        calendarPanelTitle: 'Monthly Expiry Calendar',
+        calendarPanelSubtitle: 'Check members expiring in the selected month by date.',
+        calendarMonthAria: 'Select expiry month',
+        memberListTitle: 'Member List',
+        memberListSubtitle: 'Quickly review and edit attendance, PT, expiry, and notes.',
+        searchPlaceholder: 'Search name, phone, or notes',
+        memberFilterAria: 'Member filter',
+        filterAll: 'All members',
+        filterRenewal: 'Renewal candidates',
+        filterExpired: 'Expired members',
+        filterAbsent14: '14+ days absent',
+        filterAbsent30: '30+ days absent',
+        registerTitle: 'Register Member',
+        registerSubtitle: 'Choose registration and expiry dates from the calendar.',
+        nameLabel: 'Name',
+        namePlaceholder: 'John Kim',
+        phoneLabel: 'Phone',
+        startDateLabel: 'Registration date',
+        expireDateLabel: 'Expiry date',
+        ptTotalLabel: 'Total PT sessions',
+        ptRemainingLabel: 'Remaining PT sessions',
+        memoLabel: 'Member notes',
+        memoPlaceholder: 'Shoulder injury, knee pain, parent contact, weight-loss goal, special notes...',
+        editMemoPlaceholder: 'Special notes, injuries, goals, guardian contact...',
+        registerButton: 'Register member',
+        absenceTitle: 'Long-Absence Members',
+        absenceSubtitle: 'Review 14+ day and 30+ day absences separately.',
+        absent14Tag: '14+ days',
+        absent30Tag: '30+ days',
+        dataTitle: 'Data Management',
+        dataSubtitle: 'Keep localStorage data and back up/restore with JSON.',
+        storageInfoButton: 'Storage guide',
+        jsonBackupButton: 'JSON backup',
+        jsonRestoreButton: 'JSON restore',
+        attendanceModalTitle: 'Attendance History',
+        editModalTitle: 'Edit Member',
+        closeButton: 'Close',
+        saveButton: 'Save',
+        storageModalTitle: 'How Data Is Stored',
+        storageNotice1Title: 'This app uses local storage without login.',
+        storageNotice1Body: 'Member data is stored in localStorage on the current device and browser, not on a server.',
+        storageNotice2Title: 'Data is not automatically shared across devices or browsers.',
+        storageNotice2Item1: 'Data entered in iPhone Safari stays in iPhone Safari.',
+        storageNotice2Item2: 'On a PC, another phone, or another browser, use JSON restore.',
+        storageNotice2Item3: 'Data may disappear if browser data is cleared or the device is changed.',
+        storageNotice3Title: 'Use JSON backup to protect your data.',
+        storageNotice3Item1: 'JSON backup: saves current member/attendance/PT/note data to a file.',
+        storageNotice3Item2: 'JSON restore: loads a previously saved backup file.',
+        storageNotice3Item3: 'Keep backup files somewhere safe such as iCloud Drive or Google Drive.',
+        dontShowStorageInfo: 'Do not show this guide automatically next time',
+        backupNowButton: 'Back up JSON now',
+        confirmStorageInfo: 'I understand',
+        todayPrefix: 'Today',
+        totalMembers: '{count} total',
+        manageCount: '{count} to manage',
+        noDate: 'None',
+        expiredDays: '{count} days expired',
+        dueToday: 'Expires today',
+        dueDaysBefore: '{count} days before expiry',
+        daysRemaining: '{count} days remaining',
+        noRenewalTitle: 'No renewal-risk members right now.',
+        noRenewalBody: 'Members expiring within 14 days will appear here first.',
+        registrationPrefix: 'Registered',
+        expiryPrefix: 'Expiry',
+        ptShort: 'PT {remaining}/{total}',
+        lastVisitWithDays: 'Last visit {date} ({days} days ago)',
+        checkInButton: 'Check in',
+        renewEditButton: 'Renew/Edit',
+        weekdayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        countPeople: '{count}',
+        noMonthlyExpiry: 'No members expire in the selected month.',
+        noAbsent14: 'No members absent for 14+ days',
+        noAbsent30: 'No members absent for 30+ days',
+        daysOnly: '{count} days',
+        lastPrefix: 'Last',
+        noSearchResults: 'No search results.',
+        noMembersToShow: 'No members to show.',
+        memberEmptyHelp: 'Change the filter or register a new member.',
+        absentDaysLabel: '{count} days absent',
+        contactPrefix: 'Phone',
+        attendanceCount: '{count} check-ins',
+        repeatCheckInButton: 'Check in again',
+        attendanceHistoryButton: 'Attendance',
+        editButton: 'Edit',
+        deleteButton: 'Delete',
+        noAttendance: 'No attendance records.',
+        ptDeducted: 'PT deducted',
+        ptNotDeducted: 'No PT deduction',
+        requiredMemberFields: 'Please enter name, phone, registration date, and expiry date.',
+        requiredEditFields: 'Please enter the required member information.',
+        invalidExpiryDate: 'Expiry date must be after the registration date.',
+        invalidPt: 'Please enter valid PT counts.',
+        memberRegistered: '{name} has been registered.',
+        checkInDeducted: '{name} checked in. 1 PT deducted ({count} remaining).',
+        checkInNoPt: '{name} checked in. No PT remaining.',
+        attendanceTitle: '{name} - Attendance History',
+        editTitle: '{name} - Edit Member',
+        memberUpdated: '{name} has been updated.',
+        confirmDelete: 'Delete {name}?',
+        memberDeleted: '{name} has been deleted.',
+        backupDownloaded: 'JSON backup file downloaded.',
+        importConfirm: 'Replace existing {oldCount} members with {newCount} imported members?',
+        importDone: 'Data restored.',
+        importInvalid: 'This is not a valid JSON file.'
+      },
+      es: {
+        documentTitle: 'Gestor de Renovaciones del Gimnasio de Boxeo',
+        eyebrow: 'Operación centrada en renovaciones',
+        appTitle: 'Gestor de<br>Renovaciones',
+        appSubtitle: 'Gestiona renovaciones, ausencias y asistencias en un solo lugar para no perder miembros por vencer.',
+        dashboardAria: 'Panel operativo',
+        statRenewalLabel: 'Renovaciones previstas',
+        statRenewalHint: 'Vencen en 14 días',
+        statUrgentLabel: 'Vencimientos urgentes',
+        statUrgentHint: 'Enfoque en 7 días',
+        statExpiredLabel: 'Miembros vencidos',
+        statExpiredHint: 'Lista de seguimiento',
+        statAbsentLabel: 'Ausencia prolongada',
+        statAbsentHint: '14+ días sin visita',
+        statTodayLabel: 'Asistencias de hoy',
+        renewalPanelTitle: 'Renovación como prioridad',
+        renewalPanelSubtitle: 'Los miembros aparecen 14 días antes del vencimiento, con alertas de 7 días, 3 días y hoy.',
+        calendarPanelTitle: 'Calendario mensual de vencimientos',
+        calendarPanelSubtitle: 'Consulta por fecha los miembros que vencen en el mes seleccionado.',
+        calendarMonthAria: 'Seleccionar mes de vencimiento',
+        memberListTitle: 'Lista de miembros',
+        memberListSubtitle: 'Revisa y edita asistencia, PT, vencimiento y notas rápidamente.',
+        searchPlaceholder: 'Buscar nombre, teléfono o notas',
+        memberFilterAria: 'Filtro de miembros',
+        filterAll: 'Todos los miembros',
+        filterRenewal: 'Renovaciones previstas',
+        filterExpired: 'Miembros vencidos',
+        filterAbsent14: '14+ días ausente',
+        filterAbsent30: '30+ días ausente',
+        registerTitle: 'Registrar miembro',
+        registerSubtitle: 'Elige fecha de registro y vencimiento desde el calendario.',
+        nameLabel: 'Nombre',
+        namePlaceholder: 'Juan Kim',
+        phoneLabel: 'Teléfono',
+        startDateLabel: 'Fecha de registro',
+        expireDateLabel: 'Fecha de vencimiento',
+        ptTotalLabel: 'Total de sesiones PT',
+        ptRemainingLabel: 'Sesiones PT restantes',
+        memoLabel: 'Notas del miembro',
+        memoPlaceholder: 'Lesión de hombro, dolor de rodilla, contacto familiar, meta de peso, notas especiales...',
+        editMemoPlaceholder: 'Notas especiales, lesiones, objetivos, contacto de tutor...',
+        registerButton: 'Registrar miembro',
+        absenceTitle: 'Miembros con ausencia prolongada',
+        absenceSubtitle: 'Revisa por separado ausencias de 14+ y 30+ días.',
+        absent14Tag: '14+ días',
+        absent30Tag: '30+ días',
+        dataTitle: 'Gestión de datos',
+        dataSubtitle: 'Mantén los datos en localStorage y haz copia/restauración con JSON.',
+        storageInfoButton: 'Guía de guardado',
+        jsonBackupButton: 'Copia JSON',
+        jsonRestoreButton: 'Restaurar JSON',
+        attendanceModalTitle: 'Historial de asistencia',
+        editModalTitle: 'Editar miembro',
+        closeButton: 'Cerrar',
+        saveButton: 'Guardar',
+        storageModalTitle: 'Cómo se guardan los datos',
+        storageNotice1Title: 'Esta app usa almacenamiento local sin inicio de sesión.',
+        storageNotice1Body: 'Los datos se guardan en localStorage del dispositivo y navegador actuales, no en un servidor.',
+        storageNotice2Title: 'Los datos no se comparten automáticamente entre dispositivos o navegadores.',
+        storageNotice2Item1: 'Los datos ingresados en Safari del iPhone quedan solo en Safari del iPhone.',
+        storageNotice2Item2: 'En PC, otro teléfono u otro navegador, usa Restaurar JSON.',
+        storageNotice2Item3: 'Los datos pueden desaparecer si borras datos del navegador o cambias de dispositivo.',
+        storageNotice3Title: 'Usa copias JSON para proteger tus datos.',
+        storageNotice3Item1: 'Copia JSON: guarda datos de miembros/asistencia/PT/notas en un archivo.',
+        storageNotice3Item2: 'Restaurar JSON: carga un archivo de copia guardado.',
+        storageNotice3Item3: 'Guarda las copias en un lugar seguro como iCloud Drive o Google Drive.',
+        dontShowStorageInfo: 'No mostrar esta guía automáticamente la próxima vez',
+        backupNowButton: 'Crear copia JSON ahora',
+        confirmStorageInfo: 'Entendido',
+        todayPrefix: 'Hoy',
+        totalMembers: '{count} en total',
+        manageCount: '{count} por gestionar',
+        noDate: 'Ninguna',
+        expiredDays: '{count} días vencido',
+        dueToday: 'Vence hoy',
+        dueDaysBefore: 'Faltan {count} días',
+        daysRemaining: '{count} días restantes',
+        noRenewalTitle: 'No hay miembros en riesgo de renovación ahora.',
+        noRenewalBody: 'Los miembros que vencen en 14 días aparecerán primero aquí.',
+        registrationPrefix: 'Registro',
+        expiryPrefix: 'Vence',
+        ptShort: 'PT {remaining}/{total}',
+        lastVisitWithDays: 'Última visita {date} (hace {days} días)',
+        checkInButton: 'Asistencia',
+        renewEditButton: 'Renovar/Editar',
+        weekdayNames: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+        countPeople: '{count}',
+        noMonthlyExpiry: 'No hay vencimientos en el mes seleccionado.',
+        noAbsent14: 'No hay miembros ausentes 14+ días',
+        noAbsent30: 'No hay miembros ausentes 30+ días',
+        daysOnly: '{count} días',
+        lastPrefix: 'Última',
+        noSearchResults: 'No hay resultados.',
+        noMembersToShow: 'No hay miembros para mostrar.',
+        memberEmptyHelp: 'Cambia el filtro o registra un nuevo miembro.',
+        absentDaysLabel: '{count} días ausente',
+        contactPrefix: 'Teléfono',
+        attendanceCount: '{count} asistencias',
+        repeatCheckInButton: 'Registrar otra vez',
+        attendanceHistoryButton: 'Asistencia',
+        editButton: 'Editar',
+        deleteButton: 'Eliminar',
+        noAttendance: 'No hay registros de asistencia.',
+        ptDeducted: 'PT descontado',
+        ptNotDeducted: 'PT no descontado',
+        requiredMemberFields: 'Ingresa nombre, teléfono, fecha de registro y vencimiento.',
+        requiredEditFields: 'Ingresa la información requerida del miembro.',
+        invalidExpiryDate: 'La fecha de vencimiento debe ser posterior al registro.',
+        invalidPt: 'Ingresa cantidades PT válidas.',
+        memberRegistered: '{name} fue registrado.',
+        checkInDeducted: '{name} registró asistencia. 1 PT descontado ({count} restantes).',
+        checkInNoPt: '{name} registró asistencia. No quedan PT.',
+        attendanceTitle: '{name} - Historial de asistencia',
+        editTitle: '{name} - Editar miembro',
+        memberUpdated: '{name} fue actualizado.',
+        confirmDelete: '¿Eliminar a {name}?',
+        memberDeleted: '{name} fue eliminado.',
+        backupDownloaded: 'Archivo de copia JSON descargado.',
+        importConfirm: '¿Reemplazar {oldCount} miembros existentes con {newCount} miembros importados?',
+        importDone: 'Datos restaurados.',
+        importInvalid: 'No es un archivo JSON válido.'
+      },
+      ru: {
+        documentTitle: 'Менеджер продлений боксерского зала',
+        eyebrow: 'Продления прежде всего',
+        appTitle: 'Менеджер<br>продлений',
+        appSubtitle: 'Управляйте продлениями, отсутствиями и посещениями в одном месте, чтобы не пропустить клиентов с истекающим абонементом.',
+        dashboardAria: 'Операционная панель',
+        statRenewalLabel: 'К продлению',
+        statRenewalHint: 'Истекают за 14 дней',
+        statUrgentLabel: 'Скоро истекают',
+        statUrgentHint: 'Фокус на 7 дней',
+        statExpiredLabel: 'Истекшие клиенты',
+        statExpiredHint: 'Отдельный список',
+        statAbsentLabel: 'Долгое отсутствие',
+        statAbsentHint: 'Нет визита 14+ дней',
+        statTodayLabel: 'Посещения сегодня',
+        renewalPanelTitle: 'Продления в приоритете',
+        renewalPanelSubtitle: 'Клиенты появляются за 14 дней до истечения, с выделением 7 дней, 3 дней и дня истечения.',
+        calendarPanelTitle: 'Календарь истечений по месяцам',
+        calendarPanelSubtitle: 'Проверяйте клиентов с истечением в выбранном месяце по датам.',
+        calendarMonthAria: 'Выбрать месяц истечения',
+        memberListTitle: 'Список клиентов',
+        memberListSubtitle: 'Быстро проверяйте и редактируйте посещения, PT, истечение и заметки.',
+        searchPlaceholder: 'Поиск по имени, телефону или заметкам',
+        memberFilterAria: 'Фильтр клиентов',
+        filterAll: 'Все клиенты',
+        filterRenewal: 'К продлению',
+        filterExpired: 'Истекшие',
+        filterAbsent14: '14+ дней отсутствует',
+        filterAbsent30: '30+ дней отсутствует',
+        registerTitle: 'Регистрация клиента',
+        registerSubtitle: 'Выберите дату регистрации и истечения в календаре.',
+        nameLabel: 'Имя',
+        namePlaceholder: 'Иван Ким',
+        phoneLabel: 'Телефон',
+        startDateLabel: 'Дата регистрации',
+        expireDateLabel: 'Дата истечения',
+        ptTotalLabel: 'Всего PT занятий',
+        ptRemainingLabel: 'Осталось PT занятий',
+        memoLabel: 'Заметки клиента',
+        memoPlaceholder: 'Травма плеча, боль в колене, контакт родителей, цель по весу, особые заметки...',
+        editMemoPlaceholder: 'Особые заметки, травмы, цели, контакт опекуна...',
+        registerButton: 'Зарегистрировать',
+        absenceTitle: 'Клиенты с долгим отсутствием',
+        absenceSubtitle: 'Отдельно просматривайте отсутствие 14+ и 30+ дней.',
+        absent14Tag: '14+ дней',
+        absent30Tag: '30+ дней',
+        dataTitle: 'Управление данными',
+        dataSubtitle: 'Данные хранятся в localStorage; используйте JSON для копии/восстановления.',
+        storageInfoButton: 'Как хранятся данные',
+        jsonBackupButton: 'JSON копия',
+        jsonRestoreButton: 'JSON восстановление',
+        attendanceModalTitle: 'История посещений',
+        editModalTitle: 'Редактировать клиента',
+        closeButton: 'Закрыть',
+        saveButton: 'Сохранить',
+        storageModalTitle: 'Как хранятся данные',
+        storageNotice1Title: 'Приложение использует локальное хранение без входа.',
+        storageNotice1Body: 'Данные клиентов хранятся в localStorage текущего устройства и браузера, не на сервере.',
+        storageNotice2Title: 'Данные не синхронизируются автоматически между устройствами и браузерами.',
+        storageNotice2Item1: 'Данные, введенные в Safari на iPhone, остаются только в Safari на iPhone.',
+        storageNotice2Item2: 'На ПК, другом телефоне или другом браузере используйте восстановление JSON.',
+        storageNotice2Item3: 'Данные могут исчезнуть при очистке данных браузера или смене устройства.',
+        storageNotice3Title: 'Используйте JSON-копии для защиты данных.',
+        storageNotice3Item1: 'JSON копия: сохраняет текущие данные клиентов/посещений/PT/заметок в файл.',
+        storageNotice3Item2: 'JSON восстановление: загружает ранее сохраненный файл копии.',
+        storageNotice3Item3: 'Храните копии в безопасном месте, например iCloud Drive или Google Drive.',
+        dontShowStorageInfo: 'Не показывать это руководство автоматически в следующий раз',
+        backupNowButton: 'Сделать JSON копию',
+        confirmStorageInfo: 'Понятно',
+        todayPrefix: 'Сегодня',
+        totalMembers: 'Всего {count}',
+        manageCount: 'В работе {count}',
+        noDate: 'Нет',
+        expiredDays: 'Истекло {count} дн. назад',
+        dueToday: 'Истекает сегодня',
+        dueDaysBefore: 'До истечения {count} дн.',
+        daysRemaining: 'Осталось {count} дн.',
+        noRenewalTitle: 'Сейчас нет клиентов с риском продления.',
+        noRenewalBody: 'Клиенты с истечением в течение 14 дней появятся здесь первыми.',
+        registrationPrefix: 'Регистрация',
+        expiryPrefix: 'Истечение',
+        ptShort: 'PT {remaining}/{total}',
+        lastVisitWithDays: 'Последний визит {date} ({days} дн. назад)',
+        checkInButton: 'Отметить',
+        renewEditButton: 'Продлить/Редакт.',
+        weekdayNames: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+        countPeople: '{count}',
+        noMonthlyExpiry: 'В выбранном месяце нет истечений.',
+        noAbsent14: 'Нет клиентов, отсутствующих 14+ дней',
+        noAbsent30: 'Нет клиентов, отсутствующих 30+ дней',
+        daysOnly: '{count} дн.',
+        lastPrefix: 'Последний',
+        noSearchResults: 'Ничего не найдено.',
+        noMembersToShow: 'Нет клиентов для показа.',
+        memberEmptyHelp: 'Измените фильтр или зарегистрируйте нового клиента.',
+        absentDaysLabel: 'Отсутствует {count} дн.',
+        contactPrefix: 'Телефон',
+        attendanceCount: 'Посещений: {count}',
+        repeatCheckInButton: 'Отметить снова',
+        attendanceHistoryButton: 'Посещения',
+        editButton: 'Редакт.',
+        deleteButton: 'Удалить',
+        noAttendance: 'Нет записей посещений.',
+        ptDeducted: 'PT списано',
+        ptNotDeducted: 'PT не списано',
+        requiredMemberFields: 'Введите имя, телефон, дату регистрации и дату истечения.',
+        requiredEditFields: 'Введите обязательные данные клиента.',
+        invalidExpiryDate: 'Дата истечения должна быть позже даты регистрации.',
+        invalidPt: 'Введите корректное количество PT.',
+        memberRegistered: '{name} зарегистрирован.',
+        checkInDeducted: '{name} отмечен. Списано 1 PT (осталось {count}).',
+        checkInNoPt: '{name} отмечен. PT не осталось.',
+        attendanceTitle: '{name} - История посещений',
+        editTitle: '{name} - Редактировать клиента',
+        memberUpdated: '{name} обновлен.',
+        confirmDelete: 'Удалить {name}?',
+        memberDeleted: '{name} удален.',
+        backupDownloaded: 'Файл JSON-копии загружен.',
+        importConfirm: 'Заменить существующих клиентов ({oldCount}) импортированными ({newCount})?',
+        importDone: 'Данные восстановлены.',
+        importInvalid: 'Это некорректный JSON-файл.'
+      },
+      mn: {
+        documentTitle: 'Боксын заалны сунгалтын менежер',
+        eyebrow: 'Сунгалтыг нэн тэргүүнд',
+        appTitle: 'Боксын заалны<br>сунгалтын менежер',
+        appSubtitle: 'Дуусах гишүүдийг алдахгүй байхын тулд сунгалт, ирээгүй байдал, ирцийг нэг дор удирдана.',
+        dashboardAria: 'Үйл ажиллагааны самбар',
+        statRenewalLabel: 'Сунгах гишүүд',
+        statRenewalHint: '14 хоногт дуусна',
+        statUrgentLabel: 'Дуусах дөхсөн',
+        statUrgentHint: '7 хоногт анхаарах',
+        statExpiredLabel: 'Хугацаа дууссан',
+        statExpiredHint: 'Тусдаа холбоо барих жагсаалт',
+        statAbsentLabel: 'Удаан ирээгүй',
+        statAbsentHint: '14+ хоног ирээгүй',
+        statTodayLabel: 'Өнөөдрийн ирц',
+        renewalPanelTitle: 'Сунгалтын удирдлага нэн тэргүүнд',
+        renewalPanelSubtitle: 'Дуусахаас 14 хоногийн өмнө харуулж, 7 хоног/3 хоног/өнөөдөр өнгөөр ялгана.',
+        calendarPanelTitle: 'Сарын дуусах хугацааны календарь',
+        calendarPanelSubtitle: 'Сонгосон сард дуусах гишүүдийг огноогоор шалгана.',
+        calendarMonthAria: 'Дуусах сарыг сонгох',
+        memberListTitle: 'Гишүүдийн жагсаалт',
+        memberListSubtitle: 'Ирц, PT, дуусах хугацаа, тэмдэглэлийг хурдан шалгаж засна.',
+        searchPlaceholder: 'Нэр, утас, тэмдэглэлээр хайх',
+        memberFilterAria: 'Гишүүний шүүлтүүр',
+        filterAll: 'Бүх гишүүд',
+        filterRenewal: 'Сунгах гишүүд',
+        filterExpired: 'Хугацаа дууссан',
+        filterAbsent14: '14+ хоног ирээгүй',
+        filterAbsent30: '30+ хоног ирээгүй',
+        registerTitle: 'Гишүүн бүртгэх',
+        registerSubtitle: 'Бүртгэлийн болон дуусах огноог календараас сонгоно.',
+        nameLabel: 'Нэр',
+        namePlaceholder: 'Бат',
+        phoneLabel: 'Утас',
+        startDateLabel: 'Бүртгэлийн огноо',
+        expireDateLabel: 'Дуусах огноо',
+        ptTotalLabel: 'Нийт PT тоо',
+        ptRemainingLabel: 'Үлдсэн PT тоо',
+        memoLabel: 'Гишүүний тэмдэглэл',
+        memoPlaceholder: 'Мөрний гэмтэл, өвдөг өвдөх, эцэг эхийн утас, жин хасах зорилго, онцгой тэмдэглэл...',
+        editMemoPlaceholder: 'Онцгой тэмдэглэл, гэмтэл, зорилго, асран хамгаалагчийн утас...',
+        registerButton: 'Гишүүн бүртгэх',
+        absenceTitle: 'Удаан ирээгүй гишүүд',
+        absenceSubtitle: '14+ болон 30+ хоног ирээгүйг тусад нь шалгана.',
+        absent14Tag: '14+ хоног',
+        absent30Tag: '30+ хоног',
+        dataTitle: 'Өгөгдлийн удирдлага',
+        dataSubtitle: 'localStorage-д хадгалж, JSON-оор нөөцлөх/сэргээнэ.',
+        storageInfoButton: 'Хадгалалтын заавар',
+        jsonBackupButton: 'JSON нөөц',
+        jsonRestoreButton: 'JSON сэргээх',
+        attendanceModalTitle: 'Ирцийн түүх',
+        editModalTitle: 'Гишүүн засах',
+        closeButton: 'Хаах',
+        saveButton: 'Хадгалах',
+        storageModalTitle: 'Өгөгдөл хэрхэн хадгалагдах вэ',
+        storageNotice1Title: 'Энэ апп нэвтрэлтгүй локал хадгалалт ашиглана.',
+        storageNotice1Body: 'Гишүүний өгөгдөл серверт биш, одоогийн төхөөрөмж ба браузерын localStorage-д хадгалагдана.',
+        storageNotice2Title: 'Өгөгдөл төхөөрөмж/браузер хооронд автоматаар хуваалцагдахгүй.',
+        storageNotice2Item1: 'iPhone Safari-д оруулсан өгөгдөл зөвхөн iPhone Safari-д үлдэнэ.',
+        storageNotice2Item2: 'PC, өөр утас, өөр браузерт JSON сэргээх хэрэгтэй.',
+        storageNotice2Item3: 'Браузерын өгөгдөл устгах эсвэл төхөөрөмж солиход өгөгдөл алдагдаж болно.',
+        storageNotice3Title: 'Өгөгдлөө хамгаалахын тулд JSON нөөц ашиглаарай.',
+        storageNotice3Item1: 'JSON нөөц: одоогийн гишүүн/ирц/PT/тэмдэглэлийн өгөгдлийг файл болгож хадгална.',
+        storageNotice3Item2: 'JSON сэргээх: өмнө хадгалсан нөөц файлыг дахин ачаална.',
+        storageNotice3Item3: 'Нөөц файлыг iCloud Drive эсвэл Google Drive зэрэг аюулгүй газар хадгалахыг зөвлөж байна.',
+        dontShowStorageInfo: 'Дараагийн удаа энэ зааврыг автоматаар харуулахгүй',
+        backupNowButton: 'Одоо JSON нөөцлөх',
+        confirmStorageInfo: 'Ойлголоо',
+        todayPrefix: 'Өнөөдөр',
+        totalMembers: 'Нийт {count}',
+        manageCount: 'Удирдах {count}',
+        noDate: 'Байхгүй',
+        expiredDays: '{count} хоног хэтэрсэн',
+        dueToday: 'Өнөөдөр дуусна',
+        dueDaysBefore: 'Дуусахад {count} хоног',
+        daysRemaining: '{count} хоног үлдсэн',
+        noRenewalTitle: 'Одоогоор сунгалтын эрсдэлтэй гишүүн алга.',
+        noRenewalBody: '14 хоногийн дотор дуусах гишүүд энд хамгийн түрүүнд гарна.',
+        registrationPrefix: 'Бүртгэл',
+        expiryPrefix: 'Дуусах',
+        ptShort: 'PT {remaining}/{total}',
+        lastVisitWithDays: 'Сүүлд ирсэн {date} ({days} хоногийн өмнө)',
+        checkInButton: 'Ирц',
+        renewEditButton: 'Сунгах/Засах',
+        weekdayNames: ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'],
+        countPeople: '{count}',
+        noMonthlyExpiry: 'Сонгосон сард дуусах гишүүн алга.',
+        noAbsent14: '14+ хоног ирээгүй гишүүн алга',
+        noAbsent30: '30+ хоног ирээгүй гишүүн алга',
+        daysOnly: '{count} хоног',
+        lastPrefix: 'Сүүлд',
+        noSearchResults: 'Хайлтын үр дүн алга.',
+        noMembersToShow: 'Харуулах гишүүн алга.',
+        memberEmptyHelp: 'Шүүлтүүрээ өөрчлөх эсвэл шинэ гишүүн бүртгэнэ үү.',
+        absentDaysLabel: '{count} хоног ирээгүй',
+        contactPrefix: 'Утас',
+        attendanceCount: 'Ирц {count}',
+        repeatCheckInButton: 'Дахин ирц',
+        attendanceHistoryButton: 'Ирцийн түүх',
+        editButton: 'Засах',
+        deleteButton: 'Устгах',
+        noAttendance: 'Ирцийн бүртгэл алга.',
+        ptDeducted: 'PT 1 хассан',
+        ptNotDeducted: 'PT хасаагүй',
+        requiredMemberFields: 'Нэр, утас, бүртгэлийн огноо, дуусах огноог оруулна уу.',
+        requiredEditFields: 'Шаардлагатай гишүүний мэдээллийг оруулна уу.',
+        invalidExpiryDate: 'Дуусах огноо бүртгэлийн огнооноос хойш байх ёстой.',
+        invalidPt: 'PT тоог зөв оруулна уу.',
+        memberRegistered: '{name} бүртгэгдлээ.',
+        checkInDeducted: '{name} ирц бүртгэгдлээ. PT 1 хассан (үлдсэн {count}).',
+        checkInNoPt: '{name} ирц бүртгэгдлээ. PT үлдээгүй.',
+        attendanceTitle: '{name} - Ирцийн түүх',
+        editTitle: '{name} - Гишүүн засах',
+        memberUpdated: '{name} шинэчлэгдлээ.',
+        confirmDelete: '{name}-г устгах уу?',
+        memberDeleted: '{name} устгагдлаа.',
+        backupDownloaded: 'JSON нөөц файл татагдлаа.',
+        importConfirm: 'Одоо байгаа {oldCount} гишүүний өгөгдлийг импортолсон {newCount} гишүүнээр солих уу?',
+        importDone: 'Өгөгдөл сэргээгдлээ.',
+        importInvalid: 'Зөв JSON файл биш байна.'
+      }
+    };
 
+    let currentLanguage = getSavedLanguage();
     let members = loadMembers();
     let searchQuery = '';
     let memberFilter = 'all';
@@ -1084,6 +1732,50 @@
       } catch {
         return [];
       }
+    }
+
+    function getSavedLanguage() {
+      const saved = localStorage.getItem(LANGUAGE_KEY);
+      return SUPPORTED_LANGUAGES.includes(saved) ? saved : 'ko';
+    }
+
+    function t(key, params = {}) {
+      const dictionary = TRANSLATIONS[currentLanguage] || TRANSLATIONS.ko;
+      const fallback = TRANSLATIONS.ko[key] || key;
+      let value = dictionary[key] || fallback;
+      if (Array.isArray(value)) return value;
+      Object.entries(params).forEach(([name, replacement]) => {
+        value = value.replaceAll(`{${name}}`, replacement);
+      });
+      return value;
+    }
+
+    function applyTranslations() {
+      document.documentElement.lang = currentLanguage;
+      document.title = t('documentTitle');
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.dataset.i18n;
+        if (key === 'appTitle') {
+          element.innerHTML = t(key);
+        } else {
+          element.textContent = t(key);
+        }
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+        element.placeholder = t(element.dataset.i18nPlaceholder);
+      });
+      document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
+        element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
+      });
+      document.getElementById('languageSelect').value = currentLanguage;
+    }
+
+    function setLanguage(language) {
+      if (!SUPPORTED_LANGUAGES.includes(language)) return;
+      currentLanguage = language;
+      localStorage.setItem(LANGUAGE_KEY, language);
+      applyTranslations();
+      refreshAll();
     }
 
     function migrateMembers(data) {
@@ -1171,12 +1863,12 @@
 
     function getRenewalStatus(member) {
       const days = getDaysUntilExpiry(member);
-      if (days < 0) return { key: 'expired', label: `만기 ${Math.abs(days)}일 지남`, priority: 0 };
-      if (days === 0) return { key: 'due-today', label: '만기 당일', priority: 1 };
-      if (days <= 3) return { key: 'due-three', label: `만기 ${days}일 전`, priority: 2 };
-      if (days <= 7) return { key: 'due-week', label: `만기 ${days}일 전`, priority: 3 };
-      if (days <= 14) return { key: 'due-soon', label: `만기 ${days}일 전`, priority: 4 };
-      return { key: 'normal', label: `만기 ${days}일 남음`, priority: 5 };
+      if (days < 0) return { key: 'expired', label: t('expiredDays', { count: Math.abs(days) }), priority: 0 };
+      if (days === 0) return { key: 'due-today', label: t('dueToday'), priority: 1 };
+      if (days <= 3) return { key: 'due-three', label: t('dueDaysBefore', { count: days }), priority: 2 };
+      if (days <= 7) return { key: 'due-week', label: t('dueDaysBefore', { count: days }), priority: 3 };
+      if (days <= 14) return { key: 'due-soon', label: t('dueDaysBefore', { count: days }), priority: 4 };
+      return { key: 'normal', label: t('daysRemaining', { count: days }), priority: 5 };
     }
 
     function isRenewalTarget(member) {
@@ -1209,7 +1901,7 @@
     }
 
     function formatDateOnly(dateOnly) {
-      if (!dateOnly) return '없음';
+      if (!dateOnly) return t('noDate');
       const [y, m, d] = dateOnly.split('-');
       return `${y}.${m}.${d}`;
     }
@@ -1279,14 +1971,14 @@
       const expiredTargets = members.filter(isExpired);
       const absentTargets = members.filter(m => isLongAbsent(m, 14));
 
-      document.getElementById('todayLabel').textContent = `오늘 ${formatDateOnly(getTodayDateOnly())}`;
+      document.getElementById('todayLabel').textContent = `${t('todayPrefix')} ${formatDateOnly(getTodayDateOnly())}`;
       document.getElementById('statRenewal').textContent = renewalTargets.length;
       document.getElementById('statUrgent').textContent = urgentTargets.length;
       document.getElementById('statExpired').textContent = expiredTargets.length;
       document.getElementById('statAbsent').textContent = absentTargets.length;
       document.getElementById('statToday').textContent = getTodayCount();
-      document.getElementById('statTotalMembers').textContent = `전체 ${members.length}명`;
-      document.getElementById('renewalSummary').textContent = `${renewalTargets.length + expiredTargets.length}명 관리`;
+      document.getElementById('statTotalMembers').textContent = t('totalMembers', { count: members.length });
+      document.getElementById('renewalSummary').textContent = t('manageCount', { count: renewalTargets.length + expiredTargets.length });
     }
 
     function renderRenewalList() {
@@ -1298,8 +1990,8 @@
       if (targets.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <strong>현재 재등록 위험 회원이 없습니다.</strong>
-            만기 14일 이내 회원이 생기면 이 영역에 가장 먼저 표시됩니다.
+            <strong>${t('noRenewalTitle')}</strong>
+            ${t('noRenewalBody')}
           </div>`;
         return;
       }
@@ -1315,17 +2007,17 @@
             <div class="renewal-name">${escapeHtml(member.name)}</div>
             <div class="meta-line">
               <span>${escapeHtml(member.phone)}</span>
-              <span>등록 ${formatDateOnly(member.startDate)}</span>
-              <span>만기 ${formatDateOnly(member.expireDate)}</span>
-              <span>PT ${member.ptRemaining}/${member.ptTotal}회</span>
-              <span>마지막 방문 ${formatDateOnly(member.lastVisit)} (${getDaysSinceLastVisit(member)}일 전)</span>
+              <span>${t('registrationPrefix')} ${formatDateOnly(member.startDate)}</span>
+              <span>${t('expiryPrefix')} ${formatDateOnly(member.expireDate)}</span>
+              <span>${t('ptShort', { remaining: member.ptRemaining, total: member.ptTotal })}</span>
+              <span>${t('lastVisitWithDays', { date: formatDateOnly(member.lastVisit), days: getDaysSinceLastVisit(member) })}</span>
             </div>
             ${member.memo ? `<div class="member-memo">${escapeHtml(member.memo)}</div>` : ''}
           </div>
           <div class="member-actions">
             <span class="status-badge ${status.key}">${status.label}</span>
-            <button class="btn btn-success btn-sm" onclick="checkIn('${member.id}')">출석</button>
-            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${member.id}')">재등록/수정</button>
+            <button class="btn btn-success btn-sm" onclick="checkIn('${member.id}')">${t('checkInButton')}</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${member.id}')">${t('renewEditButton')}</button>
           </div>
         </article>`;
     }
@@ -1351,7 +2043,7 @@
         return acc;
       }, {});
 
-      const cells = WEEKDAYS.map(day => `<div class="calendar-weekday">${day}</div>`);
+      const cells = t('weekdayNames').map(day => `<div class="calendar-weekday">${day}</div>`);
       const cursor = new Date(start);
 
       while (cursor <= end) {
@@ -1368,7 +2060,7 @@
         cells.push(`
           <div class="${classes}" title="${expiries.map(m => m.name).join(', ')}">
             <div>${cursor.getDate()}</div>
-            ${expiries.length ? `<span class="count">${expiries.length}명</span>` : ''}
+            ${expiries.length ? `<span class="count">${t('countPeople', { count: expiries.length })}</span>` : ''}
           </div>`);
         cursor.setDate(cursor.getDate() + 1);
       }
@@ -1384,7 +2076,7 @@
         .sort((a, b) => parseDateOnly(a.expireDate) - parseDateOnly(b.expireDate));
 
       if (monthly.length === 0) {
-        list.innerHTML = '<div class="empty-state">선택한 월에 만기되는 회원이 없습니다.</div>';
+        list.innerHTML = `<div class="empty-state">${t('noMonthlyExpiry')}</div>`;
         return;
       }
 
@@ -1398,15 +2090,15 @@
             </div>
             <div class="meta-line">
               <span>${escapeHtml(member.phone)}</span>
-              <span>PT ${member.ptRemaining}/${member.ptTotal}회</span>
+              <span>${t('ptShort', { remaining: member.ptRemaining, total: member.ptTotal })}</span>
             </div>
           </div>`;
       }).join('');
     }
 
     function renderAbsenceLists() {
-      renderAbsenceList('absent14List', members.filter(m => isLongAbsent(m, 14) && !isLongAbsent(m, 30)), '14일 이상 미방문 회원 없음');
-      renderAbsenceList('absent30List', members.filter(m => isLongAbsent(m, 30)), '30일 이상 미방문 회원 없음');
+      renderAbsenceList('absent14List', members.filter(m => isLongAbsent(m, 14) && !isLongAbsent(m, 30)), t('noAbsent14'));
+      renderAbsenceList('absent30List', members.filter(m => isLongAbsent(m, 30)), t('noAbsent30'));
     }
 
     function renderAbsenceList(elementId, data, emptyText) {
@@ -1422,11 +2114,11 @@
         <div class="mini-card">
           <div class="mini-card-title">
             <span>${escapeHtml(member.name)}</span>
-            <span class="tag info">${getDaysSinceLastVisit(member)}일</span>
+            <span class="tag info">${t('daysOnly', { count: getDaysSinceLastVisit(member) })}</span>
           </div>
           <div class="meta-line">
             <span>${escapeHtml(member.phone)}</span>
-            <span>마지막 ${formatDateOnly(member.lastVisit)}</span>
+            <span>${t('lastPrefix')} ${formatDateOnly(member.lastVisit)}</span>
           </div>
         </div>
       `).join('');
@@ -1456,8 +2148,8 @@
       if (filtered.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <strong>${searchQuery ? '검색 결과가 없습니다.' : '표시할 회원이 없습니다.'}</strong>
-            필터를 변경하거나 새 회원을 등록해 주세요.
+            <strong>${searchQuery ? t('noSearchResults') : t('noMembersToShow')}</strong>
+            ${t('memberEmptyHelp')}
           </div>`;
         return;
       }
@@ -1477,23 +2169,23 @@
             <h3>
               ${escapeHtml(member.name)}
               <span class="status-badge ${status.key}">${status.label}</span>
-              ${absent ? `<span class="tag info">${getDaysSinceLastVisit(member)}일 미방문</span>` : ''}
+              ${absent ? `<span class="tag info">${t('absentDaysLabel', { count: getDaysSinceLastVisit(member) })}</span>` : ''}
             </h3>
             <div class="meta-line">
-              <span>연락처 ${escapeHtml(member.phone)}</span>
-              <span>등록 ${formatDateOnly(member.startDate)}</span>
-              <span>만기 ${formatDateOnly(member.expireDate)}</span>
-              <span>PT ${member.ptRemaining}/${member.ptTotal}회</span>
-              <span>출석 ${member.attendance.length}회</span>
-              <span>마지막 방문 ${formatDateOnly(member.lastVisit)}</span>
+              <span>${t('contactPrefix')} ${escapeHtml(member.phone)}</span>
+              <span>${t('registrationPrefix')} ${formatDateOnly(member.startDate)}</span>
+              <span>${t('expiryPrefix')} ${formatDateOnly(member.expireDate)}</span>
+              <span>${t('ptShort', { remaining: member.ptRemaining, total: member.ptTotal })}</span>
+              <span>${t('attendanceCount', { count: member.attendance.length })}</span>
+              <span>${t('lastPrefix')} ${formatDateOnly(member.lastVisit)}</span>
             </div>
             ${member.memo ? `<div class="member-memo">${escapeHtml(member.memo)}</div>` : ''}
           </div>
           <div class="member-actions">
-            <button class="btn btn-success btn-sm" onclick="checkIn('${member.id}')">${todayChecked ? '재출석' : '출석'}</button>
-            <button class="btn btn-ghost btn-sm" onclick="showAttendance('${member.id}')">출석 기록</button>
-            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${member.id}')">수정</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteMember('${member.id}')">삭제</button>
+            <button class="btn btn-success btn-sm" onclick="checkIn('${member.id}')">${todayChecked ? t('repeatCheckInButton') : t('checkInButton')}</button>
+            <button class="btn btn-ghost btn-sm" onclick="showAttendance('${member.id}')">${t('attendanceHistoryButton')}</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${member.id}')">${t('editButton')}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMember('${member.id}')">${t('deleteButton')}</button>
           </div>
         </article>`;
     }
@@ -1525,17 +2217,17 @@
       const memo = document.getElementById('memo').value.trim();
 
       if (!name || !phone || !startDate || !expireDate) {
-        showToast('이름, 연락처, 등록일, 만기일을 입력해주세요.', 'warning');
+        showToast(t('requiredMemberFields'), 'warning');
         return;
       }
 
       if (parseDateOnly(expireDate) < parseDateOnly(startDate)) {
-        showToast('만기일은 등록일 이후로 선택해주세요.', 'warning');
+        showToast(t('invalidExpiryDate'), 'warning');
         return;
       }
 
       if (ptTotal < 0 || ptRemaining < 0 || Number.isNaN(ptTotal) || Number.isNaN(ptRemaining)) {
-        showToast('PT 횟수를 올바르게 입력해주세요.', 'warning');
+        showToast(t('invalidPt'), 'warning');
         return;
       }
 
@@ -1559,7 +2251,7 @@
       document.getElementById('ptTotal').value = '10';
       document.getElementById('ptRemaining').value = '10';
       resetRegisterDates();
-      showToast(`${name} 회원이 등록되었습니다.`);
+      showToast(t('memberRegistered', { name }));
       refreshAll();
     }
 
@@ -1584,8 +2276,8 @@
 
       saveMembers();
       showToast(ptDeducted
-        ? `${member.name} 출석 완료! PT 1회 차감 (잔여 ${member.ptRemaining}회)`
-        : `${member.name} 출석 완료! PT 잔여 없음`, ptDeducted ? 'success' : 'warning');
+        ? t('checkInDeducted', { name: member.name, count: member.ptRemaining })
+        : t('checkInNoPt', { name: member.name }), ptDeducted ? 'success' : 'warning');
       refreshAll();
     }
 
@@ -1593,16 +2285,16 @@
       const member = members.find(m => m.id === id);
       if (!member) return;
 
-      document.getElementById('modalTitle').textContent = `${member.name} - 출석 기록`;
+      document.getElementById('modalTitle').textContent = t('attendanceTitle', { name: member.name });
       const list = document.getElementById('attendanceList');
 
       if (member.attendance.length === 0) {
-        list.innerHTML = '<div class="empty-state">출석 기록이 없습니다.</div>';
+        list.innerHTML = `<div class="empty-state">${t('noAttendance')}</div>`;
       } else {
         list.innerHTML = member.attendance.map(attendance => `
           <div class="attendance-item">
             <span>${formatDateTime(attendance.date)}</span>
-            <span class="tag ${attendance.ptDeducted ? 'danger' : 'info'}">${attendance.ptDeducted ? 'PT 1회 차감' : 'PT 미차감'}</span>
+            <span class="tag ${attendance.ptDeducted ? 'danger' : 'info'}">${attendance.ptDeducted ? t('ptDeducted') : t('ptNotDeducted')}</span>
           </div>
         `).join('');
       }
@@ -1622,7 +2314,7 @@
       document.getElementById('editPtTotal').value = member.ptTotal;
       document.getElementById('editPtRemaining').value = member.ptRemaining;
       document.getElementById('editMemo').value = member.memo || '';
-      document.getElementById('editModalTitle').textContent = `${member.name} - 회원 정보 수정`;
+      document.getElementById('editModalTitle').textContent = t('editTitle', { name: member.name });
       document.getElementById('editModal').classList.add('active');
     }
 
@@ -1642,17 +2334,17 @@
       const memo = document.getElementById('editMemo').value.trim();
 
       if (!name || !phone || !startDate || !expireDate) {
-        showToast('필수 회원 정보를 입력해주세요.', 'warning');
+        showToast(t('requiredEditFields'), 'warning');
         return;
       }
 
       if (parseDateOnly(expireDate) < parseDateOnly(startDate)) {
-        showToast('만기일은 등록일 이후로 선택해주세요.', 'warning');
+        showToast(t('invalidExpiryDate'), 'warning');
         return;
       }
 
       if (ptTotal < 0 || ptRemaining < 0 || Number.isNaN(ptTotal) || Number.isNaN(ptRemaining)) {
-        showToast('PT 횟수를 올바르게 입력해주세요.', 'warning');
+        showToast(t('invalidPt'), 'warning');
         return;
       }
 
@@ -1669,18 +2361,18 @@
 
       saveMembers();
       document.getElementById('editModal').classList.remove('active');
-      showToast(`${name} 회원 정보가 수정되었습니다.`);
+      showToast(t('memberUpdated', { name }));
       refreshAll();
     }
 
     function deleteMember(id) {
       const member = members.find(m => m.id === id);
       if (!member) return;
-      if (!confirm(`${member.name} 회원을 삭제하시겠습니까?`)) return;
+      if (!confirm(t('confirmDelete', { name: member.name }))) return;
 
       members = members.filter(m => m.id !== id);
       saveMembers();
-      showToast(`${member.name} 회원이 삭제되었습니다.`);
+      showToast(t('memberDeleted', { name: member.name }));
       refreshAll();
     }
 
@@ -1700,7 +2392,7 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('JSON 백업 파일이 다운로드되었습니다.');
+      showToast(t('backupDownloaded'));
     }
 
     function importData(file) {
@@ -1711,16 +2403,16 @@
           const imported = Array.isArray(data) ? data : data.members;
           if (!Array.isArray(imported)) throw new Error('invalid format');
 
-          if (!confirm(`기존 ${members.length}명 데이터를 ${imported.length}명 데이터로 교체하시겠습니까?`)) {
+          if (!confirm(t('importConfirm', { oldCount: members.length, newCount: imported.length }))) {
             return;
           }
 
           members = migrateMembers(imported);
           saveMembers();
-          showToast('데이터가 복원되었습니다.');
+          showToast(t('importDone'));
           refreshAll();
         } catch {
-          showToast('올바른 JSON 파일이 아닙니다.', 'warning');
+          showToast(t('importInvalid'), 'warning');
         }
       };
       reader.readAsText(file);
@@ -1755,6 +2447,10 @@
 
     document.getElementById('calendarMonth').addEventListener('change', renderCalendar);
 
+    document.getElementById('languageSelect').addEventListener('change', e => {
+      setLanguage(e.target.value);
+    });
+
     document.getElementById('closeModal').addEventListener('click', () => {
       document.getElementById('attendanceModal').classList.remove('active');
     });
@@ -1785,6 +2481,7 @@
     });
 
     resetRegisterDates();
+    applyTranslations();
     saveMembers();
     refreshAll();
     showStorageInfoOnEntry();
