@@ -1,0 +1,37 @@
+{
+  "name": "스웨트매니저 - 복싱장 재등록 운영 관리",
+  "short_name": "스웨트매니저",
+  "description": "복싱장 운영자가 재등록 예정, 만기, 미방문, 출석 회원을 놓치지 않도록 관리하는 로컬 저장 기반 운영 앱입니다.",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0d14",
+  "theme_color": "#ef4444",
+  "categories": ["business", "productivity", "sports"],
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "재등록 관리",
+      "short_name": "재등록",
+      "description": "재등록 예정 회원을 확인합니다.",
+      "url": "./",
+      "icons": [
+        {
+          "src": "./app-icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}

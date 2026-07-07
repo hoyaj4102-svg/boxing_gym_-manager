@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>복싱장 재등록 운영 관리</title>
+  <meta name="description" content="복싱장 운영자가 재등록 예정, 만기, 미방문, 출석 회원을 관리하는 스웨트매니저 앱">
+  <meta name="theme-color" content="#ef4444">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="스웨트매니저">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./app-icon.svg">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -3096,6 +3105,14 @@
     applyTranslations();
     saveMembers();
     refreshAll();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {
+          // The app still works normally if service worker registration is unavailable.
+        });
+      });
+    }
   </script>
 </body>
 </html>
