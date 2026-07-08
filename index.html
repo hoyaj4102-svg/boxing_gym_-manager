@@ -1203,6 +1203,7 @@
             <textarea id="editMemo" placeholder="특이사항, 부상, 목표, 보호자 연락처 등" data-i18n-placeholder="editMemoPlaceholder"></textarea>
           </div>
           <div class="form-actions">
+            <button type="button" class="btn btn-danger" id="editDeleteButton" data-i18n="withdrawButton">회원탈퇴</button>
             <button type="submit" class="btn btn-primary" data-i18n="saveButton">저장</button>
           </div>
         </form>
@@ -1273,6 +1274,7 @@
         editModalTitle: '회원 정보 수정',
         closeButton: '닫기',
         saveButton: '저장',
+        withdrawButton: '회원탈퇴',
         storageModalTitle: '데이터 저장 방식 안내',
         storageNotice1Title: '이 앱은 로그인 없이 사용하는 로컬 저장 방식입니다.',
         storageNotice1Body: '회원 정보는 서버가 아니라 현재 사용 중인 기기와 브라우저의 localStorage에 저장됩니다.',
@@ -1395,6 +1397,7 @@
         editModalTitle: 'Edit Member',
         closeButton: 'Close',
         saveButton: 'Save',
+        withdrawButton: 'Withdraw member',
         storageModalTitle: 'How Data Is Stored',
         storageNotice1Title: 'This app uses local storage without login.',
         storageNotice1Body: 'Member data is stored in localStorage on the current device and browser, not on a server.',
@@ -1517,6 +1520,7 @@
         editModalTitle: 'Editar miembro',
         closeButton: 'Cerrar',
         saveButton: 'Guardar',
+        withdrawButton: 'Dar de baja',
         storageModalTitle: 'Cómo se guardan los datos',
         storageNotice1Title: 'Esta app usa almacenamiento local sin inicio de sesión.',
         storageNotice1Body: 'Los datos se guardan en localStorage del dispositivo y navegador actuales, no en un servidor.',
@@ -1639,6 +1643,7 @@
         editModalTitle: 'Редактировать клиента',
         closeButton: 'Закрыть',
         saveButton: 'Сохранить',
+        withdrawButton: 'Удалить клиента',
         storageModalTitle: 'Как хранятся данные',
         storageNotice1Title: 'Приложение использует локальное хранение без входа.',
         storageNotice1Body: 'Данные клиентов хранятся в localStorage текущего устройства и браузера, не на сервере.',
@@ -1761,6 +1766,7 @@
         editModalTitle: 'Гишүүн засах',
         closeButton: 'Хаах',
         saveButton: 'Хадгалах',
+        withdrawButton: 'Гишүүн хасах',
         storageModalTitle: 'Өгөгдөл хэрхэн хадгалагдах вэ',
         storageNotice1Title: 'Энэ апп нэвтрэлтгүй локал хадгалалт ашиглана.',
         storageNotice1Body: 'Гишүүний өгөгдөл серверт биш, одоогийн төхөөрөмж ба браузерын localStorage-д хадгалагдана.',
@@ -1883,6 +1889,7 @@
         editModalTitle: '编辑会员',
         closeButton: '关闭',
         saveButton: '保存',
+        withdrawButton: '会员退会',
         storageModalTitle: '数据存储方式说明',
         storageNotice1Title: '本应用无需登录，使用本地存储。',
         storageNotice1Body: '会员信息不会存到服务器，而是保存在当前设备和浏览器的localStorage中。',
@@ -2005,6 +2012,7 @@
         editModalTitle: 'सदस्य संपादित करें',
         closeButton: 'बंद करें',
         saveButton: 'सेव करें',
+        withdrawButton: 'सदस्य हटाएं',
         storageModalTitle: 'डेटा कैसे सेव होता है',
         storageNotice1Title: 'यह ऐप लॉगिन के बिना लोकल स्टोरेज का उपयोग करता है।',
         storageNotice1Body: 'सदस्य डेटा सर्वर पर नहीं, वर्तमान डिवाइस और ब्राउजर के localStorage में सेव होता है।',
@@ -2127,6 +2135,7 @@
         editModalTitle: 'Modifier le membre',
         closeButton: 'Fermer',
         saveButton: 'Enregistrer',
+        withdrawButton: 'Retirer le membre',
         storageModalTitle: 'Comment les données sont stockées',
         storageNotice1Title: 'Cette application utilise un stockage local sans connexion.',
         storageNotice1Body: 'Les données des membres sont stockées dans le localStorage de l’appareil et du navigateur actuels, pas sur un serveur.',
@@ -2983,13 +2992,21 @@
 
     function deleteMember(id) {
       const member = members.find(m => m.id === id);
-      if (!member) return;
-      if (!confirm(t('confirmDelete', { name: member.name }))) return;
+      if (!member) return false;
+      if (!confirm(t('confirmDelete', { name: member.name }))) return false;
 
       members = members.filter(m => m.id !== id);
       saveMembers();
       showToast(t('memberDeleted', { name: member.name }));
       refreshAll();
+      return true;
+    }
+
+    function deleteEditingMember() {
+      const id = document.getElementById('editId').value;
+      if (deleteMember(id)) {
+        document.getElementById('editModal').classList.remove('active');
+      }
     }
 
     function exportData() {
@@ -3036,6 +3053,7 @@
 
     document.getElementById('registerForm').addEventListener('submit', registerMember);
     document.getElementById('editForm').addEventListener('submit', saveEditMember);
+    document.getElementById('editDeleteButton').addEventListener('click', deleteEditingMember);
 
     document.getElementById('phone').addEventListener('input', e => {
       e.target.value = formatPhone(e.target.value);
