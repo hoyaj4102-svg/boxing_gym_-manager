@@ -1,7 +1,8 @@
-const CACHE_VERSION = 'sweat-manager-v1';
+const CACHE_VERSION = 'sweat-manager-v3';
 const APP_SHELL = [
   './',
   './index.html',
+  './supabase-config.js',
   './manifest.webmanifest',
   './app-icon.svg',
   './app-icon-180.png',
@@ -31,8 +32,14 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const request = event.request;
+  const url = new URL(request.url);
 
   if (request.method !== 'GET') return;
+
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   event.respondWith(
     fetch(request)
