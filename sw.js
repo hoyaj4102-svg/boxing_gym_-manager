@@ -1,7 +1,8 @@
-const CACHE_VERSION = 'sweat-manager-v1';
+const CACHE_VERSION = 'sweat-manager-v4';
 const APP_SHELL = [
   './',
   './index.html',
+  './manifest.json',
   './manifest.webmanifest',
   './app-icon.svg',
   './app-icon-180.png',
