@@ -337,6 +337,49 @@
 
     .panel-body { padding: 16px; }
 
+    .auth-panel {
+      margin-bottom: 14px;
+      border-color: rgba(56, 189, 248, .3);
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .auth-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .auth-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .auth-status {
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: .82rem;
+    }
+
+    .auth-status strong {
+      color: var(--text);
+    }
+
+    .auth-panel.signed-in {
+      border-color: rgba(34, 197, 94, .45);
+    }
+
+    .auth-panel.not-configured {
+      border-color: rgba(250, 204, 21, .45);
+    }
+
     .renewal-panel {
       border-color: rgba(239, 68, 68, .42);
       background: linear-gradient(180deg, rgba(42, 25, 36, .96), rgba(21, 27, 41, .94));
@@ -971,6 +1014,36 @@
       </article>
     </section>
 
+    <section class="panel auth-panel" id="authPanel">
+      <div class="panel-header">
+        <div>
+          <h2>Supabase 로그인</h2>
+          <p class="panel-subtitle">이메일로 로그인하면 회원 데이터가 Supabase에 사용자별로 저장됩니다.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <form id="authForm" class="auth-grid">
+          <div class="auth-fields">
+            <div class="field">
+              <label for="authEmail">이메일</label>
+              <input type="email" id="authEmail" autocomplete="email" placeholder="owner@example.com">
+            </div>
+            <div class="field">
+              <label for="authPassword">비밀번호</label>
+              <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상">
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button type="submit" class="btn btn-primary" id="signInButton">로그인</button>
+            <button type="button" class="btn btn-ghost" id="signUpButton">회원가입</button>
+            <button type="button" class="btn btn-ghost" id="uploadLocalButton">현재 브라우저 로컬 데이터 업로드</button>
+            <button type="button" class="btn btn-danger" id="signOutButton" hidden>로그아웃</button>
+          </div>
+        </form>
+        <p class="auth-status" id="authStatus">Supabase 설정 확인 중...</p>
+      </div>
+    </section>
+
     <section class="panel dashboard-contact-panel" id="dashboardContactPanel" hidden>
       <div class="panel-header">
         <div>
@@ -1213,10 +1286,13 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-config.js"></script>
   <script>
     const STORAGE_KEY = 'boxing_gym_members';
     const LANGUAGE_KEY = 'boxing_gym_language';
     const DAY_MS = 24 * 60 * 60 * 1000;
+    const SUPABASE_TABLE = 'members';
     const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
     const TRANSLATIONS = {
       ko: {
@@ -2210,6 +2286,11 @@
     let searchQuery = '';
     let memberFilter = 'all';
     let activeDashboardKey = '';
+    let supabaseClient = null;
+    let currentUser = null;
+    let isSupabaseConfigured = false;
+    let isRemoteReady = false;
+    let isLoadingRemote = false;
 
     function loadMembers() {
       try {
@@ -2218,6 +2299,67 @@
       } catch {
         return [];
       }
+    }
+
+    function getSupabaseConfig() {
+      return window.SWEAT_MANAGER_SUPABASE || {};
+    }
+
+    function initSupabaseClient() {
+      const config = getSupabaseConfig();
+      isSupabaseConfigured = Boolean(config.url && config.anonKey && window.supabase);
+
+      if (!isSupabaseConfigured) {
+        supabaseClient = null;
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(config.url, config.anonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+    }
+
+    function memberToRow(member) {
+      return {
+        id: String(member.id),
+        user_id: currentUser.id,
+        name: member.name,
+        phone: member.phone,
+        start_date: member.startDate,
+        expire_date: member.expireDate,
+        pt_total: member.ptTotal,
+        pt_remaining: member.ptRemaining,
+        memo: member.memo || '',
+        last_visit: member.lastVisit,
+        created_at: member.createdAt,
+        updated_at: member.updatedAt || new Date().toISOString(),
+        attendance: Array.isArray(member.attendance) ? member.attendance : []
+      };
+    }
+
+    function rowToMember(row) {
+      return {
+        id: row.id,
+        name: row.name || '',
+        phone: row.phone || '',
+        startDate: row.start_date,
+        expireDate: row.expire_date,
+        ptTotal: readNumber(row.pt_total, 0),
+        ptRemaining: readNumber(row.pt_remaining, 0),
+        memo: row.memo || '',
+        lastVisit: row.last_visit || null,
+        createdAt: row.created_at || new Date().toISOString(),
+        updatedAt: row.updated_at || null,
+        attendance: Array.isArray(row.attendance) ? row.attendance : []
+      };
+    }
+
+    function isSupabaseActive() {
+      return Boolean(supabaseClient && currentUser && isRemoteReady);
     }
 
     function getSavedLanguage() {
@@ -2423,6 +2565,204 @@
       toast.textContent = message;
       toast.className = 'toast show ' + type;
       setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function renderAuthState(message = '') {
+      const panel = document.getElementById('authPanel');
+      const status = document.getElementById('authStatus');
+      const signOutButton = document.getElementById('signOutButton');
+      const uploadLocalButton = document.getElementById('uploadLocalButton');
+      const signInButton = document.getElementById('signInButton');
+      const signUpButton = document.getElementById('signUpButton');
+
+      panel.classList.toggle('signed-in', Boolean(currentUser));
+      panel.classList.toggle('not-configured', !isSupabaseConfigured);
+
+      if (!isSupabaseConfigured) {
+        status.innerHTML = '<strong>Supabase 설정이 필요합니다.</strong> supabase-config.js에 Project URL과 anon key를 입력한 뒤 배포해 주세요.';
+        signOutButton.hidden = true;
+        uploadLocalButton.hidden = true;
+        signInButton.disabled = true;
+        signUpButton.disabled = true;
+        return;
+      }
+
+      signInButton.disabled = false;
+      signUpButton.disabled = false;
+      signOutButton.hidden = !currentUser;
+      uploadLocalButton.hidden = !currentUser;
+
+      if (currentUser) {
+        status.innerHTML = `<strong>${escapeHtml(currentUser.email || '로그인됨')}</strong> 계정의 Supabase 데이터로 동기화 중입니다.${message ? ' ' + escapeHtml(message) : ''}`;
+      } else {
+        status.textContent = message || '이메일로 로그인하거나 회원가입하면 이 브라우저의 로컬 데이터 대신 Supabase 데이터를 사용합니다.';
+      }
+    }
+
+    async function initSupabaseAuth() {
+      initSupabaseClient();
+      renderAuthState();
+
+      if (!supabaseClient) return;
+
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        renderAuthState('세션 확인 중 오류가 발생했습니다.');
+        return;
+      }
+
+      currentUser = data.session?.user || null;
+      if (currentUser) {
+        await loadMembersFromSupabase();
+      }
+      renderAuthState();
+
+      supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+        currentUser = session?.user || null;
+        isRemoteReady = false;
+        if (currentUser) {
+          await loadMembersFromSupabase();
+        } else {
+          members = loadMembers();
+          refreshAll();
+        }
+        renderAuthState();
+      });
+    }
+
+    async function loadMembersFromSupabase() {
+      if (!supabaseClient || !currentUser) return;
+
+      isLoadingRemote = true;
+      renderAuthState('데이터를 불러오는 중입니다...');
+
+      const { data, error } = await supabaseClient
+        .from(SUPABASE_TABLE)
+        .select('*')
+        .order('expire_date', { ascending: true });
+
+      isLoadingRemote = false;
+
+      if (error) {
+        showToast(`Supabase 데이터 로드 실패: ${error.message}`, 'warning');
+        renderAuthState('Supabase 데이터를 불러오지 못했습니다.');
+        return;
+      }
+
+      members = migrateMembers((data || []).map(rowToMember));
+      isRemoteReady = true;
+      saveMembers();
+      refreshAll();
+    }
+
+    async function saveMemberToSupabase(member) {
+      if (!isSupabaseActive() || isLoadingRemote) return;
+
+      const { error } = await supabaseClient
+        .from(SUPABASE_TABLE)
+        .upsert(memberToRow(member), { onConflict: 'id' });
+
+      if (error) {
+        showToast(`Supabase 저장 실패: ${error.message}`, 'warning');
+        throw error;
+      }
+    }
+
+    async function deleteMemberFromSupabase(id) {
+      if (!isSupabaseActive()) return;
+
+      const { error } = await supabaseClient
+        .from(SUPABASE_TABLE)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        showToast(`Supabase 삭제 실패: ${error.message}`, 'warning');
+        throw error;
+      }
+    }
+
+    async function upsertMembersToSupabase(memberList) {
+      if (!isSupabaseActive() || memberList.length === 0) return;
+
+      const { error } = await supabaseClient
+        .from(SUPABASE_TABLE)
+        .upsert(memberList.map(memberToRow), { onConflict: 'id' });
+
+      if (error) {
+        showToast(`Supabase 업로드 실패: ${error.message}`, 'warning');
+        throw error;
+      }
+    }
+
+    async function replaceSupabaseMembers(memberList) {
+      if (!isSupabaseActive()) return;
+
+      const { error: deleteError } = await supabaseClient
+        .from(SUPABASE_TABLE)
+        .delete()
+        .eq('user_id', currentUser.id);
+
+      if (deleteError) {
+        showToast(`Supabase 교체 실패: ${deleteError.message}`, 'warning');
+        throw deleteError;
+      }
+
+      await upsertMembersToSupabase(memberList);
+    }
+
+    async function signInWithEmail(email, password) {
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        showToast(`로그인 실패: ${error.message}`, 'warning');
+      } else {
+        showToast('로그인되었습니다.');
+      }
+    }
+
+    async function signUpWithEmail(email, password) {
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        showToast(`회원가입 실패: ${error.message}`, 'warning');
+      } else {
+        showToast('회원가입이 완료되었습니다. 이메일 확인 설정이 켜져 있다면 메일을 확인해 주세요.');
+      }
+    }
+
+    async function signOut() {
+      if (!supabaseClient) return;
+
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      isRemoteReady = false;
+      members = loadMembers();
+      renderAuthState('로그아웃되었습니다. 현재 브라우저의 로컬 데이터를 표시합니다.');
+      refreshAll();
+    }
+
+    async function uploadLocalDataToSupabase() {
+      if (!isSupabaseActive()) {
+        showToast('먼저 Supabase에 로그인해 주세요.', 'warning');
+        return;
+      }
+
+      const localMembers = loadMembers();
+      if (localMembers.length === 0) {
+        showToast('업로드할 로컬 회원 데이터가 없습니다.', 'warning');
+        return;
+      }
+
+      if (!confirm(`현재 브라우저의 로컬 회원 ${localMembers.length}명을 Supabase 계정에 업로드하시겠습니까? 같은 id는 업데이트됩니다.`)) {
+        return;
+      }
+
+      await upsertMembersToSupabase(localMembers);
+      await loadMembersFromSupabase();
+      showToast('로컬 데이터가 Supabase로 업로드되었습니다.');
     }
 
     function refreshAll() {
@@ -2830,7 +3170,7 @@
       }
     }
 
-    function registerMember(e) {
+    async function registerMember(e) {
       e.preventDefault();
 
       const name = document.getElementById('name').value.trim();
@@ -2856,7 +3196,7 @@
         return;
       }
 
-      members.unshift({
+      const member = {
         id: generateId(),
         name,
         phone,
@@ -2869,9 +3209,12 @@
         createdAt: new Date().toISOString(),
         updatedAt: null,
         attendance: []
-      });
+      };
+
+      members.unshift(member);
 
       saveMembers();
+      await saveMemberToSupabase(member);
       document.getElementById('registerForm').reset();
       document.getElementById('ptTotal').value = '10';
       document.getElementById('ptRemaining').value = '10';
@@ -2880,7 +3223,7 @@
       refreshAll();
     }
 
-    function checkIn(id) {
+    async function checkIn(id) {
       const member = members.find(m => m.id === id);
       if (!member) return;
 
@@ -2900,6 +3243,7 @@
       });
 
       saveMembers();
+      await saveMemberToSupabase(member);
       showToast(ptDeducted
         ? t('checkInDeducted', { name: member.name, count: member.ptRemaining })
         : t('checkInNoPt', { name: member.name }), ptDeducted ? 'success' : 'warning');
@@ -2943,7 +3287,7 @@
       document.getElementById('editModal').classList.add('active');
     }
 
-    function saveEditMember(e) {
+    async function saveEditMember(e) {
       e.preventDefault();
 
       const id = document.getElementById('editId').value;
@@ -2985,18 +3329,20 @@
       });
 
       saveMembers();
+      await saveMemberToSupabase(member);
       document.getElementById('editModal').classList.remove('active');
       showToast(t('memberUpdated', { name }));
       refreshAll();
     }
 
-    function deleteMember(id) {
+    async function deleteMember(id) {
       const member = members.find(m => m.id === id);
       if (!member) return false;
       if (!confirm(t('confirmDelete', { name: member.name }))) return false;
 
       members = members.filter(m => m.id !== id);
       saveMembers();
+      await deleteMemberFromSupabase(id);
       showToast(t('memberDeleted', { name: member.name }));
       refreshAll();
       return true;
@@ -3030,7 +3376,7 @@
 
     function importData(file) {
       const reader = new FileReader();
-      reader.onload = e => {
+      reader.onload = async e => {
         try {
           const data = JSON.parse(e.target.result);
           const imported = Array.isArray(data) ? data : data.members;
@@ -3042,6 +3388,7 @@
 
           members = migrateMembers(imported);
           saveMembers();
+          await replaceSupabaseMembers(members);
           showToast(t('importDone'));
           refreshAll();
         } catch {
@@ -3054,6 +3401,30 @@
     document.getElementById('registerForm').addEventListener('submit', registerMember);
     document.getElementById('editForm').addEventListener('submit', saveEditMember);
     document.getElementById('editDeleteButton').addEventListener('click', deleteEditingMember);
+
+    document.getElementById('authForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      if (!email || !password) {
+        showToast('이메일과 비밀번호를 입력해 주세요.', 'warning');
+        return;
+      }
+      signInWithEmail(email, password);
+    });
+
+    document.getElementById('signUpButton').addEventListener('click', () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      if (!email || !password) {
+        showToast('이메일과 비밀번호를 입력해 주세요.', 'warning');
+        return;
+      }
+      signUpWithEmail(email, password);
+    });
+
+    document.getElementById('signOutButton').addEventListener('click', signOut);
+    document.getElementById('uploadLocalButton').addEventListener('click', uploadLocalDataToSupabase);
 
     document.getElementById('phone').addEventListener('input', e => {
       e.target.value = formatPhone(e.target.value);
@@ -3124,6 +3495,7 @@
     applyTranslations();
     saveMembers();
     refreshAll();
+    initSupabaseAuth();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
