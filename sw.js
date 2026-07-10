@@ -1,13 +1,13 @@
-const CACHE_VERSION = 'sweat-manager-v4';
+const CACHE_VERSION = 'sweat-manager-v5';
 const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './manifest.webmanifest',
-  './app-icon.svg',
-  './app-icon-180.png',
-  './app-icon-192.png',
-  './app-icon-512.png'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/manifest.webmanifest',
+  '/app-icon.svg',
+  '/app-icon-180.png',
+  '/app-icon-192.png',
+  '/app-icon-512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -42,6 +42,6 @@ self.addEventListener('fetch', event => {
         caches.open(CACHE_VERSION).then(cache => cache.put(request, copy));
         return response;
       })
-      .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html')))
+      .catch(() => caches.match(request).then(cached => cached || caches.match('/index.html')))
   );
 });

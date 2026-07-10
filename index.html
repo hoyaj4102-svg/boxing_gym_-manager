@@ -10,11 +10,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="스웨트매니저">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
-  <link rel="icon" href="./app-icon-192.png" type="image/png" sizes="192x192">
-  <link rel="apple-touch-icon" href="./app-icon-180.png" sizes="180x180">
-  <link rel="apple-touch-icon-precomposed" href="./app-icon-180.png" sizes="180x180">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/app-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/app-icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/app-icon-180.png">
+  <link rel="apple-touch-icon" href="/app-icon-180.png" sizes="180x180">
+  <link rel="apple-touch-icon-precomposed" href="/app-icon-180.png" sizes="180x180">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -3128,7 +3129,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
           // The app still works normally if service worker registration is unavailable.
         });
       });
