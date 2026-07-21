@@ -9,9 +9,11 @@
 
 1. Supabase 프로젝트 생성
 2. `supabase/schema.sql` 실행
-3. `js/config.js`에 Project URL / anon key 입력
-4. 앱 접속 → 회원가입 → 회원 관리
+3. `supabase/billing.sql` 실행 (요금제/회원 한도)
+4. `js/config.js`에 Project URL / anon key 입력
+5. 앱 접속 → 회원가입 → 회원 관리
 
+수익화 설계는 [BILLING.md](./BILLING.md) 를 보세요.
 자세한 단계는 [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) 를 보세요.
 
 ## 주요 기능
