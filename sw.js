@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v7-supabase-config';
+const CACHE_VERSION = 'sweat-manager-v8-i18n-complete';
 const APP_SHELL = [
   '/',
   '/index.html',
