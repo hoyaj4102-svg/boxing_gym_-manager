@@ -1090,11 +1090,11 @@
       <form id="authForm" class="auth-form">
         <div class="field signup-only" hidden>
           <label for="authGymName" data-i18n="authGymNameLabel">체육관 이름</label>
-          <input type="text" id="authGymName" autocomplete="organization" placeholder="예: 강남 복싱짐">
+          <input type="text" id="authGymName" autocomplete="organization" placeholder="예: 강남 복싱짐" data-i18n-placeholder="authGymNamePlaceholder">
         </div>
         <div class="field signup-only" hidden>
           <label for="authOwnerName" data-i18n="authOwnerNameLabel">대표자 이름</label>
-          <input type="text" id="authOwnerName" autocomplete="name" placeholder="홍길동">
+          <input type="text" id="authOwnerName" autocomplete="name" placeholder="홍길동" data-i18n-placeholder="authOwnerNamePlaceholder">
         </div>
         <div class="field signup-only" hidden>
           <label for="authGymPhone" data-i18n="authGymPhoneLabel">체육관 연락처</label>
@@ -1102,11 +1102,11 @@
         </div>
         <div class="field">
           <label for="authEmail" data-i18n="authEmailLabel">이메일</label>
-          <input type="email" id="authEmail" autocomplete="email" required placeholder="owner@example.com">
+          <input type="email" id="authEmail" autocomplete="email" required placeholder="owner@example.com" data-i18n-placeholder="authEmailPlaceholder">
         </div>
         <div class="field login-only signup-only">
           <label for="authPassword" data-i18n="authPasswordLabel">비밀번호</label>
-          <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상">
+          <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상" data-i18n-placeholder="authPasswordPlaceholder">
         </div>
         <div class="field reset-only" hidden>
           <p class="lead" style="margin:0;" data-i18n="authResetHelp">가입한 이메일로 비밀번호 재설정 링크를 보냅니다.</p>
@@ -1498,6 +1498,26 @@
         migrateConfirm: '현재 브라우저의 로컬 회원 {count}명을 Supabase로 업로드할까요?',
         migrateDone: '로컬 데이터가 Supabase로 업로드되었습니다.',
         migrateEmpty: '업로드할 로컬 데이터가 없습니다.',
+        contactHelpSuffix: '전화번호 확인 후 전화 또는 SMS 아이콘으로 직접 연락합니다. 문자 API는 사용하지 않습니다.',
+        noContactTargetsTitle: '대상 회원이 없습니다.',
+        noContactTargetsBody: '다른 대시보드 카드를 선택해 주세요.',
+        callButton: '전화',
+        smsButton: 'SMS',
+        callAria: '{name} 전화',
+        smsAria: '{name} SMS',
+        smsPreviewPrefix: 'SMS:',
+        smsAbsent: '안녕하세요 [스웨트매니저] 체육관 {days}일 미방문 알림드립니다.',
+        smsToday: '안녕하세요 [스웨트매니저] 체육관 오늘 출석 확인 안내드립니다.',
+        smsExpired: '안녕하세요 [스웨트매니저] 체육관 만기일이 {days}일 지났습니다. 재등록 안내드립니다.',
+        smsDueToday: '안녕하세요 [스웨트매니저] 체육관 만기일 당일 알림드립니다.',
+        smsDueSoon: '안녕하세요 [스웨트매니저] 체육관 만기일 {days}일 전 알림드립니다.',
+        newPasswordPrompt: '새 비밀번호를 입력하세요 (6자 이상)',
+        passwordUpdated: '비밀번호가 변경되었습니다.',
+        gymFallbackName: '체육관',
+        authGymNamePlaceholder: '예: 강남 복싱짐',
+        authOwnerNamePlaceholder: '홍길동',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '6자 이상',
         storageInfoButton: '저장 방식 안내',
         jsonBackupButton: 'JSON 백업',
         jsonRestoreButton: 'JSON 복원',
@@ -1647,6 +1667,26 @@
         migrateConfirm: 'Upload {count} local members to Supabase?',
         migrateDone: 'Local data uploaded to Supabase.',
         migrateEmpty: 'No local data to upload.',
+        contactHelpSuffix: 'Check the phone number, then call or SMS directly. No messaging API is used.',
+        noContactTargetsTitle: 'No members in this list.',
+        noContactTargetsBody: 'Select another dashboard card.',
+        callButton: 'Call',
+        smsButton: 'SMS',
+        callAria: 'Call {name}',
+        smsAria: 'SMS {name}',
+        smsPreviewPrefix: 'SMS:',
+        smsAbsent: 'Hello from [Sweat Manager] gym — it has been {days} days since your last visit.',
+        smsToday: 'Hello from [Sweat Manager] gym — confirming today’s attendance.',
+        smsExpired: 'Hello from [Sweat Manager] gym — your membership expired {days} days ago. Please renew.',
+        smsDueToday: 'Hello from [Sweat Manager] gym — your membership expires today.',
+        smsDueSoon: 'Hello from [Sweat Manager] gym — your membership expires in {days} days.',
+        newPasswordPrompt: 'Enter a new password (6+ characters)',
+        passwordUpdated: 'Password updated.',
+        gymFallbackName: 'Gym',
+        authGymNamePlaceholder: 'e.g. Downtown Boxing',
+        authOwnerNamePlaceholder: 'Owner name',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '6+ characters',
         storageInfoButton: 'Storage guide',
         jsonBackupButton: 'JSON backup',
         jsonRestoreButton: 'JSON restore',
@@ -1796,6 +1836,26 @@
         migrateConfirm: '¿Subir {count} miembros locales a Supabase?',
         migrateDone: 'Datos locales subidos a Supabase.',
         migrateEmpty: 'No hay datos locales para subir.',
+        contactHelpSuffix: 'Revisa el teléfono y llama o envía SMS directamente. No usamos API de mensajería.',
+        noContactTargetsTitle: 'No hay miembros en esta lista.',
+        noContactTargetsBody: 'Selecciona otra tarjeta del panel.',
+        callButton: 'Llamar',
+        smsButton: 'SMS',
+        callAria: 'Llamar a {name}',
+        smsAria: 'SMS a {name}',
+        smsPreviewPrefix: 'SMS:',
+        smsAbsent: 'Hola desde el gimnasio [Sweat Manager]: llevas {days} días sin visitar.',
+        smsToday: 'Hola desde el gimnasio [Sweat Manager]: confirmación de asistencia de hoy.',
+        smsExpired: 'Hola desde el gimnasio [Sweat Manager]: tu membresía venció hace {days} días. Renueva por favor.',
+        smsDueToday: 'Hola desde el gimnasio [Sweat Manager]: tu membresía vence hoy.',
+        smsDueSoon: 'Hola desde el gimnasio [Sweat Manager]: tu membresía vence en {days} días.',
+        newPasswordPrompt: 'Introduce una nueva contraseña (6+ caracteres)',
+        passwordUpdated: 'Contraseña actualizada.',
+        gymFallbackName: 'Gimnasio',
+        authGymNamePlaceholder: 'ej. Boxeo Centro',
+        authOwnerNamePlaceholder: 'Nombre del dueño',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '6+ caracteres',
         storageInfoButton: 'Guía de guardado',
         jsonBackupButton: 'Copia JSON',
         jsonRestoreButton: 'Restaurar JSON',
@@ -1805,15 +1865,15 @@
         saveButton: 'Guardar',
         withdrawButton: 'Dar de baja',
         storageModalTitle: 'Cómo se guardan los datos',
-        storageNotice1Title: 'Esta app usa almacenamiento local sin inicio de sesión.',
-        storageNotice1Body: 'Los datos se guardan en localStorage del dispositivo y navegador actuales, no en un servidor.',
-        storageNotice2Title: 'Los datos no se comparten automáticamente entre dispositivos o navegadores.',
-        storageNotice2Item1: 'Los datos ingresados en Safari del iPhone quedan solo en Safari del iPhone.',
-        storageNotice2Item2: 'En PC, otro teléfono u otro navegador, usa Restaurar JSON.',
-        storageNotice2Item3: 'Los datos pueden desaparecer si borras datos del navegador o cambias de dispositivo.',
-        storageNotice3Title: 'Usa copias JSON para proteger tus datos.',
-        storageNotice3Item1: 'Copia JSON: guarda datos de miembros/asistencia/PT/notas en un archivo.',
-        storageNotice3Item2: 'Restaurar JSON: carga un archivo de copia guardado.',
+        storageNotice1Title: 'Los datos se separan por cuenta de gimnasio.',
+        storageNotice1Body: 'Miembros y asistencia se guardan en Supabase. RLS impide ver datos de otros gimnasios.',
+        storageNotice2Title: 'La misma cuenta se sincroniza entre dispositivos.',
+        storageNotice2Item1: 'Inicia sesión con el mismo correo en PC, móvil o tablet.',
+        storageNotice2Item2: 'Si hay datos localStorage antiguos, súbelos una vez abajo.',
+        storageNotice2Item3: '¿Olvidaste la contraseña? Usa restablecer en la pantalla de acceso.',
+        storageNotice3Title: 'La copia JSON es una seguridad extra.',
+        storageNotice3Item1: 'Copia JSON: guarda miembros/asistencia/PT/notas en un archivo.',
+        storageNotice3Item2: 'Restaurar JSON: reemplaza los datos de Supabase con el archivo.',
         storageNotice3Item3: 'Guarda las copias en un lugar seguro como iCloud Drive o Google Drive.',
         dontShowStorageInfo: 'No mostrar esta guía automáticamente la próxima vez',
         backupNowButton: 'Crear copia JSON ahora',
@@ -1945,6 +2005,26 @@
         migrateConfirm: 'Загрузить {count} локальных клиентов в Supabase?',
         migrateDone: 'Локальные данные загружены в Supabase.',
         migrateEmpty: 'Нет локальных данных для загрузки.',
+        contactHelpSuffix: 'Проверьте телефон и позвоните или отправьте SMS напрямую. Messaging API не используется.',
+        noContactTargetsTitle: 'В этом списке нет клиентов.',
+        noContactTargetsBody: 'Выберите другую карточку панели.',
+        callButton: 'Звонок',
+        smsButton: 'SMS',
+        callAria: 'Позвонить {name}',
+        smsAria: 'SMS {name}',
+        smsPreviewPrefix: 'SMS:',
+        smsAbsent: 'Здравствуйте! Зал [Sweat Manager]: вы не были {days} дн.',
+        smsToday: 'Здравствуйте! Зал [Sweat Manager]: подтверждение посещения сегодня.',
+        smsExpired: 'Здравствуйте! Зал [Sweat Manager]: абонемент истёк {days} дн. назад. Продлите, пожалуйста.',
+        smsDueToday: 'Здравствуйте! Зал [Sweat Manager]: абонемент заканчивается сегодня.',
+        smsDueSoon: 'Здравствуйте! Зал [Sweat Manager]: абонемент заканчивается через {days} дн.',
+        newPasswordPrompt: 'Введите новый пароль (от 6 символов)',
+        passwordUpdated: 'Пароль обновлён.',
+        gymFallbackName: 'Зал',
+        authGymNamePlaceholder: 'напр. Boxing Club',
+        authOwnerNamePlaceholder: 'Имя владельца',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: 'от 6 символов',
         storageInfoButton: 'Как хранятся данные',
         jsonBackupButton: 'JSON копия',
         jsonRestoreButton: 'JSON восстановление',
@@ -1954,15 +2034,15 @@
         saveButton: 'Сохранить',
         withdrawButton: 'Удалить клиента',
         storageModalTitle: 'Как хранятся данные',
-        storageNotice1Title: 'Приложение использует локальное хранение без входа.',
-        storageNotice1Body: 'Данные клиентов хранятся в localStorage текущего устройства и браузера, не на сервере.',
-        storageNotice2Title: 'Данные не синхронизируются автоматически между устройствами и браузерами.',
-        storageNotice2Item1: 'Данные, введенные в Safari на iPhone, остаются только в Safari на iPhone.',
-        storageNotice2Item2: 'На ПК, другом телефоне или другом браузере используйте восстановление JSON.',
-        storageNotice2Item3: 'Данные могут исчезнуть при очистке данных браузера или смене устройства.',
-        storageNotice3Title: 'Используйте JSON-копии для защиты данных.',
-        storageNotice3Item1: 'JSON копия: сохраняет текущие данные клиентов/посещений/PT/заметок в файл.',
-        storageNotice3Item2: 'JSON восстановление: загружает ранее сохраненный файл копии.',
+        storageNotice1Title: 'Данные разделены по аккаунту зала.',
+        storageNotice1Body: 'Клиенты и посещения хранятся в Supabase. RLS блокирует чужие залы.',
+        storageNotice2Title: 'Один аккаунт синхронизируется на устройствах.',
+        storageNotice2Item1: 'Войдите с тем же email на ПК, телефоне или планшете.',
+        storageNotice2Item2: 'Если есть старые localStorage-данные, загрузите их один раз ниже.',
+        storageNotice2Item3: 'Забыли пароль? Используйте сброс на экране входа.',
+        storageNotice3Title: 'JSON-копия — дополнительная защита.',
+        storageNotice3Item1: 'JSON копия: сохраняет клиентов/посещения/PT/заметки в файл.',
+        storageNotice3Item2: 'JSON восстановление: заменяет данные Supabase файлом.',
         storageNotice3Item3: 'Храните копии в безопасном месте, например iCloud Drive или Google Drive.',
         dontShowStorageInfo: 'Не показывать это руководство автоматически в следующий раз',
         backupNowButton: 'Сделать JSON копию',
@@ -2094,6 +2174,26 @@
         migrateConfirm: 'Локал гишүүн {count}-г Supabase руу байршуулах уу?',
         migrateDone: 'Локал өгөгдлийг Supabase руу байршууллаа.',
         migrateEmpty: 'Байршуулах локал өгөгдөл алга.',
+        contactHelpSuffix: 'Утасны дугаарыг шалгаад шууд залгах эсвэл SMS илгээнэ. Messaging API ашиглахгүй.',
+        noContactTargetsTitle: 'Энэ жагсаалтад гишүүн алга.',
+        noContactTargetsBody: 'Өөр самбарын картыг сонгоно уу.',
+        callButton: 'Залгах',
+        smsButton: 'SMS',
+        callAria: '{name}-д залгах',
+        smsAria: '{name}-д SMS',
+        smsPreviewPrefix: 'SMS:',
+        smsAbsent: 'Сайн байна уу [Sweat Manager] гимнази: {days} хоног ирээгүй байна.',
+        smsToday: 'Сайн байна уу [Sweat Manager] гимнази: өнөөдрийн ирцийг баталгаажуулж байна.',
+        smsExpired: 'Сайн байна уу [Sweat Manager] гимнази: эрх {days} хоногийн өмнө дууссан. дахин бүртгүүлнэ үү.',
+        smsDueToday: 'Сайн байна уу [Sweat Manager] гимнази: эрх өнөөдөр дуусна.',
+        smsDueSoon: 'Сайн байна уу [Sweat Manager] гимнази: эрх {days} хоногийн дараа дуусна.',
+        newPasswordPrompt: 'Шинэ нууц үг оруулна уу (6+ тэмдэгт)',
+        passwordUpdated: 'Нууц үг шинэчлэгдлээ.',
+        gymFallbackName: 'Гимнази',
+        authGymNamePlaceholder: 'ж: Downtown Boxing',
+        authOwnerNamePlaceholder: 'Эзэмшигчийн нэр',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '6+ тэмдэгт',
         storageInfoButton: 'Хадгалалтын заавар',
         jsonBackupButton: 'JSON нөөц',
         jsonRestoreButton: 'JSON сэргээх',
@@ -2103,16 +2203,16 @@
         saveButton: 'Хадгалах',
         withdrawButton: 'Гишүүн хасах',
         storageModalTitle: 'Өгөгдөл хэрхэн хадгалагдах вэ',
-        storageNotice1Title: 'Энэ апп нэвтрэлтгүй локал хадгалалт ашиглана.',
-        storageNotice1Body: 'Гишүүний өгөгдөл серверт биш, одоогийн төхөөрөмж ба браузерын localStorage-д хадгалагдана.',
-        storageNotice2Title: 'Өгөгдөл төхөөрөмж/браузер хооронд автоматаар хуваалцагдахгүй.',
-        storageNotice2Item1: 'iPhone Safari-д оруулсан өгөгдөл зөвхөн iPhone Safari-д үлдэнэ.',
-        storageNotice2Item2: 'PC, өөр утас, өөр браузерт JSON сэргээх хэрэгтэй.',
-        storageNotice2Item3: 'Браузерын өгөгдөл устгах эсвэл төхөөрөмж солиход өгөгдөл алдагдаж болно.',
-        storageNotice3Title: 'Өгөгдлөө хамгаалахын тулд JSON нөөц ашиглаарай.',
-        storageNotice3Item1: 'JSON нөөц: одоогийн гишүүн/ирц/PT/тэмдэглэлийн өгөгдлийг файл болгож хадгална.',
-        storageNotice3Item2: 'JSON сэргээх: өмнө хадгалсан нөөц файлыг дахин ачаална.',
-        storageNotice3Item3: 'Нөөц файлыг iCloud Drive эсвэл Google Drive зэрэг аюулгүй газар хадгалахыг зөвлөж байна.',
+        storageNotice1Title: 'Өгөгдөл нэвтэрсэн гимназийн бүртгэлээр тусгаарлагдана.',
+        storageNotice1Body: 'Гишүүн/ирц Supabase-д хадгалагдана. RLS бусад гимназийн өгөгдлийг хаах болно.',
+        storageNotice2Title: 'Ижил бүртгэл төхөөрөмж хооронд синк хийнэ.',
+        storageNotice2Item1: 'PC, утас, таблет дээр ижил и-мэйлээр нэвтэрнэ үү.',
+        storageNotice2Item2: 'Хуучин localStorage өгөгдөл байвал доор нэг удаа байршуулна.',
+        storageNotice2Item3: 'Нууц үг мартсан бол нэвтрэх дэлгэцийн сэргээлтийг ашиглана.',
+        storageNotice3Title: 'JSON нөөц нь нэмэлт хамгаалалт.',
+        storageNotice3Item1: 'JSON нөөц: гишүүн/ирц/PT/тэмдэглэлийг файлд хадгална.',
+        storageNotice3Item2: 'JSON сэргээх: Supabase өгөгдлийг файлаар солино.',
+        storageNotice3Item3: 'Нөөцийг iCloud Drive эсвэл Google Drive зэрэг аюулгүй газарт хадгална.',
         dontShowStorageInfo: 'Дараагийн удаа энэ зааврыг автоматаар харуулахгүй',
         backupNowButton: 'Одоо JSON нөөцлөх',
         confirmStorageInfo: 'Ойлголоо',
@@ -2243,6 +2343,26 @@
         migrateConfirm: '将本地 {count} 名会员上传到 Supabase？',
         migrateDone: '本地数据已上传到 Supabase。',
         migrateEmpty: '没有可上传的本地数据。',
+        contactHelpSuffix: '确认电话后直接拨打或发送短信。不使用短信 API。',
+        noContactTargetsTitle: '此列表没有会员。',
+        noContactTargetsBody: '请选择其他看板卡片。',
+        callButton: '电话',
+        smsButton: '短信',
+        callAria: '给 {name} 打电话',
+        smsAria: '给 {name} 发短信',
+        smsPreviewPrefix: '短信:',
+        smsAbsent: '您好，[Sweat Manager] 健身房提醒：您已 {days} 天未到访。',
+        smsToday: '您好，[Sweat Manager] 健身房：确认今日出勤。',
+        smsExpired: '您好，[Sweat Manager] 健身房：会员已过期 {days} 天，请续费。',
+        smsDueToday: '您好，[Sweat Manager] 健身房：会员今天到期。',
+        smsDueSoon: '您好，[Sweat Manager] 健身房：会员将在 {days} 天后到期。',
+        newPasswordPrompt: '请输入新密码（至少6位）',
+        passwordUpdated: '密码已更新。',
+        gymFallbackName: '健身房',
+        authGymNamePlaceholder: '例如：市中心拳馆',
+        authOwnerNamePlaceholder: '负责人姓名',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '至少6位',
         storageInfoButton: '存储方式说明',
         jsonBackupButton: 'JSON备份',
         jsonRestoreButton: 'JSON恢复',
@@ -2252,16 +2372,16 @@
         saveButton: '保存',
         withdrawButton: '会员退会',
         storageModalTitle: '数据存储方式说明',
-        storageNotice1Title: '本应用无需登录，使用本地存储。',
-        storageNotice1Body: '会员信息不会存到服务器，而是保存在当前设备和浏览器的localStorage中。',
-        storageNotice2Title: '即使网址相同，不同设备/浏览器之间也不会自动共享数据。',
-        storageNotice2Item1: '在iPhone Safari输入的数据只保存在该iPhone Safari中。',
-        storageNotice2Item2: '在电脑、其他手机或其他浏览器上需要使用JSON恢复。',
-        storageNotice2Item3: '清除浏览器数据或更换设备时，数据可能会消失。',
-        storageNotice3Title: '请务必使用JSON备份保护数据。',
-        storageNotice3Item1: 'JSON备份：将当前会员/出勤/PT/备注数据保存为文件。',
-        storageNotice3Item2: 'JSON恢复：重新导入已保存的备份文件。',
-        storageNotice3Item3: '建议将备份文件保存在iCloud Drive或Google Drive等安全位置。',
+        storageNotice1Title: '数据按已登录健身房账号隔离。',
+        storageNotice1Body: '会员和出勤保存在 Supabase。RLS 阻止其他健身房读取你的数据。',
+        storageNotice2Title: '同一账号可在多设备同步。',
+        storageNotice2Item1: '在电脑、手机或平板用同一邮箱登录。',
+        storageNotice2Item2: '如果还有旧的浏览器 localStorage 数据，请在下方上传一次。',
+        storageNotice2Item3: '忘记密码？请使用登录页的密码重置。',
+        storageNotice3Title: 'JSON 备份是额外保障。',
+        storageNotice3Item1: 'JSON备份：将会员/出勤/PT/备注保存为文件。',
+        storageNotice3Item2: 'JSON恢复：用备份文件替换 Supabase 数据。',
+        storageNotice3Item3: '请将备份保存在 iCloud Drive 或 Google Drive 等安全位置。',
         dontShowStorageInfo: '下次访问时不再自动显示此说明',
         backupNowButton: '立即JSON备份',
         confirmStorageInfo: '我已了解',
@@ -2392,6 +2512,26 @@
         migrateConfirm: '{count} लोकल सदस्यों को Supabase पर अपलोड करें?',
         migrateDone: 'लोकल डेटा Supabase पर अपलोड हो गया।',
         migrateEmpty: 'अपलोड करने के लिए लोकल डेटा नहीं है।',
+        contactHelpSuffix: 'फोन नंबर देखकर सीधे कॉल या SMS करें। मैसेजिंग API उपयोग नहीं होता।',
+        noContactTargetsTitle: 'इस सूची में कोई सदस्य नहीं।',
+        noContactTargetsBody: 'कोई अन्य डैशबोर्ड कार्ड चुनें।',
+        callButton: 'कॉल',
+        smsButton: 'SMS',
+        callAria: '{name} को कॉल',
+        smsAria: '{name} को SMS',
+        smsPreviewPrefix: 'SMS:',
+        smsAbsent: 'नमस्ते [Sweat Manager] जिम — आप {days} दिनों से नहीं आए।',
+        smsToday: 'नमस्ते [Sweat Manager] जिम — आज की उपस्थिति की पुष्टि।',
+        smsExpired: 'नमस्ते [Sweat Manager] जिम — मेंबरशिप {days} दिन पहले खत्म हो गई। कृपया रिन्यू करें।',
+        smsDueToday: 'नमस्ते [Sweat Manager] जिम — मेंबरशिप आज खत्म हो रही है।',
+        smsDueSoon: 'नमस्ते [Sweat Manager] जिम — मेंबरशिप {days} दिन में खत्म होगी।',
+        newPasswordPrompt: 'नया पासवर्ड दर्ज करें (6+ अक्षर)',
+        passwordUpdated: 'पासवर्ड अपडेट हो गया।',
+        gymFallbackName: 'जिम',
+        authGymNamePlaceholder: 'उदा. Downtown Boxing',
+        authOwnerNamePlaceholder: 'मालिक का नाम',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '6+ अक्षर',
         storageInfoButton: 'स्टोरेज गाइड',
         jsonBackupButton: 'JSON बैकअप',
         jsonRestoreButton: 'JSON रिस्टोर',
@@ -2401,16 +2541,16 @@
         saveButton: 'सेव करें',
         withdrawButton: 'सदस्य हटाएं',
         storageModalTitle: 'डेटा कैसे सेव होता है',
-        storageNotice1Title: 'यह ऐप लॉगिन के बिना लोकल स्टोरेज का उपयोग करता है।',
-        storageNotice1Body: 'सदस्य डेटा सर्वर पर नहीं, वर्तमान डिवाइस और ब्राउजर के localStorage में सेव होता है।',
-        storageNotice2Title: 'एक ही पते पर भी डेटा अलग डिवाइस/ब्राउजर में अपने आप साझा नहीं होता।',
-        storageNotice2Item1: 'iPhone Safari में डाला गया डेटा केवल उसी iPhone Safari में रहता है।',
-        storageNotice2Item2: 'PC, दूसरे फोन या दूसरे ब्राउजर पर JSON रिस्टोर की जरूरत होगी।',
-        storageNotice2Item3: 'ब्राउजर डेटा हटाने या डिवाइस बदलने पर डेटा गायब हो सकता है।',
-        storageNotice3Title: 'डेटा सुरक्षित रखने के लिए JSON बैकअप जरूर इस्तेमाल करें।',
-        storageNotice3Item1: 'JSON बैकअप: वर्तमान सदस्य/उपस्थिति/PT/नोट डेटा को फाइल में सेव करता है।',
-        storageNotice3Item2: 'JSON रिस्टोर: सेव की गई बैकअप फाइल को वापस लोड करता है।',
-        storageNotice3Item3: 'बैकअप फाइल को iCloud Drive या Google Drive जैसी सुरक्षित जगह पर रखें।',
+        storageNotice1Title: 'डेटा लॉगिन किए जिम अकाउंट के अनुसार अलग रहता है।',
+        storageNotice1Body: 'सदस्य और उपस्थिति Supabase में सेव होते हैं। RLS अन्य जिम का डेटा ब्लॉक करता है।',
+        storageNotice2Title: 'एक ही अकाउंट डिवाइस पर सिंक होता है।',
+        storageNotice2Item1: 'PC, फोन या टैबलेट पर उसी ईमेल से लॉगिन करें।',
+        storageNotice2Item2: 'अगर पुराना localStorage डेटा है, तो नीचे एक बार अपलोड करें।',
+        storageNotice2Item3: 'पासवर्ड भूल गए? लॉगिन स्क्रीन पर रीसेट उपयोग करें।',
+        storageNotice3Title: 'JSON बैकअप अतिरिक्त सुरक्षा है।',
+        storageNotice3Item1: 'JSON बैकअप: सदस्य/उपस्थिति/PT/नोट को फाइल में सेव करता है।',
+        storageNotice3Item2: 'JSON रिस्टोर: बैकअप फाइल से Supabase डेटा बदलता है।',
+        storageNotice3Item3: 'बैकअप को iCloud Drive या Google Drive जैसी सुरक्षित जगह पर रखें।',
         dontShowStorageInfo: 'अगली बार यह गाइड अपने आप न दिखाएं',
         backupNowButton: 'अभी JSON बैकअप',
         confirmStorageInfo: 'समझ गया',
@@ -2541,6 +2681,26 @@
         migrateConfirm: 'Importer {count} membres locaux vers Supabase ?',
         migrateDone: 'Données locales importées vers Supabase.',
         migrateEmpty: 'Aucune donnée locale à importer.',
+        contactHelpSuffix: 'Vérifiez le numéro puis appelez ou envoyez un SMS directement. Aucune API de messagerie.',
+        noContactTargetsTitle: 'Aucun membre dans cette liste.',
+        noContactTargetsBody: 'Sélectionnez une autre carte du tableau.',
+        callButton: 'Appeler',
+        smsButton: 'SMS',
+        callAria: 'Appeler {name}',
+        smsAria: 'SMS {name}',
+        smsPreviewPrefix: 'SMS :',
+        smsAbsent: 'Bonjour [Sweat Manager] : cela fait {days} jours sans visite.',
+        smsToday: 'Bonjour [Sweat Manager] : confirmation de présence aujourd’hui.',
+        smsExpired: 'Bonjour [Sweat Manager] : l’abonnement a expiré il y a {days} jours. Merci de renouveler.',
+        smsDueToday: 'Bonjour [Sweat Manager] : l’abonnement expire aujourd’hui.',
+        smsDueSoon: 'Bonjour [Sweat Manager] : l’abonnement expire dans {days} jours.',
+        newPasswordPrompt: 'Entrez un nouveau mot de passe (6+ caractères)',
+        passwordUpdated: 'Mot de passe mis à jour.',
+        gymFallbackName: 'Salle',
+        authGymNamePlaceholder: 'ex. Boxing Centre',
+        authOwnerNamePlaceholder: 'Nom du responsable',
+        authEmailPlaceholder: 'owner@example.com',
+        authPasswordPlaceholder: '6+ caractères',
         storageInfoButton: 'Guide de stockage',
         jsonBackupButton: 'Sauvegarde JSON',
         jsonRestoreButton: 'Restauration JSON',
@@ -2550,16 +2710,16 @@
         saveButton: 'Enregistrer',
         withdrawButton: 'Retirer le membre',
         storageModalTitle: 'Comment les données sont stockées',
-        storageNotice1Title: 'Cette application utilise un stockage local sans connexion.',
-        storageNotice1Body: 'Les données des membres sont stockées dans le localStorage de l’appareil et du navigateur actuels, pas sur un serveur.',
-        storageNotice2Title: 'Les données ne sont pas partagées automatiquement entre appareils ou navigateurs.',
-        storageNotice2Item1: 'Les données saisies dans Safari sur iPhone restent uniquement dans Safari sur cet iPhone.',
-        storageNotice2Item2: 'Sur un PC, un autre téléphone ou un autre navigateur, utilisez la restauration JSON.',
-        storageNotice2Item3: 'Les données peuvent disparaître si les données du navigateur sont effacées ou si vous changez d’appareil.',
-        storageNotice3Title: 'Utilisez la sauvegarde JSON pour protéger vos données.',
-        storageNotice3Item1: 'Sauvegarde JSON : enregistre les données membres/présences/PT/notes dans un fichier.',
-        storageNotice3Item2: 'Restauration JSON : recharge un fichier de sauvegarde enregistré.',
-        storageNotice3Item3: 'Conservez les fichiers de sauvegarde dans un endroit sûr comme iCloud Drive ou Google Drive.',
+        storageNotice1Title: 'Les données sont isolées par compte de salle.',
+        storageNotice1Body: 'Membres et présences sont stockés dans Supabase. RLS bloque les autres salles.',
+        storageNotice2Title: 'Le même compte se synchronise entre appareils.',
+        storageNotice2Item1: 'Connectez-vous avec le même e-mail sur PC, téléphone ou tablette.',
+        storageNotice2Item2: 'S’il reste d’anciennes données localStorage, importez-les une fois ci-dessous.',
+        storageNotice2Item3: 'Mot de passe oublié ? Utilisez la réinitialisation sur l’écran de connexion.',
+        storageNotice3Title: 'La sauvegarde JSON est une sécurité supplémentaire.',
+        storageNotice3Item1: 'Sauvegarde JSON : enregistre membres/présences/PT/notes dans un fichier.',
+        storageNotice3Item2: 'Restauration JSON : remplace les données Supabase par le fichier.',
+        storageNotice3Item3: 'Conservez les sauvegardes dans un endroit sûr comme iCloud Drive ou Google Drive.',
         dontShowStorageInfo: 'Ne plus afficher automatiquement ce guide la prochaine fois',
         backupNowButton: 'Sauvegarder JSON maintenant',
         confirmStorageInfo: 'J’ai compris',
@@ -2783,7 +2943,7 @@
       document.getElementById('appShell').hidden = false;
       const gym = SweatManagerDB.getGym();
       const user = SweatManagerDB.getUser();
-      document.getElementById('gymNameLabel').textContent = gym?.name || t('authTitle');
+      document.getElementById('gymNameLabel').textContent = gym?.name || t('gymFallbackName');
       document.getElementById('accountEmailLabel').textContent = user?.email || '';
     }
 
@@ -2830,11 +2990,11 @@
 
       SweatManagerDB.onAuthStateChange(async (event, session) => {
         if (event === 'PASSWORD_RECOVERY' && session?.user) {
-          const nextPassword = window.prompt('새 비밀번호를 입력하세요 (6자 이상)');
+          const nextPassword = window.prompt(t('newPasswordPrompt'));
           if (nextPassword && nextPassword.length >= 6) {
             try {
               await SweatManagerDB.updatePassword(nextPassword);
-              showToast('비밀번호가 변경되었습니다.');
+              showToast(t('passwordUpdated'));
             } catch (error) {
               showToast(error.message || String(error), 'warning');
             }
@@ -3158,13 +3318,13 @@
       document.getElementById('dashboardContactTitle').textContent =
         `${getDashboardLabel(activeDashboardKey)} · ${t('countPeople', { count: targets.length })}`;
       document.getElementById('dashboardContactSubtitle').textContent =
-        `${getDashboardHint(activeDashboardKey)} / 전화번호 확인 후 전화 또는 SMS 아이콘으로 직접 연락합니다. 문자 API는 사용하지 않습니다.`;
+        `${getDashboardHint(activeDashboardKey)} / ${t('contactHelpSuffix')}`;
 
       if (targets.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <strong>대상 회원이 없습니다.</strong>
-            다른 대시보드 카드를 선택해 주세요.
+            <strong>${t('noContactTargetsTitle')}</strong>
+            ${t('noContactTargetsBody')}
           </div>`;
         return;
       }
@@ -3189,22 +3349,22 @@
       const daysUntilExpiry = getDaysUntilExpiry(member);
 
       if (dashboardKey === 'absent') {
-        return `안녕하세요 [스웨트매니저] 체육관 ${getDaysSinceLastVisit(member)}일 미방문 알림드립니다.`;
+        return t('smsAbsent', { days: getDaysSinceLastVisit(member) });
       }
 
       if (dashboardKey === 'today') {
-        return '안녕하세요 [스웨트매니저] 체육관 오늘 출석 확인 안내드립니다.';
+        return t('smsToday');
       }
 
       if (daysUntilExpiry < 0) {
-        return `안녕하세요 [스웨트매니저] 체육관 만기일이 ${Math.abs(daysUntilExpiry)}일 지났습니다. 재등록 안내드립니다.`;
+        return t('smsExpired', { days: Math.abs(daysUntilExpiry) });
       }
 
       if (daysUntilExpiry === 0) {
-        return '안녕하세요 [스웨트매니저] 체육관 만기일 당일 알림드립니다.';
+        return t('smsDueToday');
       }
 
-      return `안녕하세요 [스웨트매니저] 체육관 만기일 ${daysUntilExpiry}일 전 알림드립니다.`;
+      return t('smsDueSoon', { days: daysUntilExpiry });
     }
 
     function dashboardContactCardTemplate(member, dashboardKey) {
@@ -3225,16 +3385,16 @@
               <span>${t('expiryPrefix')} ${formatDateOnly(member.expireDate)}</span>
               <span>${t('lastPrefix')} ${formatDateOnly(member.lastVisit)}</span>
             </div>
-            <div class="sms-preview">SMS: ${escapeHtml(smsMessage)}</div>
+            <div class="sms-preview">${t('smsPreviewPrefix')} ${escapeHtml(smsMessage)}</div>
           </div>
           <div class="contact-actions">
-            <a class="contact-action call" href="tel:${phoneHref}" aria-label="${escapeHtml(member.name)} 전화">
+            <a class="contact-action call" href="tel:${phoneHref}" aria-label="${escapeHtml(t('callAria', { name: member.name }))}">
               <span class="contact-icon">📞</span>
-              <span>전화</span>
+              <span>${t('callButton')}</span>
             </a>
-            <a class="contact-action sms" href="${smsHref}" aria-label="${escapeHtml(member.name)} SMS">
+            <a class="contact-action sms" href="${smsHref}" aria-label="${escapeHtml(t('smsAria', { name: member.name }))}">
               <span class="contact-icon">💬</span>
-              <span>SMS</span>
+              <span>${t('smsButton')}</span>
             </a>
           </div>
         </article>`;
