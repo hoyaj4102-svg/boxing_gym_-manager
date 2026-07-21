@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v5';
+const CACHE_VERSION = 'sweat-manager-v6-supabase';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -7,7 +7,9 @@ const APP_SHELL = [
   '/app-icon.svg',
   '/app-icon-180.png',
   '/app-icon-192.png',
-  '/app-icon-512.png'
+  '/app-icon-512.png',
+  '/js/config.js',
+  '/js/supabase-service.js'
 ];
 
 self.addEventListener('install', event => {
@@ -35,6 +37,7 @@ self.addEventListener('fetch', event => {
 
   if (request.method !== 'GET') return;
 
+  // Always network-first for app shell and config so auth settings update quickly.
   event.respondWith(
     fetch(request)
       .then(response => {

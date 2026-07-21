@@ -339,6 +339,146 @@
 
     .panel-body { padding: 16px; }
 
+    .auth-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px max(16px, env(safe-area-inset-left)) calc(24px + var(--safe-bottom)) max(16px, env(safe-area-inset-right));
+    }
+
+    .auth-gate[hidden],
+    .app[hidden] {
+      display: none !important;
+    }
+
+    .auth-card {
+      width: min(440px, 100%);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 4px);
+      background:
+        radial-gradient(circle at top right, rgba(239, 68, 68, .18), transparent 42%),
+        linear-gradient(160deg, rgba(32, 42, 60, .98), rgba(15, 20, 32, .98));
+      box-shadow: var(--shadow);
+      padding: 28px 22px;
+    }
+
+    .auth-card .brand {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .auth-card h1 {
+      font-size: clamp(1.6rem, 6vw, 2.1rem);
+      letter-spacing: -.04em;
+      margin-bottom: 8px;
+    }
+
+    .auth-card .lead {
+      color: var(--text-muted);
+      font-size: .9rem;
+      margin-bottom: 18px;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .auth-tab {
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .03);
+      color: var(--text-muted);
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .auth-tab.active {
+      color: var(--text);
+      border-color: rgba(239, 68, 68, .55);
+      background: rgba(239, 68, 68, .16);
+    }
+
+    .auth-form .field { margin-bottom: 12px; }
+
+    .auth-form label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    .auth-form input {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(8, 11, 17, .55);
+      color: var(--text);
+      outline: none;
+    }
+
+    .auth-form input:focus {
+      border-color: rgba(239, 68, 68, .55);
+    }
+
+    .auth-form .btn {
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .auth-message {
+      margin-top: 12px;
+      color: var(--text-muted);
+      font-size: .82rem;
+      min-height: 1.2em;
+    }
+
+    .auth-message.error { color: var(--danger); }
+    .auth-message.success { color: var(--success); }
+
+    .signup-only[hidden],
+    .login-only[hidden],
+    .reset-only[hidden] {
+      display: none !important;
+    }
+
+    .account-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, .09);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .04);
+      max-width: 220px;
+    }
+
+    .account-pill strong {
+      font-size: .78rem;
+      line-height: 1.2;
+    }
+
+    .account-pill span {
+      color: var(--text-muted);
+      font-size: .68rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
     .renewal-panel {
       border-color: rgba(239, 68, 68, .42);
       background: linear-gradient(180deg, rgba(42, 25, 36, .96), rgba(21, 27, 41, .94));
@@ -872,8 +1012,20 @@
       }
 
       .header-actions {
-        align-items: flex-start;
+        align-items: stretch;
         margin-top: 12px;
+      }
+
+      .language-select,
+      .today-pill,
+      .account-pill,
+      #signOutButton {
+        width: 100%;
+        max-width: none;
+      }
+
+      .account-pill {
+        align-items: flex-start;
       }
 
       .today-pill {
@@ -923,7 +1075,49 @@
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="auth-gate" id="authGate">
+    <div class="auth-card">
+      <div class="brand">Sweat Manager SaaS</div>
+      <h1 data-i18n="authTitle">체육관 로그인</h1>
+      <p class="lead" data-i18n="authLead">체육관 계정으로 로그인하면 회원 데이터가 안전하게 분리 저장됩니다.</p>
+
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" data-auth-tab="login" data-i18n="authTabLogin">로그인</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup" data-i18n="authTabSignup">회원가입</button>
+        <button type="button" class="auth-tab" data-auth-tab="reset" data-i18n="authTabReset">비밀번호</button>
+      </div>
+
+      <form id="authForm" class="auth-form">
+        <div class="field signup-only" hidden>
+          <label for="authGymName" data-i18n="authGymNameLabel">체육관 이름</label>
+          <input type="text" id="authGymName" autocomplete="organization" placeholder="예: 강남 복싱짐">
+        </div>
+        <div class="field signup-only" hidden>
+          <label for="authOwnerName" data-i18n="authOwnerNameLabel">대표자 이름</label>
+          <input type="text" id="authOwnerName" autocomplete="name" placeholder="홍길동">
+        </div>
+        <div class="field signup-only" hidden>
+          <label for="authGymPhone" data-i18n="authGymPhoneLabel">체육관 연락처</label>
+          <input type="tel" id="authGymPhone" autocomplete="tel" placeholder="010-0000-0000">
+        </div>
+        <div class="field">
+          <label for="authEmail" data-i18n="authEmailLabel">이메일</label>
+          <input type="email" id="authEmail" autocomplete="email" required placeholder="owner@example.com">
+        </div>
+        <div class="field login-only signup-only">
+          <label for="authPassword" data-i18n="authPasswordLabel">비밀번호</label>
+          <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상">
+        </div>
+        <div class="field reset-only" hidden>
+          <p class="lead" style="margin:0;" data-i18n="authResetHelp">가입한 이메일로 비밀번호 재설정 링크를 보냅니다.</p>
+        </div>
+        <button type="submit" class="btn btn-primary" id="authSubmitButton" data-i18n="authSubmitLogin">로그인</button>
+      </form>
+      <p class="auth-message" id="authMessage"></p>
+    </div>
+  </div>
+
+  <div class="app" id="appShell" hidden>
     <header>
       <div>
         <div class="eyebrow" data-i18n="eyebrow">Renewal First Operation</div>
@@ -941,6 +1135,11 @@
           <option value="hi">हिन्दी</option>
           <option value="fr">Français</option>
         </select>
+        <div class="account-pill">
+          <strong id="gymNameLabel">체육관</strong>
+          <span id="accountEmailLabel">-</span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="signOutButton" data-i18n="signOutButton">로그아웃</button>
         <div class="today-pill" id="todayLabel">오늘</div>
       </div>
     </header>
@@ -1114,35 +1313,36 @@
           <div class="panel-header">
             <div>
               <h2 data-i18n="dataTitle">데이터 관리</h2>
-              <p class="panel-subtitle" data-i18n="dataSubtitle">localStorage 저장을 유지하고 JSON으로 백업/복원합니다.</p>
+              <p class="panel-subtitle" data-i18n="dataSubtitle">Supabase에 저장되며 JSON으로 백업/복원할 수 있습니다.</p>
             </div>
           </div>
           <div class="panel-body">
             <div class="storage-notice">
               <div class="notice-card">
-                <strong data-i18n="storageNotice1Title">이 앱은 로그인 없이 사용하는 로컬 저장 방식입니다.</strong>
-                <p data-i18n="storageNotice1Body">회원 정보는 서버가 아니라 현재 사용 중인 기기와 브라우저의 localStorage에 저장됩니다.</p>
+                <strong data-i18n="storageNotice1Title">로그인한 체육관 계정 기준으로 데이터가 분리됩니다.</strong>
+                <p data-i18n="storageNotice1Body">회원/출석 정보는 Supabase Database에 저장되며, RLS로 다른 체육관 데이터는 조회할 수 없습니다.</p>
               </div>
               <div class="notice-card">
-                <strong data-i18n="storageNotice2Title">같은 주소라도 기기/브라우저가 다르면 데이터가 자동 공유되지 않습니다.</strong>
+                <strong data-i18n="storageNotice2Title">여러 기기에서 같은 계정으로 로그인하면 데이터가 동기화됩니다.</strong>
                 <ul>
-                  <li data-i18n="storageNotice2Item1">아이폰 Safari에 입력한 데이터는 아이폰 Safari에만 남습니다.</li>
-                  <li data-i18n="storageNotice2Item2">PC, 다른 휴대폰, 다른 브라우저에서는 JSON 복원이 필요합니다.</li>
-                  <li data-i18n="storageNotice2Item3">브라우저 데이터 삭제 또는 기기 변경 시 데이터가 사라질 수 있습니다.</li>
+                  <li data-i18n="storageNotice2Item1">PC, 휴대폰, 태블릿에서 동일한 이메일로 로그인하세요.</li>
+                  <li data-i18n="storageNotice2Item2">이전 브라우저 localStorage 데이터가 있으면 아래에서 한 번 업로드할 수 있습니다.</li>
+                  <li data-i18n="storageNotice2Item3">비밀번호를 잊어버리면 로그인 화면의 비밀번호 재설정을 사용하세요.</li>
                 </ul>
               </div>
               <div class="notice-card">
-                <strong data-i18n="storageNotice3Title">데이터 보전을 위해 JSON 백업을 꼭 사용해 주세요.</strong>
+                <strong data-i18n="storageNotice3Title">JSON 백업은 추가 안전장치입니다.</strong>
                 <ul>
                   <li data-i18n="storageNotice3Item1">JSON 백업: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.</li>
-                  <li data-i18n="storageNotice3Item2">JSON 복원: 저장해 둔 백업 파일을 다시 불러옵니다.</li>
-                  <li data-i18n="storageNotice3Item3">백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하는 것을 권장합니다.</li>
+                  <li data-i18n="storageNotice3Item2">JSON 복원: 백업 파일로 Supabase 데이터를 교체합니다.</li>
+                  <li data-i18n="storageNotice3Item3">백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하세요.</li>
                 </ul>
               </div>
             </div>
             <div class="backup-actions">
               <button type="button" class="btn btn-ghost" onclick="exportData()" data-i18n="jsonBackupButton">JSON 백업</button>
               <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()" data-i18n="jsonRestoreButton">JSON 복원</button>
+              <button type="button" class="btn btn-primary" id="migrateLocalButton" data-i18n="migrateLocalButton">로컬 데이터 업로드</button>
               <input type="file" id="importFile" accept=".json,application/json" hidden>
             </div>
           </div>
@@ -1215,8 +1415,11 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/supabase-service.js"></script>
   <script>
-    const STORAGE_KEY = 'boxing_gym_members';
+    const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
     const DAY_MS = 24 * 60 * 60 * 1000;
     const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
@@ -1268,7 +1471,33 @@
         absent14Tag: '14일 이상',
         absent30Tag: '30일 이상',
         dataTitle: '데이터 관리',
-        dataSubtitle: 'localStorage 저장을 유지하고 JSON으로 백업/복원합니다.',
+        dataSubtitle: 'Supabase에 저장되며 JSON으로 백업/복원할 수 있습니다.',
+        authTitle: '체육관 로그인',
+        authLead: '체육관 계정으로 로그인하면 회원 데이터가 안전하게 분리 저장됩니다.',
+        authTabLogin: '로그인',
+        authTabSignup: '회원가입',
+        authTabReset: '비밀번호',
+        authGymNameLabel: '체육관 이름',
+        authOwnerNameLabel: '대표자 이름',
+        authGymPhoneLabel: '체육관 연락처',
+        authEmailLabel: '이메일',
+        authPasswordLabel: '비밀번호',
+        authResetHelp: '가입한 이메일로 비밀번호 재설정 링크를 보냅니다.',
+        authSubmitLogin: '로그인',
+        authSubmitSignup: '회원가입',
+        authSubmitReset: '재설정 메일 보내기',
+        signOutButton: '로그아웃',
+        migrateLocalButton: '로컬 데이터 업로드',
+        authConfigMissing: 'Supabase 설정이 필요합니다. js/config.js에 URL과 anon key를 입력하세요.',
+        authLoginSuccess: '로그인되었습니다.',
+        authSignupSuccess: '회원가입이 완료되었습니다. 이메일 확인이 켜져 있으면 메일을 확인해 주세요.',
+        authResetSent: '비밀번호 재설정 메일을 보냈습니다.',
+        authSignedOut: '로그아웃되었습니다.',
+        authNeedFields: '필수 항목을 입력해 주세요.',
+        authLoading: '데이터를 불러오는 중...',
+        migrateConfirm: '현재 브라우저의 로컬 회원 {count}명을 Supabase로 업로드할까요?',
+        migrateDone: '로컬 데이터가 Supabase로 업로드되었습니다.',
+        migrateEmpty: '업로드할 로컬 데이터가 없습니다.',
         storageInfoButton: '저장 방식 안내',
         jsonBackupButton: 'JSON 백업',
         jsonRestoreButton: 'JSON 복원',
@@ -1278,16 +1507,16 @@
         saveButton: '저장',
         withdrawButton: '회원탈퇴',
         storageModalTitle: '데이터 저장 방식 안내',
-        storageNotice1Title: '이 앱은 로그인 없이 사용하는 로컬 저장 방식입니다.',
-        storageNotice1Body: '회원 정보는 서버가 아니라 현재 사용 중인 기기와 브라우저의 localStorage에 저장됩니다.',
-        storageNotice2Title: '같은 주소라도 기기/브라우저가 다르면 데이터가 자동 공유되지 않습니다.',
-        storageNotice2Item1: '아이폰 Safari에 입력한 데이터는 아이폰 Safari에만 남습니다.',
-        storageNotice2Item2: 'PC, 다른 휴대폰, 다른 브라우저에서는 JSON 복원이 필요합니다.',
-        storageNotice2Item3: '브라우저 데이터 삭제 또는 기기 변경 시 데이터가 사라질 수 있습니다.',
-        storageNotice3Title: '데이터 보전을 위해 JSON 백업을 꼭 사용해 주세요.',
+        storageNotice1Title: '로그인한 체육관 계정 기준으로 데이터가 분리됩니다.',
+        storageNotice1Body: '회원/출석 정보는 Supabase Database에 저장되며, RLS로 다른 체육관 데이터는 조회할 수 없습니다.',
+        storageNotice2Title: '여러 기기에서 같은 계정으로 로그인하면 데이터가 동기화됩니다.',
+        storageNotice2Item1: 'PC, 휴대폰, 태블릿에서 동일한 이메일로 로그인하세요.',
+        storageNotice2Item2: '이전 브라우저 localStorage 데이터가 있으면 아래에서 한 번 업로드할 수 있습니다.',
+        storageNotice2Item3: '비밀번호를 잊어버리면 로그인 화면의 비밀번호 재설정을 사용하세요.',
+        storageNotice3Title: 'JSON 백업은 추가 안전장치입니다.',
         storageNotice3Item1: 'JSON 백업: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.',
-        storageNotice3Item2: 'JSON 복원: 저장해 둔 백업 파일을 다시 불러옵니다.',
-        storageNotice3Item3: '백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하는 것을 권장합니다.',
+        storageNotice3Item2: 'JSON 복원: 백업 파일로 Supabase 데이터를 교체합니다.',
+        storageNotice3Item3: '백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하세요.',
         dontShowStorageInfo: '다음 접속부터 이 안내를 자동으로 띄우지 않기',
         backupNowButton: '지금 JSON 백업',
         confirmStorageInfo: '확인했습니다',
@@ -1391,7 +1620,33 @@
         absent14Tag: '14+ days',
         absent30Tag: '30+ days',
         dataTitle: 'Data Management',
-        dataSubtitle: 'Keep localStorage data and back up/restore with JSON.',
+        dataSubtitle: 'Saved in Supabase. Backup/restore with JSON.',
+        authTitle: 'Gym login',
+        authLead: 'Sign in with your gym account. Member data is isolated per gym.',
+        authTabLogin: 'Login',
+        authTabSignup: 'Sign up',
+        authTabReset: 'Password',
+        authGymNameLabel: 'Gym name',
+        authOwnerNameLabel: 'Owner name',
+        authGymPhoneLabel: 'Gym phone',
+        authEmailLabel: 'Email',
+        authPasswordLabel: 'Password',
+        authResetHelp: 'We will send a password reset link to your email.',
+        authSubmitLogin: 'Log in',
+        authSubmitSignup: 'Create account',
+        authSubmitReset: 'Send reset email',
+        signOutButton: 'Log out',
+        migrateLocalButton: 'Upload local data',
+        authConfigMissing: 'Supabase config required. Add URL and anon key in js/config.js.',
+        authLoginSuccess: 'Signed in.',
+        authSignupSuccess: 'Account created. Check email if confirmation is enabled.',
+        authResetSent: 'Password reset email sent.',
+        authSignedOut: 'Signed out.',
+        authNeedFields: 'Please fill in required fields.',
+        authLoading: 'Loading data...',
+        migrateConfirm: 'Upload {count} local members to Supabase?',
+        migrateDone: 'Local data uploaded to Supabase.',
+        migrateEmpty: 'No local data to upload.',
         storageInfoButton: 'Storage guide',
         jsonBackupButton: 'JSON backup',
         jsonRestoreButton: 'JSON restore',
@@ -1401,15 +1656,15 @@
         saveButton: 'Save',
         withdrawButton: 'Withdraw member',
         storageModalTitle: 'How Data Is Stored',
-        storageNotice1Title: 'This app uses local storage without login.',
-        storageNotice1Body: 'Member data is stored in localStorage on the current device and browser, not on a server.',
-        storageNotice2Title: 'Data is not automatically shared across devices or browsers.',
-        storageNotice2Item1: 'Data entered in iPhone Safari stays in iPhone Safari.',
-        storageNotice2Item2: 'On a PC, another phone, or another browser, use JSON restore.',
-        storageNotice2Item3: 'Data may disappear if browser data is cleared or the device is changed.',
-        storageNotice3Title: 'Use JSON backup to protect your data.',
+        storageNotice1Title: 'Data is isolated per signed-in gym account.',
+        storageNotice1Body: 'Members and attendance are stored in Supabase. RLS blocks other gyms from reading your data.',
+        storageNotice2Title: 'The same account syncs across devices.',
+        storageNotice2Item1: 'Sign in with the same email on PC, phone, or tablet.',
+        storageNotice2Item2: 'If old browser localStorage data exists, upload it once below.',
+        storageNotice2Item3: 'Forgot password? Use password reset on the login screen.',
+        storageNotice3Title: 'JSON backup is an extra safety net.',
         storageNotice3Item1: 'JSON backup: saves current member/attendance/PT/note data to a file.',
-        storageNotice3Item2: 'JSON restore: loads a previously saved backup file.',
+        storageNotice3Item2: 'JSON restore: replaces Supabase data with a backup file.',
         storageNotice3Item3: 'Keep backup files somewhere safe such as iCloud Drive or Google Drive.',
         dontShowStorageInfo: 'Do not show this guide automatically next time',
         backupNowButton: 'Back up JSON now',
@@ -1514,7 +1769,33 @@
         absent14Tag: '14+ días',
         absent30Tag: '30+ días',
         dataTitle: 'Gestión de datos',
-        dataSubtitle: 'Mantén los datos en localStorage y haz copia/restauración con JSON.',
+        dataSubtitle: 'Guardado en Supabase. Copia/restauración con JSON.',
+        authTitle: 'Inicio de sesión del gimnasio',
+        authLead: 'Inicia sesión con la cuenta del gimnasio. Los datos se separan por gimnasio.',
+        authTabLogin: 'Entrar',
+        authTabSignup: 'Registro',
+        authTabReset: 'Contraseña',
+        authGymNameLabel: 'Nombre del gimnasio',
+        authOwnerNameLabel: 'Nombre del dueño',
+        authGymPhoneLabel: 'Teléfono del gimnasio',
+        authEmailLabel: 'Correo',
+        authPasswordLabel: 'Contraseña',
+        authResetHelp: 'Enviaremos un enlace para restablecer la contraseña.',
+        authSubmitLogin: 'Iniciar sesión',
+        authSubmitSignup: 'Crear cuenta',
+        authSubmitReset: 'Enviar correo',
+        signOutButton: 'Cerrar sesión',
+        migrateLocalButton: 'Subir datos locales',
+        authConfigMissing: 'Falta la configuración de Supabase en js/config.js.',
+        authLoginSuccess: 'Sesión iniciada.',
+        authSignupSuccess: 'Cuenta creada. Revisa el correo si la confirmación está activa.',
+        authResetSent: 'Correo de restablecimiento enviado.',
+        authSignedOut: 'Sesión cerrada.',
+        authNeedFields: 'Completa los campos obligatorios.',
+        authLoading: 'Cargando datos...',
+        migrateConfirm: '¿Subir {count} miembros locales a Supabase?',
+        migrateDone: 'Datos locales subidos a Supabase.',
+        migrateEmpty: 'No hay datos locales para subir.',
         storageInfoButton: 'Guía de guardado',
         jsonBackupButton: 'Copia JSON',
         jsonRestoreButton: 'Restaurar JSON',
@@ -1637,7 +1918,33 @@
         absent14Tag: '14+ дней',
         absent30Tag: '30+ дней',
         dataTitle: 'Управление данными',
-        dataSubtitle: 'Данные хранятся в localStorage; используйте JSON для копии/восстановления.',
+        dataSubtitle: 'Данные в Supabase. Резервные копии через JSON.',
+        authTitle: 'Вход в зал',
+        authLead: 'Войдите в аккаунт зала. Данные разделены по залам.',
+        authTabLogin: 'Вход',
+        authTabSignup: 'Регистрация',
+        authTabReset: 'Пароль',
+        authGymNameLabel: 'Название зала',
+        authOwnerNameLabel: 'Имя владельца',
+        authGymPhoneLabel: 'Телефон зала',
+        authEmailLabel: 'Email',
+        authPasswordLabel: 'Пароль',
+        authResetHelp: 'Отправим ссылку для сброса пароля на email.',
+        authSubmitLogin: 'Войти',
+        authSubmitSignup: 'Создать аккаунт',
+        authSubmitReset: 'Отправить письмо',
+        signOutButton: 'Выйти',
+        migrateLocalButton: 'Загрузить локальные данные',
+        authConfigMissing: 'Нужна настройка Supabase в js/config.js.',
+        authLoginSuccess: 'Вход выполнен.',
+        authSignupSuccess: 'Аккаунт создан. Проверьте email, если включено подтверждение.',
+        authResetSent: 'Письмо для сброса пароля отправлено.',
+        authSignedOut: 'Вы вышли.',
+        authNeedFields: 'Заполните обязательные поля.',
+        authLoading: 'Загрузка данных...',
+        migrateConfirm: 'Загрузить {count} локальных клиентов в Supabase?',
+        migrateDone: 'Локальные данные загружены в Supabase.',
+        migrateEmpty: 'Нет локальных данных для загрузки.',
         storageInfoButton: 'Как хранятся данные',
         jsonBackupButton: 'JSON копия',
         jsonRestoreButton: 'JSON восстановление',
@@ -1760,7 +2067,33 @@
         absent14Tag: '14+ хоног',
         absent30Tag: '30+ хоног',
         dataTitle: 'Өгөгдлийн удирдлага',
-        dataSubtitle: 'localStorage-д хадгалж, JSON-оор нөөцлөх/сэргээнэ.',
+        dataSubtitle: 'Supabase-д хадгална. JSON-оор нөөцлөх/сэргээнэ.',
+        authTitle: 'Гимназийн нэвтрэлт',
+        authLead: 'Гимназийн бүртгэлээр нэвтэрнэ. Өгөгдөл гимназиар тусгаарлагдана.',
+        authTabLogin: 'Нэвтрэх',
+        authTabSignup: 'Бүртгүүлэх',
+        authTabReset: 'Нууц үг',
+        authGymNameLabel: 'Гимназийн нэр',
+        authOwnerNameLabel: 'Эзэмшигчийн нэр',
+        authGymPhoneLabel: 'Гимназийн утас',
+        authEmailLabel: 'И-мэйл',
+        authPasswordLabel: 'Нууц үг',
+        authResetHelp: 'Нууц үг сэргээх холбоосыг и-мэйлээр илгээнэ.',
+        authSubmitLogin: 'Нэвтрэх',
+        authSubmitSignup: 'Бүртгүүлэх',
+        authSubmitReset: 'И-мэйл илгээх',
+        signOutButton: 'Гарах',
+        migrateLocalButton: 'Локал өгөгдөл байршуулах',
+        authConfigMissing: 'js/config.js дээр Supabase тохиргоо хэрэгтэй.',
+        authLoginSuccess: 'Амжилттай нэвтэрлээ.',
+        authSignupSuccess: 'Бүртгэл үүслээ. И-мэйл баталгаажуулалт асаалттай бол шалгана уу.',
+        authResetSent: 'Нууц үг сэргээх и-мэйл илгээлээ.',
+        authSignedOut: 'Гарлаа.',
+        authNeedFields: 'Шаардлагатай талбаруудыг бөглөнө үү.',
+        authLoading: 'Өгөгдөл ачаалж байна...',
+        migrateConfirm: 'Локал гишүүн {count}-г Supabase руу байршуулах уу?',
+        migrateDone: 'Локал өгөгдлийг Supabase руу байршууллаа.',
+        migrateEmpty: 'Байршуулах локал өгөгдөл алга.',
         storageInfoButton: 'Хадгалалтын заавар',
         jsonBackupButton: 'JSON нөөц',
         jsonRestoreButton: 'JSON сэргээх',
@@ -1883,7 +2216,33 @@
         absent14Tag: '14天以上',
         absent30Tag: '30天以上',
         dataTitle: '数据管理',
-        dataSubtitle: '保持localStorage保存，并使用JSON备份/恢复。',
+        dataSubtitle: '数据保存在 Supabase，可用 JSON 备份/恢复。',
+        authTitle: '健身房登录',
+        authLead: '使用健身房账号登录后，会员数据会按健身房隔离保存。',
+        authTabLogin: '登录',
+        authTabSignup: '注册',
+        authTabReset: '密码',
+        authGymNameLabel: '健身房名称',
+        authOwnerNameLabel: '负责人姓名',
+        authGymPhoneLabel: '健身房电话',
+        authEmailLabel: '邮箱',
+        authPasswordLabel: '密码',
+        authResetHelp: '将向注册邮箱发送密码重置链接。',
+        authSubmitLogin: '登录',
+        authSubmitSignup: '创建账号',
+        authSubmitReset: '发送重置邮件',
+        signOutButton: '退出登录',
+        migrateLocalButton: '上传本地数据',
+        authConfigMissing: '需要配置 Supabase，请在 js/config.js 填写 URL 和 anon key。',
+        authLoginSuccess: '已登录。',
+        authSignupSuccess: '注册完成。若开启邮箱确认，请查收邮件。',
+        authResetSent: '已发送密码重置邮件。',
+        authSignedOut: '已退出。',
+        authNeedFields: '请填写必填项。',
+        authLoading: '正在加载数据...',
+        migrateConfirm: '将本地 {count} 名会员上传到 Supabase？',
+        migrateDone: '本地数据已上传到 Supabase。',
+        migrateEmpty: '没有可上传的本地数据。',
         storageInfoButton: '存储方式说明',
         jsonBackupButton: 'JSON备份',
         jsonRestoreButton: 'JSON恢复',
@@ -2006,7 +2365,33 @@
         absent14Tag: '14+ दिन',
         absent30Tag: '30+ दिन',
         dataTitle: 'डेटा प्रबंधन',
-        dataSubtitle: 'localStorage में डेटा रखें और JSON से बैकअप/रिस्टोर करें।',
+        dataSubtitle: 'Supabase में सेव; JSON से बैकअप/रिस्टोर।',
+        authTitle: 'जिम लॉगिन',
+        authLead: 'जिम अकाउंट से लॉगिन करें। सदस्य डेटा जिम के अनुसार अलग रहता है।',
+        authTabLogin: 'लॉगिन',
+        authTabSignup: 'साइन अप',
+        authTabReset: 'पासवर्ड',
+        authGymNameLabel: 'जिम का नाम',
+        authOwnerNameLabel: 'मालिक का नाम',
+        authGymPhoneLabel: 'जिम फोन',
+        authEmailLabel: 'ईमेल',
+        authPasswordLabel: 'पासवर्ड',
+        authResetHelp: 'पासवर्ड रीसेट लिंक आपके ईमेल पर भेजा जाएगा।',
+        authSubmitLogin: 'लॉगिन',
+        authSubmitSignup: 'अकाउंट बनाएं',
+        authSubmitReset: 'रीसेट ईमेल भेजें',
+        signOutButton: 'लॉग आउट',
+        migrateLocalButton: 'लोकल डेटा अपलोड',
+        authConfigMissing: 'Supabase कॉन्फ़िग चाहिए। js/config.js में URL और anon key डालें।',
+        authLoginSuccess: 'लॉगिन हो गया।',
+        authSignupSuccess: 'अकाउंट बन गया। अगर कन्फर्मेशन ऑन है तो ईमेल देखें।',
+        authResetSent: 'पासवर्ड रीसेट ईमेल भेज दिया गया।',
+        authSignedOut: 'लॉग आउट हो गया।',
+        authNeedFields: 'ज़रूरी फ़ील्ड भरें।',
+        authLoading: 'डेटा लोड हो रहा है...',
+        migrateConfirm: '{count} लोकल सदस्यों को Supabase पर अपलोड करें?',
+        migrateDone: 'लोकल डेटा Supabase पर अपलोड हो गया।',
+        migrateEmpty: 'अपलोड करने के लिए लोकल डेटा नहीं है।',
         storageInfoButton: 'स्टोरेज गाइड',
         jsonBackupButton: 'JSON बैकअप',
         jsonRestoreButton: 'JSON रिस्टोर',
@@ -2129,7 +2514,33 @@
         absent14Tag: '14+ jours',
         absent30Tag: '30+ jours',
         dataTitle: 'Gestion des données',
-        dataSubtitle: 'Conservez les données localStorage et sauvegardez/restaurez avec JSON.',
+        dataSubtitle: 'Enregistré sur Supabase. Sauvegarde/restauration JSON.',
+        authTitle: 'Connexion salle',
+        authLead: 'Connectez-vous avec le compte de la salle. Les données sont isolées par salle.',
+        authTabLogin: 'Connexion',
+        authTabSignup: 'Inscription',
+        authTabReset: 'Mot de passe',
+        authGymNameLabel: 'Nom de la salle',
+        authOwnerNameLabel: 'Nom du responsable',
+        authGymPhoneLabel: 'Téléphone de la salle',
+        authEmailLabel: 'E-mail',
+        authPasswordLabel: 'Mot de passe',
+        authResetHelp: 'Nous enverrons un lien de réinitialisation à votre e-mail.',
+        authSubmitLogin: 'Se connecter',
+        authSubmitSignup: 'Créer un compte',
+        authSubmitReset: 'Envoyer l’e-mail',
+        signOutButton: 'Se déconnecter',
+        migrateLocalButton: 'Importer les données locales',
+        authConfigMissing: 'Configuration Supabase requise dans js/config.js.',
+        authLoginSuccess: 'Connecté.',
+        authSignupSuccess: 'Compte créé. Vérifiez l’e-mail si la confirmation est activée.',
+        authResetSent: 'E-mail de réinitialisation envoyé.',
+        authSignedOut: 'Déconnecté.',
+        authNeedFields: 'Veuillez remplir les champs obligatoires.',
+        authLoading: 'Chargement des données...',
+        migrateConfirm: 'Importer {count} membres locaux vers Supabase ?',
+        migrateDone: 'Données locales importées vers Supabase.',
+        migrateEmpty: 'Aucune donnée locale à importer.',
         storageInfoButton: 'Guide de stockage',
         jsonBackupButton: 'Sauvegarde JSON',
         jsonRestoreButton: 'Restauration JSON',
@@ -2208,12 +2619,15 @@
     };
 
     let currentLanguage = getSavedLanguage();
-    let members = loadMembers();
+    let members = [];
     let searchQuery = '';
     let memberFilter = 'all';
     let activeDashboardKey = '';
+    let authMode = 'login';
+    let isBootstrapping = true;
+    let isSaving = false;
 
-    function loadMembers() {
+    function loadLegacyLocalMembers() {
       try {
         const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         return migrateMembers(raw);
@@ -2263,6 +2677,7 @@
       currentLanguage = language;
       localStorage.setItem(LANGUAGE_KEY, language);
       applyTranslations();
+      setAuthMode(authMode);
       refreshAll();
     }
 
@@ -2294,6 +2709,7 @@
           ptRemaining,
           memo: m.memo || '',
           lastVisit,
+          totalVisits: readNumber(m.totalVisits, attendance.length),
           createdAt: m.createdAt || new Date().toISOString(),
           updatedAt: m.updatedAt || null,
           attendance
@@ -2302,7 +2718,218 @@
     }
 
     function saveMembers() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+      // Members are persisted in Supabase. No localStorage writes for gym data.
+    }
+
+    function requireAuth() {
+      if (!window.SweatManagerDB || !SweatManagerDB.isReady()) {
+        showToast(t('authConfigMissing'), 'warning');
+        showAuthGate(t('authConfigMissing'), 'error');
+        return false;
+      }
+      return true;
+    }
+
+    async function reloadMembersFromServer() {
+      members = migrateMembers(await SweatManagerDB.fetchMembers());
+      refreshAll();
+    }
+
+    function setAuthMessage(message, type = '') {
+      const el = document.getElementById('authMessage');
+      el.textContent = message || '';
+      el.className = 'auth-message' + (type ? ' ' + type : '');
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      document.querySelectorAll('[data-auth-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.authTab === mode);
+      });
+
+      document.querySelectorAll('.signup-only').forEach(el => {
+        el.hidden = mode !== 'signup';
+      });
+      document.querySelectorAll('.login-only').forEach(el => {
+        el.hidden = mode !== 'login' && mode !== 'signup';
+      });
+      document.querySelectorAll('.reset-only').forEach(el => {
+        el.hidden = mode !== 'reset';
+      });
+
+      const passwordField = document.getElementById('authPassword');
+      passwordField.required = mode !== 'reset';
+      passwordField.closest('.field').hidden = mode === 'reset';
+
+      const submit = document.getElementById('authSubmitButton');
+      if (mode === 'signup') submit.textContent = t('authSubmitSignup');
+      else if (mode === 'reset') submit.textContent = t('authSubmitReset');
+      else submit.textContent = t('authSubmitLogin');
+    }
+
+    function showAuthGate(message = '', type = '') {
+      document.getElementById('authGate').hidden = false;
+      document.getElementById('appShell').hidden = true;
+      setAuthMessage(message, type);
+    }
+
+    function showAppShell() {
+      document.getElementById('authGate').hidden = true;
+      document.getElementById('appShell').hidden = false;
+      const gym = SweatManagerDB.getGym();
+      const user = SweatManagerDB.getUser();
+      document.getElementById('gymNameLabel').textContent = gym?.name || t('authTitle');
+      document.getElementById('accountEmailLabel').textContent = user?.email || '';
+    }
+
+    async function handleSignedIn(sessionUser) {
+      try {
+        setAuthMessage(t('authLoading'));
+        await SweatManagerDB.loadSessionContext(sessionUser);
+        showAppShell();
+        await reloadMembersFromServer();
+        setAuthMessage('');
+      } catch (error) {
+        console.error(error);
+        showAuthGate(error.message || String(error), 'error');
+        members = [];
+        refreshAll();
+      }
+    }
+
+    async function handleSignedOut(message = '') {
+      members = [];
+      refreshAll();
+      showAuthGate(message || t('authSignedOut'));
+    }
+
+    async function initAuth() {
+      SweatManagerDB.initClient();
+
+      if (!SweatManagerDB.isConfigured()) {
+        showAuthGate(t('authConfigMissing'), 'error');
+        isBootstrapping = false;
+        return;
+      }
+
+      try {
+        const session = await SweatManagerDB.getSession();
+        if (session?.user) {
+          await handleSignedIn(session.user);
+        } else {
+          showAuthGate();
+        }
+      } catch (error) {
+        showAuthGate(error.message || String(error), 'error');
+      }
+
+      SweatManagerDB.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY' && session?.user) {
+          const nextPassword = window.prompt('새 비밀번호를 입력하세요 (6자 이상)');
+          if (nextPassword && nextPassword.length >= 6) {
+            try {
+              await SweatManagerDB.updatePassword(nextPassword);
+              showToast('비밀번호가 변경되었습니다.');
+            } catch (error) {
+              showToast(error.message || String(error), 'warning');
+            }
+          }
+        }
+
+        if (isBootstrapping && event === 'INITIAL_SESSION') return;
+        if (session?.user) {
+          await handleSignedIn(session.user);
+        } else {
+          await handleSignedOut();
+        }
+      });
+
+      isBootstrapping = false;
+    }
+
+    async function submitAuthForm(e) {
+      e.preventDefault();
+      if (!SweatManagerDB.isConfigured()) {
+        setAuthMessage(t('authConfigMissing'), 'error');
+        return;
+      }
+
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const gymName = document.getElementById('authGymName').value.trim();
+      const ownerName = document.getElementById('authOwnerName').value.trim();
+      const phone = document.getElementById('authGymPhone').value.trim();
+
+      try {
+        if (authMode === 'reset') {
+          if (!email) {
+            setAuthMessage(t('authNeedFields'), 'error');
+            return;
+          }
+          await SweatManagerDB.resetPassword(email);
+          setAuthMessage(t('authResetSent'), 'success');
+          showToast(t('authResetSent'));
+          return;
+        }
+
+        if (!email || !password) {
+          setAuthMessage(t('authNeedFields'), 'error');
+          return;
+        }
+
+        if (authMode === 'signup') {
+          if (!gymName) {
+            setAuthMessage(t('authNeedFields'), 'error');
+            return;
+          }
+          await SweatManagerDB.signUp({
+            email,
+            password,
+            gymName,
+            ownerName,
+            phone
+          });
+          setAuthMessage(t('authSignupSuccess'), 'success');
+          showToast(t('authSignupSuccess'));
+          return;
+        }
+
+        await SweatManagerDB.signIn(email, password);
+        showToast(t('authLoginSuccess'));
+      } catch (error) {
+        setAuthMessage(error.message || String(error), 'error');
+        showToast(error.message || String(error), 'warning');
+      }
+    }
+
+    async function handleSignOut() {
+      try {
+        await SweatManagerDB.signOut();
+        await handleSignedOut(t('authSignedOut'));
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+      }
+    }
+
+    async function migrateLocalData() {
+      if (!requireAuth()) return;
+      const localMembers = loadLegacyLocalMembers();
+      if (!localMembers.length) {
+        showToast(t('migrateEmpty'), 'warning');
+        return;
+      }
+      if (!confirm(t('migrateConfirm', { count: localMembers.length }))) return;
+
+      try {
+        isSaving = true;
+        members = migrateMembers(await SweatManagerDB.migrateLocalMembers(localMembers));
+        refreshAll();
+        showToast(t('migrateDone'));
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+      } finally {
+        isSaving = false;
+      }
     }
 
     function readNumber(value, fallback) {
@@ -2832,8 +3459,9 @@
       }
     }
 
-    function registerMember(e) {
+    async function registerMember(e) {
       e.preventDefault();
+      if (!requireAuth() || isSaving) return;
 
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
@@ -2858,54 +3486,53 @@
         return;
       }
 
-      members.unshift({
-        id: generateId(),
-        name,
-        phone,
-        startDate,
-        expireDate,
-        ptTotal,
-        ptRemaining,
-        memo,
-        lastVisit: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: null,
-        attendance: []
-      });
-
-      saveMembers();
-      document.getElementById('registerForm').reset();
-      document.getElementById('ptTotal').value = '10';
-      document.getElementById('ptRemaining').value = '10';
-      resetRegisterDates();
-      showToast(t('memberRegistered', { name }));
-      refreshAll();
+      try {
+        isSaving = true;
+        const created = await SweatManagerDB.createMember({
+          name,
+          phone,
+          startDate,
+          expireDate,
+          ptTotal,
+          ptRemaining,
+          memo,
+          lastVisit: null,
+          totalVisits: 0,
+          attendance: []
+        });
+        members.unshift(created);
+        document.getElementById('registerForm').reset();
+        document.getElementById('ptTotal').value = '10';
+        document.getElementById('ptRemaining').value = '10';
+        resetRegisterDates();
+        showToast(t('memberRegistered', { name }));
+        refreshAll();
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+      } finally {
+        isSaving = false;
+      }
     }
 
-    function checkIn(id) {
+    async function checkIn(id) {
+      if (!requireAuth() || isSaving) return;
       const member = members.find(m => m.id === id);
       if (!member) return;
 
-      const ptDeducted = member.ptRemaining > 0;
-      if (ptDeducted) {
-        member.ptRemaining -= 1;
+      try {
+        isSaving = true;
+        await SweatManagerDB.recordAttendance(id);
+        await reloadMembersFromServer();
+        const updated = members.find(m => m.id === id);
+        const ptDeducted = updated && updated.ptRemaining < member.ptRemaining;
+        showToast(ptDeducted
+          ? t('checkInDeducted', { name: member.name, count: updated.ptRemaining })
+          : t('checkInNoPt', { name: member.name }), ptDeducted ? 'success' : 'warning');
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+      } finally {
+        isSaving = false;
       }
-
-      const now = new Date();
-      const today = getTodayDateOnly();
-      member.lastVisit = today;
-      member.updatedAt = now.toISOString();
-      member.attendance.unshift({
-        date: now.toISOString(),
-        visitDate: today,
-        ptDeducted
-      });
-
-      saveMembers();
-      showToast(ptDeducted
-        ? t('checkInDeducted', { name: member.name, count: member.ptRemaining })
-        : t('checkInNoPt', { name: member.name }), ptDeducted ? 'success' : 'warning');
-      refreshAll();
     }
 
     function showAttendance(id) {
@@ -2945,8 +3572,9 @@
       document.getElementById('editModal').classList.add('active');
     }
 
-    function saveEditMember(e) {
+    async function saveEditMember(e) {
       e.preventDefault();
+      if (!requireAuth() || isSaving) return;
 
       const id = document.getElementById('editId').value;
       const member = members.find(m => m.id === id);
@@ -2975,38 +3603,54 @@
         return;
       }
 
-      Object.assign(member, {
-        name,
-        phone,
-        startDate,
-        expireDate,
-        ptTotal,
-        ptRemaining,
-        memo,
-        updatedAt: new Date().toISOString()
-      });
-
-      saveMembers();
-      document.getElementById('editModal').classList.remove('active');
-      showToast(t('memberUpdated', { name }));
-      refreshAll();
+      try {
+        isSaving = true;
+        const updated = await SweatManagerDB.updateMember({
+          ...member,
+          name,
+          phone,
+          startDate,
+          expireDate,
+          ptTotal,
+          ptRemaining,
+          memo
+        });
+        const index = members.findIndex(m => m.id === id);
+        if (index >= 0) members[index] = updated;
+        document.getElementById('editModal').classList.remove('active');
+        showToast(t('memberUpdated', { name }));
+        refreshAll();
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+      } finally {
+        isSaving = false;
+      }
     }
 
-    function deleteMember(id) {
+    async function deleteMember(id) {
+      if (!requireAuth() || isSaving) return false;
       const member = members.find(m => m.id === id);
       if (!member) return false;
       if (!confirm(t('confirmDelete', { name: member.name }))) return false;
 
-      members = members.filter(m => m.id !== id);
-      saveMembers();
-      showToast(t('memberDeleted', { name: member.name }));
-      refreshAll();
-      return true;
+      try {
+        isSaving = true;
+        await SweatManagerDB.deleteMember(id);
+        members = members.filter(m => m.id !== id);
+        showToast(t('memberDeleted', { name: member.name }));
+        refreshAll();
+        return true;
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+        return false;
+      } finally {
+        isSaving = false;
+      }
     }
 
-    function deleteEditingMember() {
+    async function deleteEditingMember() {
       const id = document.getElementById('editId').value;
-      if (deleteMember(id)) {
+      if (await deleteMember(id)) {
         document.getElementById('editModal').classList.remove('active');
       }
     }
@@ -3032,8 +3676,9 @@
 
     function importData(file) {
       const reader = new FileReader();
-      reader.onload = e => {
+      reader.onload = async e => {
         try {
+          if (!requireAuth()) return;
           const data = JSON.parse(e.target.result);
           const imported = Array.isArray(data) ? data : data.members;
           if (!Array.isArray(imported)) throw new Error('invalid format');
@@ -3042,12 +3687,15 @@
             return;
           }
 
-          members = migrateMembers(imported);
-          saveMembers();
+          isSaving = true;
+          const migrated = migrateMembers(imported);
+          members = migrateMembers(await SweatManagerDB.replaceAllMembers(migrated));
           showToast(t('importDone'));
           refreshAll();
-        } catch {
-          showToast(t('importInvalid'), 'warning');
+        } catch (error) {
+          showToast(error.message || t('importInvalid'), 'warning');
+        } finally {
+          isSaving = false;
         }
       };
       reader.readAsText(file);
@@ -3056,6 +3704,20 @@
     document.getElementById('registerForm').addEventListener('submit', registerMember);
     document.getElementById('editForm').addEventListener('submit', saveEditMember);
     document.getElementById('editDeleteButton').addEventListener('click', deleteEditingMember);
+    document.getElementById('authForm').addEventListener('submit', submitAuthForm);
+    document.getElementById('signOutButton').addEventListener('click', handleSignOut);
+    document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
+
+    document.querySelectorAll('[data-auth-tab]').forEach(button => {
+      button.addEventListener('click', () => {
+        setAuthMode(button.dataset.authTab);
+        setAuthMessage('');
+      });
+    });
+
+    document.getElementById('authGymPhone').addEventListener('input', e => {
+      e.target.value = formatPhone(e.target.value);
+    });
 
     document.getElementById('phone').addEventListener('input', e => {
       e.target.value = formatPhone(e.target.value);
@@ -3124,8 +3786,9 @@
 
     resetRegisterDates();
     applyTranslations();
-    saveMembers();
+    setAuthMode('login');
     refreshAll();
+    initAuth();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
