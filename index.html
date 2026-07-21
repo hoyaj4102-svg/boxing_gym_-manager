@@ -2722,9 +2722,14 @@
     }
 
     function requireAuth() {
-      if (!window.SweatManagerDB || !SweatManagerDB.isReady()) {
+      if (!window.SweatManagerDB || !SweatManagerDB.isConfigured()) {
         showToast(t('authConfigMissing'), 'warning');
         showAuthGate(t('authConfigMissing'), 'error');
+        return false;
+      }
+      if (!SweatManagerDB.isReady()) {
+        showToast(t('authSubmitLogin'), 'warning');
+        showAuthGate();
         return false;
       }
       return true;
