@@ -479,6 +479,49 @@
       max-width: 100%;
     }
 
+    .billing-panel {
+      border-color: rgba(250, 204, 21, .35);
+    }
+
+    .billing-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .billing-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .billing-row strong {
+      font-size: .92rem;
+    }
+
+    .billing-row span {
+      color: var(--text-muted);
+      font-size: .8rem;
+      text-align: right;
+    }
+
+    .billing-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .billing-note {
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: .78rem;
+    }
+
     .renewal-panel {
       border-color: rgba(239, 68, 68, .42);
       background: linear-gradient(180deg, rgba(42, 25, 36, .96), rgba(21, 27, 41, .94));
@@ -1309,6 +1352,40 @@
           </div>
         </section>
 
+        <section class="panel billing-panel" id="billingPanel">
+          <div class="panel-header">
+            <div>
+              <h2 data-i18n="billingTitle">요금제</h2>
+              <p class="panel-subtitle" data-i18n="billingSubtitle">Free 20명 · Pro 무제한 (14일 체험 후 구독)</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="billing-grid">
+              <div class="billing-row">
+                <strong data-i18n="billingPlanLabel">현재 플랜</strong>
+                <span id="billingPlanValue">-</span>
+              </div>
+              <div class="billing-row">
+                <strong data-i18n="billingStatusLabel">상태</strong>
+                <span id="billingStatusValue">-</span>
+              </div>
+              <div class="billing-row">
+                <strong data-i18n="billingUsageLabel">회원 수</strong>
+                <span id="billingUsageValue">-</span>
+              </div>
+              <div class="billing-row">
+                <strong data-i18n="billingTrialLabel">체험 종료</strong>
+                <span id="billingTrialValue">-</span>
+              </div>
+            </div>
+            <div class="billing-actions">
+              <button type="button" class="btn btn-primary" id="upgradeMonthlyButton" data-i18n="upgradeMonthlyButton">Pro 월간 시작</button>
+              <button type="button" class="btn btn-ghost" id="upgradeYearlyButton" data-i18n="upgradeYearlyButton">Pro 연간 시작</button>
+            </div>
+            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">결제 연동 전에도 한도 체크와 체험 로직은 동작합니다. 자세한 설계는 BILLING.md를 참고하세요.</p>
+          </div>
+        </section>
+
         <section class="panel">
           <div class="panel-header">
             <div>
@@ -1417,7 +1494,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./js/config.js"></script>
+  <script src="./js/billing-config.js"></script>
   <script src="./js/supabase-service.js"></script>
+  <script src="./js/billing.js"></script>
   <script>
     const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
@@ -1518,6 +1597,28 @@
         authOwnerNamePlaceholder: '홍길동',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6자 이상',
+        billingTitle: '요금제',
+        billingSubtitle: 'Free 20명 · Pro 무제한 (14일 체험 후 구독)',
+        billingPlanLabel: '현재 플랜',
+        billingStatusLabel: '상태',
+        billingUsageLabel: '회원 수',
+        billingTrialLabel: '체험 종료',
+        billingNoteDefault: '결제 연동 전에도 한도 체크와 체험 로직은 동작합니다. 자세한 설계는 BILLING.md를 참고하세요.',
+        upgradeMonthlyButton: 'Pro 월간 시작',
+        upgradeYearlyButton: 'Pro 연간 시작',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: '무제한',
+        planMemberUsage: '{count} / {limit}명',
+        planStatusUnknown: '확인 중',
+        planStatusTrialing: '14일 체험 중',
+        planStatusActive: '구독 중',
+        planStatusPastDue: '결제 필요',
+        planStatusFree: 'Free 플랜',
+        billingCheckoutNotConfigured: '결제 엔드포인트가 아직 없습니다. BILLING.md의 Edge Function 연동 후 js/billing-config.js에 checkoutEndpoint를 넣으세요. (월 {amount})',
+        memberLimitReached: 'Free 플랜 회원 한도({limit}명)에 도달했습니다. Pro로 업그레이드하세요.',
+        billingLoadFailed: '요금제 정보를 불러오지 못했습니다. supabase/billing.sql 실행 여부를 확인하세요.',
+        billingNoTrial: '해당 없음',
         storageInfoButton: '저장 방식 안내',
         jsonBackupButton: 'JSON 백업',
         jsonRestoreButton: 'JSON 복원',
@@ -1687,6 +1788,28 @@
         authOwnerNamePlaceholder: 'Owner name',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ characters',
+        billingTitle: 'Billing',
+        billingSubtitle: 'Free 20 members · Pro unlimited (14-day trial)',
+        billingPlanLabel: 'Current plan',
+        billingStatusLabel: 'Status',
+        billingUsageLabel: 'Members',
+        billingTrialLabel: 'Trial ends',
+        billingNoteDefault: 'Limits and trial work before payment is connected. See BILLING.md.',
+        upgradeMonthlyButton: 'Start Pro monthly',
+        upgradeYearlyButton: 'Start Pro yearly',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: 'Unlimited',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: 'Checking',
+        planStatusTrialing: '14-day trial',
+        planStatusActive: 'Subscribed',
+        planStatusPastDue: 'Payment required',
+        planStatusFree: 'Free plan',
+        billingCheckoutNotConfigured: 'Checkout endpoint is not set yet. After Edge Function setup, add checkoutEndpoint in js/billing-config.js. (Monthly {amount})',
+        memberLimitReached: 'Free plan member limit ({limit}) reached. Please upgrade to Pro.',
+        billingLoadFailed: 'Could not load billing info. Make sure supabase/billing.sql was run.',
+        billingNoTrial: 'N/A',
         storageInfoButton: 'Storage guide',
         jsonBackupButton: 'JSON backup',
         jsonRestoreButton: 'JSON restore',
@@ -1856,6 +1979,28 @@
         authOwnerNamePlaceholder: 'Nombre del dueño',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ caracteres',
+        billingTitle: 'Suscripción',
+        billingSubtitle: 'Free 20 · Pro ilimitado (prueba 14 días)',
+        billingPlanLabel: 'Plan actual',
+        billingStatusLabel: 'Estado',
+        billingUsageLabel: 'Miembros',
+        billingTrialLabel: 'Fin de prueba',
+        billingNoteDefault: 'Los límites funcionan antes de conectar pagos. Ver BILLING.md.',
+        upgradeMonthlyButton: 'Pro mensual',
+        upgradeYearlyButton: 'Pro anual',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: 'Ilimitado',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: 'Comprobando',
+        planStatusTrialing: 'Prueba 14 días',
+        planStatusActive: 'Suscrito',
+        planStatusPastDue: 'Pago pendiente',
+        planStatusFree: 'Plan Free',
+        billingCheckoutNotConfigured: 'Falta checkoutEndpoint en js/billing-config.js. (Mensual {amount})',
+        memberLimitReached: 'Límite Free ({limit}) alcanzado. Actualiza a Pro.',
+        billingLoadFailed: 'No se pudo cargar facturación. Ejecuta supabase/billing.sql.',
+        billingNoTrial: 'N/D',
         storageInfoButton: 'Guía de guardado',
         jsonBackupButton: 'Copia JSON',
         jsonRestoreButton: 'Restaurar JSON',
@@ -2025,6 +2170,28 @@
         authOwnerNamePlaceholder: 'Имя владельца',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: 'от 6 символов',
+        billingTitle: 'Тариф',
+        billingSubtitle: 'Free 20 · Pro без лимита (14 дней)',
+        billingPlanLabel: 'Текущий план',
+        billingStatusLabel: 'Статус',
+        billingUsageLabel: 'Клиенты',
+        billingTrialLabel: 'Конец триала',
+        billingNoteDefault: 'Лимиты работают до подключения оплаты. См. BILLING.md.',
+        upgradeMonthlyButton: 'Pro помесячно',
+        upgradeYearlyButton: 'Pro ежегодно',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: 'Без лимита',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: 'Проверка',
+        planStatusTrialing: 'Триал 14 дней',
+        planStatusActive: 'Подписка',
+        planStatusPastDue: 'Нужна оплата',
+        planStatusFree: 'Free',
+        billingCheckoutNotConfigured: 'Не задан checkoutEndpoint в js/billing-config.js. (В месяц {amount})',
+        memberLimitReached: 'Лимит Free ({limit}) исчерпан. Перейдите на Pro.',
+        billingLoadFailed: 'Не удалось загрузить тариф. Выполните supabase/billing.sql.',
+        billingNoTrial: 'Н/Д',
         storageInfoButton: 'Как хранятся данные',
         jsonBackupButton: 'JSON копия',
         jsonRestoreButton: 'JSON восстановление',
@@ -2194,6 +2361,28 @@
         authOwnerNamePlaceholder: 'Эзэмшигчийн нэр',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ тэмдэгт',
+        billingTitle: 'Төлбөрийн төлөвлөгөө',
+        billingSubtitle: 'Free 20 · Pro хязгааргүй (14 хоног)',
+        billingPlanLabel: 'Одоогийн төлөвлөгөө',
+        billingStatusLabel: 'Төлөв',
+        billingUsageLabel: 'Гишүүн',
+        billingTrialLabel: 'Туршилт дуусах',
+        billingNoteDefault: 'Төлбөр холбохоос өмнө хязгаар ажиллана. BILLING.md-г үзнэ үү.',
+        upgradeMonthlyButton: 'Pro сар бүр',
+        upgradeYearlyButton: 'Pro жил бүр',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: 'Хязгааргүй',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: 'Шалгаж байна',
+        planStatusTrialing: '14 хоногийн туршилт',
+        planStatusActive: 'Захиалгатай',
+        planStatusPastDue: 'Төлбөр хэрэгтэй',
+        planStatusFree: 'Free',
+        billingCheckoutNotConfigured: 'js/billing-config.js дээр checkoutEndpoint байхгүй. (Сар {amount})',
+        memberLimitReached: 'Free хязгаар ({limit}) хүрлээ. Pro руу шилжэнэ үү.',
+        billingLoadFailed: 'Төлбөрийн мэдээлэл ачаалагдсангүй. supabase/billing.sql ажиллуулна уу.',
+        billingNoTrial: 'Байхгүй',
         storageInfoButton: 'Хадгалалтын заавар',
         jsonBackupButton: 'JSON нөөц',
         jsonRestoreButton: 'JSON сэргээх',
@@ -2363,6 +2552,28 @@
         authOwnerNamePlaceholder: '负责人姓名',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '至少6位',
+        billingTitle: '套餐',
+        billingSubtitle: 'Free 20人 · Pro 不限（14天试用）',
+        billingPlanLabel: '当前套餐',
+        billingStatusLabel: '状态',
+        billingUsageLabel: '会员数',
+        billingTrialLabel: '试用结束',
+        billingNoteDefault: '接入支付前也会执行人数限制。详见 BILLING.md。',
+        upgradeMonthlyButton: '开通 Pro 月付',
+        upgradeYearlyButton: '开通 Pro 年付',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: '不限',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: '检查中',
+        planStatusTrialing: '14天试用中',
+        planStatusActive: '已订阅',
+        planStatusPastDue: '需要付款',
+        planStatusFree: 'Free 套餐',
+        billingCheckoutNotConfigured: '尚未配置 checkoutEndpoint（js/billing-config.js）。（月费 {amount}）',
+        memberLimitReached: '已达 Free 上限（{limit}人），请升级 Pro。',
+        billingLoadFailed: '无法加载套餐信息，请确认已执行 supabase/billing.sql。',
+        billingNoTrial: '无',
         storageInfoButton: '存储方式说明',
         jsonBackupButton: 'JSON备份',
         jsonRestoreButton: 'JSON恢复',
@@ -2532,6 +2743,28 @@
         authOwnerNamePlaceholder: 'मालिक का नाम',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ अक्षर',
+        billingTitle: 'प्लान',
+        billingSubtitle: 'Free 20 · Pro अनलिमिटेड (14-दिन ट्रायल)',
+        billingPlanLabel: 'वर्तमान प्लान',
+        billingStatusLabel: 'स्थिति',
+        billingUsageLabel: 'सदस्य',
+        billingTrialLabel: 'ट्रायल समाप्ति',
+        billingNoteDefault: 'पेमेंट कनेक्ट करने से पहले भी लिमिट काम करती है। BILLING.md देखें।',
+        upgradeMonthlyButton: 'Pro मासिक',
+        upgradeYearlyButton: 'Pro वार्षिक',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: 'अनलिमिटेड',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: 'जाँच हो रही है',
+        planStatusTrialing: '14-दिन ट्रायल',
+        planStatusActive: 'सब्सक्राइब्ड',
+        planStatusPastDue: 'पेमेंट जरूरी',
+        planStatusFree: 'Free प्लान',
+        billingCheckoutNotConfigured: 'checkoutEndpoint सेट नहीं है (js/billing-config.js)। (मासिक {amount})',
+        memberLimitReached: 'Free लिमिट ({limit}) पूरी हो गई। Pro में अपग्रेड करें।',
+        billingLoadFailed: 'बिलिंग लोड नहीं हुई। supabase/billing.sql चलाएँ।',
+        billingNoTrial: 'N/A',
         storageInfoButton: 'स्टोरेज गाइड',
         jsonBackupButton: 'JSON बैकअप',
         jsonRestoreButton: 'JSON रिस्टोर',
@@ -2701,6 +2934,28 @@
         authOwnerNamePlaceholder: 'Nom du responsable',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ caractères',
+        billingTitle: 'Formule',
+        billingSubtitle: 'Free 20 · Pro illimité (essai 14 jours)',
+        billingPlanLabel: 'Formule actuelle',
+        billingStatusLabel: 'Statut',
+        billingUsageLabel: 'Membres',
+        billingTrialLabel: 'Fin d’essai',
+        billingNoteDefault: 'Les limites fonctionnent avant le paiement. Voir BILLING.md.',
+        upgradeMonthlyButton: 'Pro mensuel',
+        upgradeYearlyButton: 'Pro annuel',
+        planFreeName: 'Free',
+        planProName: 'Pro',
+        planUnlimitedMembers: 'Illimité',
+        planMemberUsage: '{count} / {limit}',
+        planStatusUnknown: 'Vérification',
+        planStatusTrialing: 'Essai 14 jours',
+        planStatusActive: 'Abonné',
+        planStatusPastDue: 'Paiement requis',
+        planStatusFree: 'Formule Free',
+        billingCheckoutNotConfigured: 'checkoutEndpoint manquant dans js/billing-config.js. (Mensuel {amount})',
+        memberLimitReached: 'Limite Free ({limit}) atteinte. Passez à Pro.',
+        billingLoadFailed: 'Impossible de charger la facturation. Exécutez supabase/billing.sql.',
+        billingNoTrial: 'N/A',
         storageInfoButton: 'Guide de stockage',
         jsonBackupButton: 'Sauvegarde JSON',
         jsonRestoreButton: 'Restauration JSON',
@@ -2786,6 +3041,7 @@
     let authMode = 'login';
     let isBootstrapping = true;
     let isSaving = false;
+    let billingSummary = null;
 
     function loadLegacyLocalMembers() {
       try {
@@ -2953,6 +3209,7 @@
         await SweatManagerDB.loadSessionContext(sessionUser);
         showAppShell();
         await reloadMembersFromServer();
+        await refreshBillingSummary();
         setAuthMessage('');
       } catch (error) {
         console.error(error);
@@ -3071,6 +3328,69 @@
       try {
         await SweatManagerDB.signOut();
         await handleSignedOut(t('authSignedOut'));
+      } catch (error) {
+        showToast(error.message || String(error), 'warning');
+      }
+    }
+
+    async function refreshBillingSummary() {
+      const planEl = document.getElementById('billingPlanValue');
+      const statusEl = document.getElementById('billingStatusValue');
+      const usageEl = document.getElementById('billingUsageValue');
+      const trialEl = document.getElementById('billingTrialValue');
+      const noteEl = document.getElementById('billingNote');
+      if (!planEl) return;
+
+      if (!window.SweatManagerBilling || !SweatManagerDB.isReady()) {
+        planEl.textContent = '-';
+        statusEl.textContent = t('planStatusUnknown');
+        usageEl.textContent = '-';
+        trialEl.textContent = '-';
+        return;
+      }
+
+      try {
+        billingSummary = await SweatManagerBilling.fetchBillingSummary(SweatManagerDB);
+        planEl.textContent = billingSummary.hasPro ? t('planProName') : t('planFreeName');
+        statusEl.textContent = SweatManagerBilling.statusLabel(billingSummary, t);
+        usageEl.textContent = SweatManagerBilling.limitLabel(billingSummary, t);
+        trialEl.textContent = billingSummary.trialEndsAt
+          ? formatDateTime(billingSummary.trialEndsAt)
+          : t('billingNoTrial');
+
+        const upgradeMonthly = document.getElementById('upgradeMonthlyButton');
+        const upgradeYearly = document.getElementById('upgradeYearlyButton');
+        const hideUpgrade = billingSummary.hasPro && billingSummary.subscriptionStatus === 'active';
+        if (upgradeMonthly) upgradeMonthly.hidden = hideUpgrade;
+        if (upgradeYearly) upgradeYearly.hidden = hideUpgrade;
+
+        if (!SweatManagerBilling.getBillingConfig().checkoutEndpoint) {
+          noteEl.textContent = t('billingCheckoutNotConfigured', {
+            amount: SweatManagerBilling.formatKrw(SweatManagerBilling.PLANS.pro.priceKrwMonthly)
+          });
+        } else {
+          noteEl.textContent = t('billingNoteDefault');
+        }
+      } catch (error) {
+        console.error(error);
+        billingSummary = null;
+        planEl.textContent = '-';
+        statusEl.textContent = t('planStatusUnknown');
+        usageEl.textContent = '-';
+        trialEl.textContent = '-';
+        noteEl.textContent = t('billingLoadFailed');
+      }
+    }
+
+    async function handleUpgrade(interval) {
+      if (!requireAuth()) return;
+      try {
+        const result = await SweatManagerBilling.startCheckout({ plan: 'pro', interval });
+        if (result?.mode === 'manual') {
+          showToast(t('billingCheckoutNotConfigured', {
+            amount: SweatManagerBilling.formatKrw(result.amountKrw || SweatManagerBilling.PLANS.pro.priceKrwMonthly)
+          }), 'warning');
+        }
       } catch (error) {
         showToast(error.message || String(error), 'warning');
       }
@@ -3672,8 +3992,15 @@
         resetRegisterDates();
         showToast(t('memberRegistered', { name }));
         refreshAll();
+        await refreshBillingSummary();
       } catch (error) {
-        showToast(error.message || String(error), 'warning');
+        if (error?.code === 'MEMBER_LIMIT_REACHED' || error?.message === 'MEMBER_LIMIT_REACHED') {
+          const limit = error.limit || billingSummary?.memberLimit || 20;
+          showToast(t('memberLimitReached', { limit }), 'warning');
+          await refreshBillingSummary();
+        } else {
+          showToast(error.message || String(error), 'warning');
+        }
       } finally {
         isSaving = false;
       }
@@ -3804,6 +4131,7 @@
         members = members.filter(m => m.id !== id);
         showToast(t('memberDeleted', { name: member.name }));
         refreshAll();
+        await refreshBillingSummary();
         return true;
       } catch (error) {
         showToast(error.message || String(error), 'warning');
@@ -3872,6 +4200,8 @@
     document.getElementById('authForm').addEventListener('submit', submitAuthForm);
     document.getElementById('signOutButton').addEventListener('click', handleSignOut);
     document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
+    document.getElementById('upgradeMonthlyButton').addEventListener('click', () => handleUpgrade('monthly'));
+    document.getElementById('upgradeYearlyButton').addEventListener('click', () => handleUpgrade('yearly'));
 
     document.querySelectorAll('[data-auth-tab]').forEach(button => {
       button.addEventListener('click', () => {

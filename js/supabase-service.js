@@ -142,11 +142,21 @@
       throw new Error('프로필이 없습니다. 회원가입 시 체육관 정보가 생성되어야 합니다.');
     }
 
-    const { data: gym, error: gymError } = await STATE.client
+    let { data: gym, error: gymError } = await STATE.client
       .from('gyms')
-      .select('id, name, owner_name, phone, created_at')
+      .select('id, name, owner_name, phone, created_at, plan_code, member_limit, subscription_status, trial_ends_at, current_period_end, billing_provider')
       .eq('id', profile.gym_id)
       .maybeSingle();
+
+    if (gymError) {
+      const fallback = await STATE.client
+        .from('gyms')
+        .select('id, name, owner_name, phone, created_at')
+        .eq('id', profile.gym_id)
+        .maybeSingle();
+      gym = fallback.data;
+      gymError = fallback.error;
+    }
 
     if (gymError) throw gymError;
     if (!gym) throw new Error('체육관 정보를 찾을 수 없습니다.');
@@ -236,6 +246,26 @@
   async function createMember(member) {
     if (!isReady()) throw new Error('로그인이 필요합니다.');
 
+    if (global.SweatManagerBilling) {
+      try {
+        const summary = await global.SweatManagerBilling.fetchBillingSummary({
+          isReady: () => isReady(),
+          client
+        });
+        if (!summary.canAddMember) {
+          const err = new Error('MEMBER_LIMIT_REACHED');
+          err.code = 'MEMBER_LIMIT_REACHED';
+          err.limit = summary.memberLimit;
+          throw err;
+        }
+      } catch (error) {
+        if (error?.code === 'MEMBER_LIMIT_REACHED' || error?.message === 'MEMBER_LIMIT_REACHED') {
+          throw error;
+        }
+        // If billing RPC is not installed yet, fall through to DB trigger / insert.
+      }
+    }
+
     const payload = memberToInsert(member, getGymId());
     const { data, error } = await STATE.client
       .from('members')
@@ -243,7 +273,14 @@
       .select('*, attendance(*)')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (String(error.message || '').includes('MEMBER_LIMIT_REACHED')) {
+        const err = new Error('MEMBER_LIMIT_REACHED');
+        err.code = 'MEMBER_LIMIT_REACHED';
+        throw err;
+      }
+      throw error;
+    }
     return rowToMember(data);
   }
 

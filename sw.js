@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v8-i18n-complete';
+const CACHE_VERSION = 'sweat-manager-v9-billing';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -9,7 +9,9 @@ const APP_SHELL = [
   '/app-icon-192.png',
   '/app-icon-512.png',
   '/js/config.js',
-  '/js/supabase-service.js'
+  '/js/billing-config.js',
+  '/js/supabase-service.js',
+  '/js/billing.js'
 ];
 
 self.addEventListener('install', event => {
