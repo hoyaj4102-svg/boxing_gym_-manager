@@ -1,0 +1,10 @@
+# Minimal Supabase config for Edge Functions deploy
+
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.confirm-toss-payment]
+verify_jwt = true
+
+[functions.billing-webhook]
+verify_jwt = false

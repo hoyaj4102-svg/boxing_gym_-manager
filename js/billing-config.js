@@ -1,11 +1,14 @@
-// Billing / payments config (safe to expose client keys only)
-// Real charge confirmation must happen in a webhook (service role).
+// Billing / payments config (client-safe values only)
+// Secret keys belong in Supabase Edge Function secrets — never here.
 window.SWEAT_MANAGER_BILLING = {
-  provider: 'toss', // 'toss' | 'stripe' | 'manual'
+  // default provider when user doesn't choose: 'toss' | 'stripe'
+  provider: 'toss',
+  // Public keys (optional on client; Edge Function can also return toss clientKey)
   tossClientKey: '',
   stripePublishableKey: '',
-  // Supabase Edge Function or Vercel API route that creates a checkout session
-  checkoutEndpoint: '',
-  successUrl: '',
-  failUrl: ''
+  // Supabase Edge Functions
+  checkoutEndpoint: 'https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/create-checkout',
+  confirmTossEndpoint: 'https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/confirm-toss-payment',
+  successUrl: 'https://boxing-gym-manager.vercel.app/?billing=success',
+  failUrl: 'https://boxing-gym-manager.vercel.app/?billing=fail'
 };

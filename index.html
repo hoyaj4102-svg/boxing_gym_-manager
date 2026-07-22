@@ -1379,10 +1379,12 @@
               </div>
             </div>
             <div class="billing-actions">
-              <button type="button" class="btn btn-primary" id="upgradeMonthlyButton" data-i18n="upgradeMonthlyButton">Pro 월간 시작</button>
-              <button type="button" class="btn btn-ghost" id="upgradeYearlyButton" data-i18n="upgradeYearlyButton">Pro 연간 시작</button>
+              <button type="button" class="btn btn-primary" id="upgradeTossMonthlyButton" data-i18n="upgradeTossMonthlyButton">토스 월간</button>
+              <button type="button" class="btn btn-ghost" id="upgradeTossYearlyButton" data-i18n="upgradeTossYearlyButton">토스 연간</button>
+              <button type="button" class="btn btn-primary" id="upgradeStripeMonthlyButton" data-i18n="upgradeStripeMonthlyButton">Stripe Monthly</button>
+              <button type="button" class="btn btn-ghost" id="upgradeStripeYearlyButton" data-i18n="upgradeStripeYearlyButton">Stripe Yearly</button>
             </div>
-            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">결제 연동 전에도 한도 체크와 체험 로직은 동작합니다. 자세한 설계는 BILLING.md를 참고하세요.</p>
+            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">한국은 토스, 해외는 Stripe 결제 세션을 사용합니다. 시크릿 키는 Edge Function에만 넣으세요.</p>
           </div>
         </section>
 
@@ -1603,9 +1605,16 @@
         billingStatusLabel: '상태',
         billingUsageLabel: '회원 수',
         billingTrialLabel: '체험 종료',
-        billingNoteDefault: '결제 연동 전에도 한도 체크와 체험 로직은 동작합니다. 자세한 설계는 BILLING.md를 참고하세요.',
+        billingNoteDefault: '한국은 토스, 해외는 Stripe 결제 세션을 사용합니다. 시크릿 키는 Edge Function에만 넣으세요.',
         upgradeMonthlyButton: 'Pro 월간 시작',
         upgradeYearlyButton: 'Pro 연간 시작',
+        upgradeTossMonthlyButton: '토스 월간',
+        upgradeTossYearlyButton: '토스 연간',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: '토스 결제창을 엽니다...',
+        billingPaymentSuccess: '결제가 완료되었습니다. Pro가 활성화됩니다.',
+        billingPaymentFailed: '결제가 취소되었거나 실패했습니다.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: '무제한',
@@ -1794,9 +1803,16 @@
         billingStatusLabel: 'Status',
         billingUsageLabel: 'Members',
         billingTrialLabel: 'Trial ends',
-        billingNoteDefault: 'Limits and trial work before payment is connected. See BILLING.md.',
+        billingNoteDefault: 'Use Toss for Korea and Stripe for overseas. Keep secret keys only in Edge Functions.',
         upgradeMonthlyButton: 'Start Pro monthly',
         upgradeYearlyButton: 'Start Pro yearly',
+        upgradeTossMonthlyButton: 'Toss Monthly',
+        upgradeTossYearlyButton: 'Toss Yearly',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: 'Opening Toss checkout...',
+        billingPaymentSuccess: 'Payment completed. Pro will be activated.',
+        billingPaymentFailed: 'Payment was canceled or failed.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Unlimited',
@@ -1985,9 +2001,16 @@
         billingStatusLabel: 'Estado',
         billingUsageLabel: 'Miembros',
         billingTrialLabel: 'Fin de prueba',
-        billingNoteDefault: 'Los límites funcionan antes de conectar pagos. Ver BILLING.md.',
+        billingNoteDefault: 'Usa Toss en Corea y Stripe en el extranjero. Las claves secretas solo en Edge Functions.',
         upgradeMonthlyButton: 'Pro mensual',
         upgradeYearlyButton: 'Pro anual',
+        upgradeTossMonthlyButton: 'Toss mensual',
+        upgradeTossYearlyButton: 'Toss anual',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: 'Abriendo Toss...',
+        billingPaymentSuccess: 'Pago completado. Se activará Pro.',
+        billingPaymentFailed: 'El pago se canceló o falló.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Ilimitado',
@@ -2176,9 +2199,16 @@
         billingStatusLabel: 'Статус',
         billingUsageLabel: 'Клиенты',
         billingTrialLabel: 'Конец триала',
-        billingNoteDefault: 'Лимиты работают до подключения оплаты. См. BILLING.md.',
+        billingNoteDefault: 'Toss для Кореи, Stripe для зарубежья. Секреты только в Edge Functions.',
         upgradeMonthlyButton: 'Pro помесячно',
         upgradeYearlyButton: 'Pro ежегодно',
+        upgradeTossMonthlyButton: 'Toss месяц',
+        upgradeTossYearlyButton: 'Toss год',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: 'Открываем Toss...',
+        billingPaymentSuccess: 'Оплата завершена. Pro будет активирован.',
+        billingPaymentFailed: 'Оплата отменена или не удалась.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Без лимита',
@@ -2367,9 +2397,16 @@
         billingStatusLabel: 'Төлөв',
         billingUsageLabel: 'Гишүүн',
         billingTrialLabel: 'Туршилт дуусах',
-        billingNoteDefault: 'Төлбөр холбохоос өмнө хязгаар ажиллана. BILLING.md-г үзнэ үү.',
+        billingNoteDefault: 'Солонгост Toss, гадаадад Stripe. Нууц түлхүүрийг зөвхөн Edge Function-д хийнэ.',
         upgradeMonthlyButton: 'Pro сар бүр',
         upgradeYearlyButton: 'Pro жил бүр',
+        upgradeTossMonthlyButton: 'Toss сар',
+        upgradeTossYearlyButton: 'Toss жил',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: 'Toss нээж байна...',
+        billingPaymentSuccess: 'Төлбөр амжилттай. Pro идэвхжинэ.',
+        billingPaymentFailed: 'Төлбөр цуцлагдсан эсвэл амжилтгүй.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Хязгааргүй',
@@ -2558,9 +2595,16 @@
         billingStatusLabel: '状态',
         billingUsageLabel: '会员数',
         billingTrialLabel: '试用结束',
-        billingNoteDefault: '接入支付前也会执行人数限制。详见 BILLING.md。',
+        billingNoteDefault: '韩国用 Toss，海外用 Stripe。密钥只放在 Edge Function。',
         upgradeMonthlyButton: '开通 Pro 月付',
         upgradeYearlyButton: '开通 Pro 年付',
+        upgradeTossMonthlyButton: 'Toss 月付',
+        upgradeTossYearlyButton: 'Toss 年付',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: '正在打开 Toss...',
+        billingPaymentSuccess: '支付完成，即将开通 Pro。',
+        billingPaymentFailed: '支付已取消或失败。',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: '不限',
@@ -2749,9 +2793,16 @@
         billingStatusLabel: 'स्थिति',
         billingUsageLabel: 'सदस्य',
         billingTrialLabel: 'ट्रायल समाप्ति',
-        billingNoteDefault: 'पेमेंट कनेक्ट करने से पहले भी लिमिट काम करती है। BILLING.md देखें।',
+        billingNoteDefault: 'Korea के लिए Toss, विदेश के लिए Stripe। सीक्रेट केवल Edge Functions में।',
         upgradeMonthlyButton: 'Pro मासिक',
         upgradeYearlyButton: 'Pro वार्षिक',
+        upgradeTossMonthlyButton: 'Toss मासिक',
+        upgradeTossYearlyButton: 'Toss वार्षिक',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: 'Toss खुल रहा है...',
+        billingPaymentSuccess: 'पेमेंट पूरा। Pro सक्रिय होगा।',
+        billingPaymentFailed: 'पेमेंट रद्द या असफल।',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'अनलिमिटेड',
@@ -2940,9 +2991,16 @@
         billingStatusLabel: 'Statut',
         billingUsageLabel: 'Membres',
         billingTrialLabel: 'Fin d’essai',
-        billingNoteDefault: 'Les limites fonctionnent avant le paiement. Voir BILLING.md.',
+        billingNoteDefault: 'Toss pour la Corée, Stripe à l’international. Secrets uniquement dans les Edge Functions.',
         upgradeMonthlyButton: 'Pro mensuel',
         upgradeYearlyButton: 'Pro annuel',
+        upgradeTossMonthlyButton: 'Toss mensuel',
+        upgradeTossYearlyButton: 'Toss annuel',
+        upgradeStripeMonthlyButton: 'Stripe Monthly',
+        upgradeStripeYearlyButton: 'Stripe Yearly',
+        billingTossOpening: 'Ouverture de Toss...',
+        billingPaymentSuccess: 'Paiement terminé. Pro sera activé.',
+        billingPaymentFailed: 'Paiement annulé ou échoué.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Illimité',
@@ -3210,6 +3268,7 @@
         showAppShell();
         await reloadMembersFromServer();
         await refreshBillingSummary();
+        await handleBillingReturn();
         setAuthMessage('');
       } catch (error) {
         console.error(error);
@@ -3358,11 +3417,17 @@
           ? formatDateTime(billingSummary.trialEndsAt)
           : t('billingNoTrial');
 
-        const upgradeMonthly = document.getElementById('upgradeMonthlyButton');
-        const upgradeYearly = document.getElementById('upgradeYearlyButton');
+        const upgradeButtons = [
+          'upgradeTossMonthlyButton',
+          'upgradeTossYearlyButton',
+          'upgradeStripeMonthlyButton',
+          'upgradeStripeYearlyButton'
+        ];
         const hideUpgrade = billingSummary.hasPro && billingSummary.subscriptionStatus === 'active';
-        if (upgradeMonthly) upgradeMonthly.hidden = hideUpgrade;
-        if (upgradeYearly) upgradeYearly.hidden = hideUpgrade;
+        upgradeButtons.forEach((id) => {
+          const button = document.getElementById(id);
+          if (button) button.hidden = hideUpgrade;
+        });
 
         if (!SweatManagerBilling.getBillingConfig().checkoutEndpoint) {
           noteEl.textContent = t('billingCheckoutNotConfigured', {
@@ -3382,17 +3447,51 @@
       }
     }
 
-    async function handleUpgrade(interval) {
+    async function handleUpgrade(interval, provider) {
       if (!requireAuth()) return;
       try {
-        const result = await SweatManagerBilling.startCheckout({ plan: 'pro', interval });
+        const result = await SweatManagerBilling.startCheckout({
+          plan: 'pro',
+          interval,
+          provider
+        });
         if (result?.mode === 'manual') {
           showToast(t('billingCheckoutNotConfigured', {
             amount: SweatManagerBilling.formatKrw(result.amountKrw || SweatManagerBilling.PLANS.pro.priceKrwMonthly)
           }), 'warning');
+        } else if (result?.mode === 'toss_widget') {
+          showToast(t('billingTossOpening'));
         }
       } catch (error) {
         showToast(error.message || String(error), 'warning');
+      }
+    }
+
+    async function handleBillingReturn() {
+      if (!window.SweatManagerBilling || !SweatManagerDB.isReady()) return;
+      const params = new URLSearchParams(window.location.search);
+      const billing = params.get('billing');
+      const provider = params.get('provider');
+
+      if (billing === 'fail') {
+        showToast(t('billingPaymentFailed'), 'warning');
+        return;
+      }
+
+      if (provider === 'toss' && billing === 'success' && params.get('paymentKey')) {
+        try {
+          await SweatManagerBilling.confirmTossFromUrl(params);
+          showToast(t('billingPaymentSuccess'));
+          await refreshBillingSummary();
+        } catch (error) {
+          showToast(error.message || String(error), 'warning');
+        }
+        return;
+      }
+
+      if (billing === 'success') {
+        showToast(t('billingPaymentSuccess'));
+        await refreshBillingSummary();
       }
     }
 
@@ -4200,8 +4299,10 @@
     document.getElementById('authForm').addEventListener('submit', submitAuthForm);
     document.getElementById('signOutButton').addEventListener('click', handleSignOut);
     document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
-    document.getElementById('upgradeMonthlyButton').addEventListener('click', () => handleUpgrade('monthly'));
-    document.getElementById('upgradeYearlyButton').addEventListener('click', () => handleUpgrade('yearly'));
+    document.getElementById('upgradeTossMonthlyButton').addEventListener('click', () => handleUpgrade('monthly', 'toss'));
+    document.getElementById('upgradeTossYearlyButton').addEventListener('click', () => handleUpgrade('yearly', 'toss'));
+    document.getElementById('upgradeStripeMonthlyButton').addEventListener('click', () => handleUpgrade('monthly', 'stripe'));
+    document.getElementById('upgradeStripeYearlyButton').addEventListener('click', () => handleUpgrade('yearly', 'stripe'));
 
     document.querySelectorAll('[data-auth-tab]').forEach(button => {
       button.addEventListener('click', () => {
