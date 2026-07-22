@@ -1,19 +1,122 @@
-# Sweat Manager 수익화 / 구독 설계
+# Sweat Manager 수익화 / 토스 + Stripe 결제 연동
 
-이 문서는 **구독 테이블 + 회원 수 제한 + 결제 연동** 구조를 설명합니다.
+한국(토스) + 해외(Stripe) 이중 결제 세션 설계입니다.
 
-## 한 줄 요약
+## 플랜
 
-| 구분 | 내용 |
-|---|---|
-| Free | 회원 **20명** |
-| Pro trial | 가입 후 **14일** 무제한 |
-| Pro | 월 **29,000원** / 연 **290,000원**, 회원 무제한 |
-| 제한 위치 | 앱 UI + DB 트리거(우회 불가) |
-| 결제 확정 | **웹훅(서버)** 만 gym plan 변경 |
+| 플랜 | 가격 | 한도 |
+|---|---|---|
+| Free | 0 | 회원 20명 |
+| Pro trial | 가입 후 14일 | 무제한 |
+| Pro 월간 | ₩29,000 / $29 | 무제한 |
+| Pro 연간 | ₩290,000 / $290 | 무제한 |
 
-브라우저가 직접 `plan_code`를 `pro`로 바꾸면 안 됩니다.  
-결제 성공 웹훅(service role)만 `gyms` / `subscriptions` 를 갱신합니다.
+## 결제 흐름
+
+### 토스 (한국)
+1. 앱에서 **토스 월간/연간** 클릭
+2. `create-checkout`가 `orderId` 생성 + `checkout_sessions` 저장
+3. 브라우저 Toss 결제창 (`requestPayment`)
+4. 성공 리다이렉트 → `confirm-toss-payment`가 시크릿 키로 승인
+5. `activate_gym_pro()`로 Pro 활성화
+
+### Stripe (해외)
+1. 앱에서 **Stripe Monthly/Yearly** 클릭
+2. `create-checkout`가 Stripe Checkout Session 생성
+3. Stripe 호스팅 결제 페이지로 이동
+4. `billing-webhook`이 `checkout.session.completed` 수신
+5. `activate_gym_pro()`로 Pro 활성화
+
+시크릿 키는 절대 프론트에 넣지 마세요.
+
+---
+
+## 1) SQL 실행 (Supabase SQL Editor)
+
+순서대로 실행:
+
+1. `supabase/schema.sql` (이미 했으면 생략)
+2. `supabase/billing.sql` (이미 했으면 생략)
+3. **`supabase/checkout_sessions.sql`** ← 이번 추가
+
+Raw:
+https://raw.githubusercontent.com/hoyaj4102-svg/boxing_gym_-manager/main/supabase/checkout_sessions.sql
+
+---
+
+## 2) Edge Function 시크릿 설정
+
+Supabase Dashboard → **Edge Functions → Secrets** (또는 CLI):
+
+```bash
+# 공통
+supabase secrets set APP_URL=https://boxing-gym-manager.vercel.app
+
+# Toss
+supabase secrets set TOSS_CLIENT_KEY=test_ck_...
+supabase secrets set TOSS_SECRET_KEY=test_sk_...
+
+# Stripe
+supabase secrets set STRIPE_SECRET_KEY=sk_test_...
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+# 권장: Stripe Dashboard에서 만든 Price ID
+supabase secrets set STRIPE_PRICE_MONTHLY=price_...
+supabase secrets set STRIPE_PRICE_YEARLY=price_...
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY` / `SUPABASE_URL` 은 보통 함수 런타임에 기본 주입됩니다.
+
+---
+
+## 3) Edge Function 배포
+
+```bash
+supabase functions deploy create-checkout
+supabase functions deploy confirm-toss-payment
+supabase functions deploy billing-webhook
+```
+
+배포 후 URL 예:
+
+- `https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/create-checkout`
+- `https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/confirm-toss-payment`
+- `https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/billing-webhook`
+
+`js/billing-config.js`에 위 URL이 이미 들어가 있습니다.
+
+---
+
+## 4) Stripe Webhook 등록
+
+Stripe Dashboard → Developers → Webhooks → Add endpoint
+
+- URL: `https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/billing-webhook?provider=stripe`
+- Events:
+  - `checkout.session.completed`
+  - `invoice.paid`
+  - `invoice.payment_failed`
+  - `customer.subscription.deleted`
+- Signing secret → `STRIPE_WEBHOOK_SECRET`
+
+---
+
+## 5) 토스 키 발급
+
+1. [토스페이먼츠 개발자센터](https://developers.tosspayments.com/) 로그인
+2. 클라이언트 키 / 시크릿 키 발급 (테스트 키로 시작)
+3. 성공 URL에 `https://boxing-gym-manager.vercel.app` 허용
+
+프론트의 `tossClientKey`는 비워도 됩니다. `create-checkout` 응답의 `clientKey`를 사용합니다.
+
+---
+
+## 6) Stripe Price 만들기 (권장)
+
+1. Stripe → Products → `Sweat Manager Pro`
+2. Monthly $29, Yearly $290 Price 생성
+3. Price ID를 `STRIPE_PRICE_MONTHLY` / `STRIPE_PRICE_YEARLY`에 저장
+
+Price ID가 없으면 함수가 `price_data`로 임시 구독을 만듭니다.
 
 ---
 
@@ -21,143 +124,34 @@
 
 ```text
 supabase/
-  schema.sql          # 기본 SaaS 스키마
-  billing.sql         # 구독/제한 (이번 추가) ← SQL Editor에서 실행
+  billing.sql
+  checkout_sessions.sql
+  functions/
+    create-checkout/index.ts
+    confirm-toss-payment/index.ts
+    billing-webhook/index.ts
+    _shared/
 js/
-  billing-config.js   # Toss/Stripe 키, checkout endpoint
-  billing.js          # 플랜 헬퍼 + checkout 시작
-  supabase-service.js # 회원 등록 시 한도 체크
-index.html            # 요금제 패널 UI
-BILLING.md            # 이 문서
+  billing-config.js
+  billing.js
+BILLING.md
 ```
 
 ---
 
-## DB 설계
+## 보안 체크
 
-### `gyms`에 추가되는 컬럼
-
-- `plan_code`: `free` | `pro`
-- `member_limit`: Free 기본 `20`, Pro는 로직상 `-1`(무제한)
-- `subscription_status`: `trialing` | `active` | `past_due` | `canceled` | `expired`
-- `trial_ends_at`: 체험 종료 시각
-- `current_period_end`: 유료 기간 종료
-- `billing_provider`: `toss` | `stripe`
-- `billing_customer_id`, `billing_subscription_id`
-
-### `subscriptions` 테이블
-
-결제/체험 이력(감사 로그). 앱은 **조회만**, 쓰기는 웹훅.
-
-### RPC
-
-- `get_billing_summary()` → 현재 플랜, 회원 수, 추가 가능 여부
-- `gym_effective_member_limit(gym_id)`
-- `members` INSERT 전 트리거로 `MEMBER_LIMIT_REACHED` 차단
-
-### 체험 규칙
-
-신규 회원가입 시:
-
-1. `plan_code = pro`
-2. `subscription_status = trialing`
-3. `trial_ends_at = now() + 14 days`
-4. 체험 중에는 회원 수 무제한
-5. 체험 종료 후 결제 없으면 Free(20명)로 동작  
-   (기존 회원은 유지, **추가 등록만 차단**)
+- [x] 브라우저가 `plan_code` 직접 변경 불가
+- [x] Toss는 서버 confirm 후에만 활성화
+- [x] Stripe는 webhook 서명 검증 후 활성화
+- [x] 회원 한도는 DB 트리거로 강제
 
 ---
 
-## 앱 동작
+## 테스트 체크리스트
 
-1. 로그인 후 `get_billing_summary()` 호출
-2. 헤더/데이터 관리에 요금제 상태 표시
-3. Free 한도 도달 시 회원 등록 버튼 막고 Upgrade CTA
-4. Upgrade 클릭 → `billing.js` `startCheckout()`
-   - `checkoutEndpoint` 있으면 서버로 세션 생성 후 결제창 이동
-   - 없으면 “결제 연동 전” 안내 (수동 모드)
-
----
-
-## 결제 연동 순서 (추천: 토스페이먼츠)
-
-### 1) SQL 적용
-
-Supabase SQL Editor에서 `supabase/billing.sql` 실행.
-
-### 2) Edge Function (또는 Vercel API)
-
-예: `create-checkout`
-
-1. Authorization Bearer(사용자 JWT) 검증
-2. `gym_id` 확인
-3. Toss/Stripe에서 결제 세션 생성
-4. `{ checkoutUrl }` 반환
-
-예: `billing-webhook`
-
-1. 결제 성공 이벤트 수신
-2. service role로:
-
-```sql
-update gyms
-set plan_code = 'pro',
-    subscription_status = 'active',
-    member_limit = -1,
-    current_period_end = ...,
-    billing_provider = 'toss',
-    billing_subscription_id = ...
-where id = ...;
-
-insert into subscriptions (...);
-```
-
-### 3) 프론트 설정
-
-`js/billing-config.js`:
-
-```js
-window.SWEAT_MANAGER_BILLING = {
-  provider: 'toss',
-  tossClientKey: 'test_ck_...',
-  checkoutEndpoint: 'https://<project>.functions.supabase.co/create-checkout',
-  successUrl: 'https://boxing-gym-manager.vercel.app/?billing=success',
-  failUrl: 'https://boxing-gym-manager.vercel.app/?billing=fail'
-};
-```
-
-### Stripe를 쓸 때
-
-- `provider: 'stripe'`
-- Checkout Session + Customer Portal
-- Webhook: `checkout.session.completed`, `customer.subscription.updated/deleted`
-
----
-
-## 가격(초기 제안)
-
-| 플랜 | 가격 | 한도 |
-|---|---|---|
-| Free | 0 | 회원 20명 |
-| Pro 월간 | 29,000원 | 무제한 |
-| Pro 연간 | 290,000원 (2개월 할인) | 무제한 |
-
-가격은 `js/billing.js`의 `PLANS`에서 수정합니다.
-
----
-
-## 보안 체크리스트
-
-- [ ] 브라우저에서 `gyms.plan_code` 직접 update 금지 (RLS 유지)
-- [ ] 웹훅 서명 검증 (Toss/Stripe)
-- [ ] service_role 키는 Edge Function 시크릿에만
-- [ ] 회원 한도는 DB 트리거로 강제
-
----
-
-## 지금 바로 할 일
-
-1. `supabase/billing.sql` 실행
-2. 앱 새로고침 → 요금제 패널 확인
-3. Free 한도 테스트(체험 종료 후 또는 status를 free로 수동 테스트)
-4. 결제 준비되면 Edge Function + `billing-config.js` 채우기
+1. SQL 3종 실행
+2. Secrets 입력 + Functions 배포
+3. 앱에서 **토스 월간** → 테스트 카드 결제 → Pro 활성화
+4. 앱에서 **Stripe Monthly** → 테스트 카드 결제 → Webhook 후 Pro 활성화
+5. Free 한도(20명) 차단 확인 (체험/구독 종료 상태)
