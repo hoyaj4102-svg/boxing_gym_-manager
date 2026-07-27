@@ -207,23 +207,74 @@
     return payload;
   }
 
+  async function waitForAccessToken(retries = 8) {
+    for (let i = 0; i < retries; i += 1) {
+      try {
+        const token = await getAccessToken();
+        if (token) return token;
+      } catch {
+        // retry
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    throw new Error('Login required');
+  }
+
   async function confirmTossFromUrl(searchParams = new URLSearchParams(global.location.search)) {
     const provider = searchParams.get('provider');
     const billing = searchParams.get('billing');
     const paymentKey = searchParams.get('paymentKey');
-    const orderId = searchParams.get('orderId');
+    const orderIds = searchParams.getAll('orderId').filter(Boolean);
+    const orderId = orderIds[orderIds.length - 1] || searchParams.get('orderId');
     const amount = Number(searchParams.get('amount'));
 
-    if (provider !== 'toss' || billing !== 'success' || !paymentKey || !orderId) {
+    if (provider !== 'toss' || billing !== 'success') {
       return null;
     }
 
+    if (!paymentKey || !orderId || !Number.isFinite(amount)) {
+      const err = new Error('TOSS_RETURN_INCOMPLETE');
+      err.code = 'TOSS_RETURN_INCOMPLETE';
+      throw err;
+    }
+
     const config = getBillingConfig();
+    const client = global.SweatManagerDB?.client?.();
+
+    // Prefer official invoke (attaches JWT reliably)
+    if (client?.functions?.invoke) {
+      await waitForAccessToken();
+      const { data, error } = await client.functions.invoke('confirm-toss-payment', {
+        body: { paymentKey, orderId, amount }
+      });
+      if (error) {
+        let message = error.message || 'Toss confirm failed';
+        try {
+          if (typeof error.context?.json === 'function') {
+            const body = await error.context.json();
+            message = body?.message || body?.error || message;
+          } else if (error.context?.body) {
+            message = String(error.context.body);
+          }
+        } catch {
+          // keep message
+        }
+        throw new Error(message);
+      }
+
+      const url = new URL(global.location.href);
+      ['paymentKey', 'orderId', 'amount', 'paymentType', 'billing', 'provider'].forEach((key) => {
+        url.searchParams.delete(key);
+      });
+      global.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+      return data;
+    }
+
     if (!config.confirmTossEndpoint) {
       throw new Error('confirmTossEndpoint missing');
     }
 
-    const accessToken = await getAccessToken();
+    const accessToken = await waitForAccessToken();
     const response = await fetch(config.confirmTossEndpoint, {
       method: 'POST',
       headers: {
@@ -246,10 +297,11 @@
       throw new Error(payload.message || rawText || 'Toss confirm failed');
     }
 
-    // Clean query params after success
     const url = new URL(global.location.href);
-    ['paymentKey', 'orderId', 'amount', 'paymentType'].forEach((key) => url.searchParams.delete(key));
-    global.history.replaceState({}, '', url.toString());
+    ['paymentKey', 'orderId', 'amount', 'paymentType', 'billing', 'provider'].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+    global.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
 
     return payload;
   }

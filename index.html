@@ -1615,6 +1615,8 @@
         billingTossOpening: '토스 결제창을 엽니다...',
         billingPaymentSuccess: '결제가 완료되었습니다. Pro가 활성화됩니다.',
         billingPaymentFailed: '결제가 취소되었거나 실패했습니다.',
+        billingNeedLoginAfterPay: '결제 후 로그인이 필요합니다. 다시 로그인해 주세요.',
+        billingTossReturnIncomplete: '결제 승인 정보가 부족합니다. 토스 결제 후 돌아온 주소에 paymentKey가 있는지 확인해 주세요.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: '무제한',
@@ -1813,6 +1815,8 @@
         billingTossOpening: 'Opening Toss checkout...',
         billingPaymentSuccess: 'Payment completed. Pro will be activated.',
         billingPaymentFailed: 'Payment was canceled or failed.',
+        billingNeedLoginAfterPay: 'Please sign in again after payment.',
+        billingTossReturnIncomplete: 'Missing Toss paymentKey/amount in the return URL. Try the test payment again.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Unlimited',
@@ -2011,6 +2015,8 @@
         billingTossOpening: 'Abriendo Toss...',
         billingPaymentSuccess: 'Pago completado. Se activará Pro.',
         billingPaymentFailed: 'El pago se canceló o falló.',
+        billingNeedLoginAfterPay: 'Inicia sesión otra vez después del pago.',
+        billingTossReturnIncomplete: 'Falta paymentKey/amount en la URL de retorno. Intenta el pago de prueba otra vez.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Ilimitado',
@@ -2209,6 +2215,8 @@
         billingTossOpening: 'Открываем Toss...',
         billingPaymentSuccess: 'Оплата завершена. Pro будет активирован.',
         billingPaymentFailed: 'Оплата отменена или не удалась.',
+        billingNeedLoginAfterPay: 'После оплаты войдите снова.',
+        billingTossReturnIncomplete: 'В URL возврата нет paymentKey/amount. Повторите тестовую оплату.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Без лимита',
@@ -2407,6 +2415,8 @@
         billingTossOpening: 'Toss нээж байна...',
         billingPaymentSuccess: 'Төлбөр амжилттай. Pro идэвхжинэ.',
         billingPaymentFailed: 'Төлбөр цуцлагдсан эсвэл амжилтгүй.',
+        billingNeedLoginAfterPay: 'Төлбөрийн дараа дахин нэвтэрнэ үү.',
+        billingTossReturnIncomplete: 'Буцах URL-д paymentKey/amount алга. Туршилтын төлбөрийг дахин хийнэ үү.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Хязгааргүй',
@@ -2605,6 +2615,8 @@
         billingTossOpening: '正在打开 Toss...',
         billingPaymentSuccess: '支付完成，即将开通 Pro。',
         billingPaymentFailed: '支付已取消或失败。',
+        billingNeedLoginAfterPay: '支付后请重新登录。',
+        billingTossReturnIncomplete: '返回地址缺少 paymentKey/amount，请重新测试支付。',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: '不限',
@@ -2803,6 +2815,8 @@
         billingTossOpening: 'Toss खुल रहा है...',
         billingPaymentSuccess: 'पेमेंट पूरा। Pro सक्रिय होगा।',
         billingPaymentFailed: 'पेमेंट रद्द या असफल।',
+        billingNeedLoginAfterPay: 'पेमेंट के बाद फिर लॉगिन करें।',
+        billingTossReturnIncomplete: 'रिटर्न URL में paymentKey/amount नहीं है। टेस्ट पेमेंट फिर से करें।',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'अनलिमिटेड',
@@ -3001,6 +3015,8 @@
         billingTossOpening: 'Ouverture de Toss...',
         billingPaymentSuccess: 'Paiement terminé. Pro sera activé.',
         billingPaymentFailed: 'Paiement annulé ou échoué.',
+        billingNeedLoginAfterPay: 'Reconnectez-vous après le paiement.',
+        billingTossReturnIncomplete: 'paymentKey/amount manquant dans l’URL de retour. Refaites le paiement test.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: 'Illimité',
@@ -3266,9 +3282,9 @@
         setAuthMessage(t('authLoading'));
         await SweatManagerDB.loadSessionContext(sessionUser);
         showAppShell();
+        await handleBillingReturn();
         await reloadMembersFromServer();
         await refreshBillingSummary();
-        await handleBillingReturn();
         setAuthMessage('');
       } catch (error) {
         console.error(error);
@@ -3468,7 +3484,7 @@
     }
 
     async function handleBillingReturn() {
-      if (!window.SweatManagerBilling || !SweatManagerDB.isReady()) return;
+      if (!window.SweatManagerBilling) return;
       const params = new URLSearchParams(window.location.search);
       const billing = params.get('billing');
       const provider = params.get('provider');
@@ -3478,13 +3494,23 @@
         return;
       }
 
-      if (provider === 'toss' && billing === 'success' && params.get('paymentKey')) {
+      if (provider === 'toss' && billing === 'success') {
+        if (!SweatManagerDB.isReady()) {
+          showToast(t('billingNeedLoginAfterPay'), 'warning');
+          return;
+        }
         try {
-          await SweatManagerBilling.confirmTossFromUrl(params);
-          showToast(t('billingPaymentSuccess'));
-          await refreshBillingSummary();
+          const result = await SweatManagerBilling.confirmTossFromUrl(params);
+          if (result) {
+            showToast(t('billingPaymentSuccess'));
+            await refreshBillingSummary();
+          }
         } catch (error) {
-          showToast(error.message || String(error), 'warning');
+          if (error?.code === 'TOSS_RETURN_INCOMPLETE' || error?.message === 'TOSS_RETURN_INCOMPLETE') {
+            showToast(t('billingTossReturnIncomplete'), 'warning');
+          } else {
+            showToast(error.message || String(error), 'warning');
+          }
         }
         return;
       }

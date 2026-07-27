@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v10-toss-stripe';
+const CACHE_VERSION = 'sweat-manager-v11-toss-confirm-fix';
 const APP_SHELL = [
   '/',
   '/index.html',
