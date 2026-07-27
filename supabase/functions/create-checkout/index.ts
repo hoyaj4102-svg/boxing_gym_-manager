@@ -153,8 +153,9 @@ async function createTossCheckout(params: {
 
   if (insertError) throw new Error(insertError.message);
 
-  const successUrl = `${params.successUrl}${params.successUrl.includes('?') ? '&' : '?'}provider=toss&orderId=${encodeURIComponent(orderId)}`;
-  const failUrl = `${params.failUrl}${params.failUrl.includes('?') ? '&' : '?'}provider=toss&orderId=${encodeURIComponent(orderId)}`;
+  // Keep success/fail URLs stable. Toss appends paymentKey, orderId, amount.
+  const successUrl = `${params.successUrl}${params.successUrl.includes('?') ? '&' : '?'}provider=toss`;
+  const failUrl = `${params.failUrl}${params.failUrl.includes('?') ? '&' : '?'}provider=toss`;
 
   // Frontend opens Toss payment widget / requestPayment with these values.
   return {
