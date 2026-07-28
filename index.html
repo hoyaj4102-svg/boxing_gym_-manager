@@ -1381,10 +1381,10 @@
             <div class="billing-actions">
               <button type="button" class="btn btn-primary" id="upgradeTossMonthlyButton" data-i18n="upgradeTossMonthlyButton">토스 월간</button>
               <button type="button" class="btn btn-ghost" id="upgradeTossYearlyButton" data-i18n="upgradeTossYearlyButton">토스 연간</button>
-              <button type="button" class="btn btn-primary" id="upgradeStripeMonthlyButton" data-i18n="upgradeStripeMonthlyButton">Stripe Monthly</button>
-              <button type="button" class="btn btn-ghost" id="upgradeStripeYearlyButton" data-i18n="upgradeStripeYearlyButton">Stripe Yearly</button>
+              <button type="button" class="btn btn-primary" id="upgradeStripeMonthlyButton" data-i18n="upgradeStripeMonthlyButton" hidden>Stripe Monthly</button>
+              <button type="button" class="btn btn-ghost" id="upgradeStripeYearlyButton" data-i18n="upgradeStripeYearlyButton" hidden>Stripe Yearly</button>
             </div>
-            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">한국은 토스, 해외는 Stripe 결제 세션을 사용합니다. 시크릿 키는 Edge Function에만 넣으세요.</p>
+            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">현재는 토스 결제만 사용합니다. 해외 Stripe는 나중에 연결합니다.</p>
           </div>
         </section>
 
@@ -3435,14 +3435,17 @@
 
         const upgradeButtons = [
           'upgradeTossMonthlyButton',
-          'upgradeTossYearlyButton',
-          'upgradeStripeMonthlyButton',
-          'upgradeStripeYearlyButton'
+          'upgradeTossYearlyButton'
         ];
         const hideUpgrade = billingSummary.hasPro && billingSummary.subscriptionStatus === 'active';
         upgradeButtons.forEach((id) => {
           const button = document.getElementById(id);
           if (button) button.hidden = hideUpgrade;
+        });
+        // Stripe is temporarily hidden until overseas account is ready.
+        ['upgradeStripeMonthlyButton', 'upgradeStripeYearlyButton'].forEach((id) => {
+          const button = document.getElementById(id);
+          if (button) button.hidden = true;
         });
 
         if (!SweatManagerBilling.getBillingConfig().checkoutEndpoint) {
@@ -4327,8 +4330,7 @@
     document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
     document.getElementById('upgradeTossMonthlyButton').addEventListener('click', () => handleUpgrade('monthly', 'toss'));
     document.getElementById('upgradeTossYearlyButton').addEventListener('click', () => handleUpgrade('yearly', 'toss'));
-    document.getElementById('upgradeStripeMonthlyButton').addEventListener('click', () => handleUpgrade('monthly', 'stripe'));
-    document.getElementById('upgradeStripeYearlyButton').addEventListener('click', () => handleUpgrade('yearly', 'stripe'));
+    // Stripe buttons stay hidden for now (Korea-first Toss billing).
 
     document.querySelectorAll('[data-auth-tab]').forEach(button => {
       button.addEventListener('click', () => {
