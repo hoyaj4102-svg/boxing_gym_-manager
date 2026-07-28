@@ -1392,7 +1392,7 @@
           <div class="panel-header">
             <div>
               <h2 data-i18n="dataTitle">데이터 관리</h2>
-              <p class="panel-subtitle" data-i18n="dataSubtitle">Supabase에 저장되며 JSON으로 백업/복원할 수 있습니다.</p>
+              <p class="panel-subtitle" data-i18n="dataSubtitle">Supabase에 저장되며 CSV로 내보내거나 JSON으로 복원할 수 있습니다.</p>
             </div>
           </div>
           <div class="panel-body">
@@ -1410,16 +1410,16 @@
                 </ul>
               </div>
               <div class="notice-card">
-                <strong data-i18n="storageNotice3Title">JSON 백업은 추가 안전장치입니다.</strong>
+                <strong data-i18n="storageNotice3Title">CSV 내보내기로 엑셀에서 확인할 수 있습니다.</strong>
                 <ul>
-                  <li data-i18n="storageNotice3Item1">JSON 백업: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.</li>
-                  <li data-i18n="storageNotice3Item2">JSON 복원: 백업 파일로 Supabase 데이터를 교체합니다.</li>
-                  <li data-i18n="storageNotice3Item3">백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하세요.</li>
+                  <li data-i18n="storageNotice3Item1">CSV 내보내기: 회원/만기/PT/메모/출석 횟수를 엑셀용 파일로 저장합니다.</li>
+                  <li data-i18n="storageNotice3Item2">JSON 복원: 이전에 저장한 전체 백업 파일이 있으면 Supabase 데이터를 교체합니다.</li>
+                  <li data-i18n="storageNotice3Item3">내보낸 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하세요.</li>
                 </ul>
               </div>
             </div>
             <div class="backup-actions">
-              <button type="button" class="btn btn-ghost" onclick="exportData()" data-i18n="jsonBackupButton">JSON 백업</button>
+              <button type="button" class="btn btn-ghost" onclick="exportData()" data-i18n="csvExportButton">CSV 내보내기</button>
               <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()" data-i18n="jsonRestoreButton">JSON 복원</button>
               <button type="button" class="btn btn-primary" id="migrateLocalButton" data-i18n="migrateLocalButton">로컬 데이터 업로드</button>
               <input type="file" id="importFile" accept=".json,application/json" hidden>
@@ -1552,7 +1552,7 @@
         absent14Tag: '14일 이상',
         absent30Tag: '30일 이상',
         dataTitle: '데이터 관리',
-        dataSubtitle: 'Supabase에 저장되며 JSON으로 백업/복원할 수 있습니다.',
+        dataSubtitle: 'Supabase에 저장되며 CSV로 내보내거나 JSON으로 복원할 수 있습니다.',
         authTitle: '체육관 로그인',
         authLead: '체육관 계정으로 로그인하면 회원 데이터가 안전하게 분리 저장됩니다.',
         authTabLogin: '로그인',
@@ -1632,6 +1632,8 @@
         billingNoTrial: '해당 없음',
         storageInfoButton: '저장 방식 안내',
         jsonBackupButton: 'JSON 백업',
+        csvExportButton: 'CSV 내보내기',
+        csvExported: 'CSV 파일이 다운로드되었습니다.',
         jsonRestoreButton: 'JSON 복원',
         attendanceModalTitle: '출석 기록',
         editModalTitle: '회원 정보 수정',
@@ -1645,10 +1647,10 @@
         storageNotice2Item1: 'PC, 휴대폰, 태블릿에서 동일한 이메일로 로그인하세요.',
         storageNotice2Item2: '이전 브라우저 localStorage 데이터가 있으면 아래에서 한 번 업로드할 수 있습니다.',
         storageNotice2Item3: '비밀번호를 잊어버리면 로그인 화면의 비밀번호 재설정을 사용하세요.',
-        storageNotice3Title: 'JSON 백업은 추가 안전장치입니다.',
-        storageNotice3Item1: 'JSON 백업: 현재 회원/출석/PT/메모 데이터를 파일로 저장합니다.',
-        storageNotice3Item2: 'JSON 복원: 백업 파일로 Supabase 데이터를 교체합니다.',
-        storageNotice3Item3: '백업 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하세요.',
+        storageNotice3Title: 'CSV 내보내기로 엑셀에서 확인할 수 있습니다.',
+        storageNotice3Item1: 'CSV 내보내기: 회원/만기/PT/메모/출석 횟수를 엑셀용 파일로 저장합니다.',
+        storageNotice3Item2: 'JSON 복원: 이전에 저장한 전체 백업 파일이 있으면 Supabase 데이터를 교체합니다.',
+        storageNotice3Item3: '내보낸 파일은 iCloud Drive, Google Drive 같은 안전한 곳에 보관하세요.',
         dontShowStorageInfo: '다음 접속부터 이 안내를 자동으로 띄우지 않기',
         backupNowButton: '지금 JSON 백업',
         confirmStorageInfo: '확인했습니다',
@@ -1752,7 +1754,7 @@
         absent14Tag: '14+ days',
         absent30Tag: '30+ days',
         dataTitle: 'Data Management',
-        dataSubtitle: 'Saved in Supabase. Backup/restore with JSON.',
+        dataSubtitle: 'Saved in Supabase. Export CSV or restore from JSON.',
         authTitle: 'Gym login',
         authLead: 'Sign in with your gym account. Member data is isolated per gym.',
         authTabLogin: 'Login',
@@ -1832,6 +1834,8 @@
         billingNoTrial: 'N/A',
         storageInfoButton: 'Storage guide',
         jsonBackupButton: 'JSON backup',
+        csvExportButton: 'Export CSV',
+        csvExported: 'CSV file downloaded.',
         jsonRestoreButton: 'JSON restore',
         attendanceModalTitle: 'Attendance History',
         editModalTitle: 'Edit Member',
@@ -1845,10 +1849,10 @@
         storageNotice2Item1: 'Sign in with the same email on PC, phone, or tablet.',
         storageNotice2Item2: 'If old browser localStorage data exists, upload it once below.',
         storageNotice2Item3: 'Forgot password? Use password reset on the login screen.',
-        storageNotice3Title: 'JSON backup is an extra safety net.',
-        storageNotice3Item1: 'JSON backup: saves current member/attendance/PT/note data to a file.',
-        storageNotice3Item2: 'JSON restore: replaces Supabase data with a backup file.',
-        storageNotice3Item3: 'Keep backup files somewhere safe such as iCloud Drive or Google Drive.',
+        storageNotice3Title: 'Export CSV to open in Excel.',
+        storageNotice3Item1: 'CSV export: saves members/expiry/PT/notes/visit counts for Excel.',
+        storageNotice3Item2: 'JSON restore: replaces Supabase data if you have a full backup file.',
+        storageNotice3Item3: 'Keep exported files somewhere safe such as iCloud Drive or Google Drive.',
         dontShowStorageInfo: 'Do not show this guide automatically next time',
         backupNowButton: 'Back up JSON now',
         confirmStorageInfo: 'I understand',
@@ -1952,7 +1956,7 @@
         absent14Tag: '14+ días',
         absent30Tag: '30+ días',
         dataTitle: 'Gestión de datos',
-        dataSubtitle: 'Guardado en Supabase. Copia/restauración con JSON.',
+        dataSubtitle: 'Guardado en Supabase. Exporta CSV o restaura con JSON.',
         authTitle: 'Inicio de sesión del gimnasio',
         authLead: 'Inicia sesión con la cuenta del gimnasio. Los datos se separan por gimnasio.',
         authTabLogin: 'Entrar',
@@ -2032,6 +2036,8 @@
         billingNoTrial: 'N/D',
         storageInfoButton: 'Guía de guardado',
         jsonBackupButton: 'Copia JSON',
+        csvExportButton: 'Exportar CSV',
+        csvExported: 'Archivo CSV descargado.',
         jsonRestoreButton: 'Restaurar JSON',
         attendanceModalTitle: 'Historial de asistencia',
         editModalTitle: 'Editar miembro',
@@ -2045,10 +2051,10 @@
         storageNotice2Item1: 'Inicia sesión con el mismo correo en PC, móvil o tablet.',
         storageNotice2Item2: 'Si hay datos localStorage antiguos, súbelos una vez abajo.',
         storageNotice2Item3: '¿Olvidaste la contraseña? Usa restablecer en la pantalla de acceso.',
-        storageNotice3Title: 'La copia JSON es una seguridad extra.',
-        storageNotice3Item1: 'Copia JSON: guarda miembros/asistencia/PT/notas en un archivo.',
-        storageNotice3Item2: 'Restaurar JSON: reemplaza los datos de Supabase con el archivo.',
-        storageNotice3Item3: 'Guarda las copias en un lugar seguro como iCloud Drive o Google Drive.',
+        storageNotice3Title: 'Exporta CSV para abrir en Excel.',
+        storageNotice3Item1: 'Exportar CSV: guarda miembros/vencimiento/PT/notas/visitas para Excel.',
+        storageNotice3Item2: 'Restaurar JSON: reemplaza Supabase si tienes una copia completa.',
+        storageNotice3Item3: 'Guarda los archivos exportados en un lugar seguro como iCloud Drive o Google Drive.',
         dontShowStorageInfo: 'No mostrar esta guía automáticamente la próxima vez',
         backupNowButton: 'Crear copia JSON ahora',
         confirmStorageInfo: 'Entendido',
@@ -2152,7 +2158,7 @@
         absent14Tag: '14+ дней',
         absent30Tag: '30+ дней',
         dataTitle: 'Управление данными',
-        dataSubtitle: 'Данные в Supabase. Резервные копии через JSON.',
+        dataSubtitle: 'Данные в Supabase. Экспорт CSV или восстановление JSON.',
         authTitle: 'Вход в зал',
         authLead: 'Войдите в аккаунт зала. Данные разделены по залам.',
         authTabLogin: 'Вход',
@@ -2232,6 +2238,8 @@
         billingNoTrial: 'Н/Д',
         storageInfoButton: 'Как хранятся данные',
         jsonBackupButton: 'JSON копия',
+        csvExportButton: 'Экспорт CSV',
+        csvExported: 'CSV файл скачан.',
         jsonRestoreButton: 'JSON восстановление',
         attendanceModalTitle: 'История посещений',
         editModalTitle: 'Редактировать клиента',
@@ -2245,10 +2253,10 @@
         storageNotice2Item1: 'Войдите с тем же email на ПК, телефоне или планшете.',
         storageNotice2Item2: 'Если есть старые localStorage-данные, загрузите их один раз ниже.',
         storageNotice2Item3: 'Забыли пароль? Используйте сброс на экране входа.',
-        storageNotice3Title: 'JSON-копия — дополнительная защита.',
-        storageNotice3Item1: 'JSON копия: сохраняет клиентов/посещения/PT/заметки в файл.',
-        storageNotice3Item2: 'JSON восстановление: заменяет данные Supabase файлом.',
-        storageNotice3Item3: 'Храните копии в безопасном месте, например iCloud Drive или Google Drive.',
+        storageNotice3Title: 'Экспорт CSV для Excel.',
+        storageNotice3Item1: 'CSV экспорт: клиенты/срок/PT/заметки/визиты для Excel.',
+        storageNotice3Item2: 'JSON восстановление: заменяет Supabase при наличии полной копии.',
+        storageNotice3Item3: 'Храните экспортированные файлы в безопасном месте.',
         dontShowStorageInfo: 'Не показывать это руководство автоматически в следующий раз',
         backupNowButton: 'Сделать JSON копию',
         confirmStorageInfo: 'Понятно',
@@ -2352,7 +2360,7 @@
         absent14Tag: '14+ хоног',
         absent30Tag: '30+ хоног',
         dataTitle: 'Өгөгдлийн удирдлага',
-        dataSubtitle: 'Supabase-д хадгална. JSON-оор нөөцлөх/сэргээнэ.',
+        dataSubtitle: 'Supabase-д хадгална. CSV экспорт эсвэл JSON сэргээнэ.',
         authTitle: 'Гимназийн нэвтрэлт',
         authLead: 'Гимназийн бүртгэлээр нэвтэрнэ. Өгөгдөл гимназиар тусгаарлагдана.',
         authTabLogin: 'Нэвтрэх',
@@ -2432,6 +2440,8 @@
         billingNoTrial: 'Байхгүй',
         storageInfoButton: 'Хадгалалтын заавар',
         jsonBackupButton: 'JSON нөөц',
+        csvExportButton: 'CSV экспорт',
+        csvExported: 'CSV файл татагдлаа.',
         jsonRestoreButton: 'JSON сэргээх',
         attendanceModalTitle: 'Ирцийн түүх',
         editModalTitle: 'Гишүүн засах',
@@ -2445,10 +2455,10 @@
         storageNotice2Item1: 'PC, утас, таблет дээр ижил и-мэйлээр нэвтэрнэ үү.',
         storageNotice2Item2: 'Хуучин localStorage өгөгдөл байвал доор нэг удаа байршуулна.',
         storageNotice2Item3: 'Нууц үг мартсан бол нэвтрэх дэлгэцийн сэргээлтийг ашиглана.',
-        storageNotice3Title: 'JSON нөөц нь нэмэлт хамгаалалт.',
-        storageNotice3Item1: 'JSON нөөц: гишүүн/ирц/PT/тэмдэглэлийг файлд хадгална.',
-        storageNotice3Item2: 'JSON сэргээх: Supabase өгөгдлийг файлаар солино.',
-        storageNotice3Item3: 'Нөөцийг iCloud Drive эсвэл Google Drive зэрэг аюулгүй газарт хадгална.',
+        storageNotice3Title: 'CSV экспортоор Excel-д харна.',
+        storageNotice3Item1: 'CSV экспорт: гишүүн/дуусах/PT/тэмдэглэл/ирцийг Excel-д хадгална.',
+        storageNotice3Item2: 'JSON сэргээх: бүтэн нөөц байвал Supabase-г солино.',
+        storageNotice3Item3: 'Экспорт файлыг аюулгүй газарт хадгална.',
         dontShowStorageInfo: 'Дараагийн удаа энэ зааврыг автоматаар харуулахгүй',
         backupNowButton: 'Одоо JSON нөөцлөх',
         confirmStorageInfo: 'Ойлголоо',
@@ -2552,7 +2562,7 @@
         absent14Tag: '14天以上',
         absent30Tag: '30天以上',
         dataTitle: '数据管理',
-        dataSubtitle: '数据保存在 Supabase，可用 JSON 备份/恢复。',
+        dataSubtitle: '数据保存在 Supabase，可导出 CSV 或用 JSON 恢复。',
         authTitle: '健身房登录',
         authLead: '使用健身房账号登录后，会员数据会按健身房隔离保存。',
         authTabLogin: '登录',
@@ -2632,6 +2642,8 @@
         billingNoTrial: '无',
         storageInfoButton: '存储方式说明',
         jsonBackupButton: 'JSON备份',
+        csvExportButton: '导出 CSV',
+        csvExported: 'CSV 文件已下载。',
         jsonRestoreButton: 'JSON恢复',
         attendanceModalTitle: '出勤记录',
         editModalTitle: '编辑会员',
@@ -2645,10 +2657,10 @@
         storageNotice2Item1: '在电脑、手机或平板用同一邮箱登录。',
         storageNotice2Item2: '如果还有旧的浏览器 localStorage 数据，请在下方上传一次。',
         storageNotice2Item3: '忘记密码？请使用登录页的密码重置。',
-        storageNotice3Title: 'JSON 备份是额外保障。',
-        storageNotice3Item1: 'JSON备份：将会员/出勤/PT/备注保存为文件。',
-        storageNotice3Item2: 'JSON恢复：用备份文件替换 Supabase 数据。',
-        storageNotice3Item3: '请将备份保存在 iCloud Drive 或 Google Drive 等安全位置。',
+        storageNotice3Title: '可导出 CSV 用 Excel 查看。',
+        storageNotice3Item1: 'CSV 导出：保存会员/到期/PT/备注/出勤次数供 Excel 使用。',
+        storageNotice3Item2: 'JSON 恢复：如有完整备份可替换 Supabase 数据。',
+        storageNotice3Item3: '请将导出文件保存在安全位置。',
         dontShowStorageInfo: '下次访问时不再自动显示此说明',
         backupNowButton: '立即JSON备份',
         confirmStorageInfo: '我已了解',
@@ -2752,7 +2764,7 @@
         absent14Tag: '14+ दिन',
         absent30Tag: '30+ दिन',
         dataTitle: 'डेटा प्रबंधन',
-        dataSubtitle: 'Supabase में सेव; JSON से बैकअप/रिस्टोर।',
+        dataSubtitle: 'Supabase में सेव; CSV निर्यात या JSON रिस्टोर।',
         authTitle: 'जिम लॉगिन',
         authLead: 'जिम अकाउंट से लॉगिन करें। सदस्य डेटा जिम के अनुसार अलग रहता है।',
         authTabLogin: 'लॉगिन',
@@ -2832,6 +2844,8 @@
         billingNoTrial: 'N/A',
         storageInfoButton: 'स्टोरेज गाइड',
         jsonBackupButton: 'JSON बैकअप',
+        csvExportButton: 'CSV निर्यात',
+        csvExported: 'CSV फ़ाइल डाउनलोड हो गई।',
         jsonRestoreButton: 'JSON रिस्टोर',
         attendanceModalTitle: 'उपस्थिति रिकॉर्ड',
         editModalTitle: 'सदस्य संपादित करें',
@@ -2845,10 +2859,10 @@
         storageNotice2Item1: 'PC, फोन या टैबलेट पर उसी ईमेल से लॉगिन करें।',
         storageNotice2Item2: 'अगर पुराना localStorage डेटा है, तो नीचे एक बार अपलोड करें।',
         storageNotice2Item3: 'पासवर्ड भूल गए? लॉगिन स्क्रीन पर रीसेट उपयोग करें।',
-        storageNotice3Title: 'JSON बैकअप अतिरिक्त सुरक्षा है।',
-        storageNotice3Item1: 'JSON बैकअप: सदस्य/उपस्थिति/PT/नोट को फाइल में सेव करता है।',
-        storageNotice3Item2: 'JSON रिस्टोर: बैकअप फाइल से Supabase डेटा बदलता है।',
-        storageNotice3Item3: 'बैकअप को iCloud Drive या Google Drive जैसी सुरक्षित जगह पर रखें।',
+        storageNotice3Title: 'Excel के लिए CSV निर्यात करें।',
+        storageNotice3Item1: 'CSV निर्यात: सदस्य/समाप्ति/PT/नोट/विज़िट Excel के लिए सेव करता है।',
+        storageNotice3Item2: 'JSON रिस्टोर: पूरा बैकअप हो तो Supabase बदलता है।',
+        storageNotice3Item3: 'निर्यात फाइलें सुरक्षित जगह पर रखें।',
         dontShowStorageInfo: 'अगली बार यह गाइड अपने आप न दिखाएं',
         backupNowButton: 'अभी JSON बैकअप',
         confirmStorageInfo: 'समझ गया',
@@ -2952,7 +2966,7 @@
         absent14Tag: '14+ jours',
         absent30Tag: '30+ jours',
         dataTitle: 'Gestion des données',
-        dataSubtitle: 'Enregistré sur Supabase. Sauvegarde/restauration JSON.',
+        dataSubtitle: 'Enregistré sur Supabase. Export CSV ou restauration JSON.',
         authTitle: 'Connexion salle',
         authLead: 'Connectez-vous avec le compte de la salle. Les données sont isolées par salle.',
         authTabLogin: 'Connexion',
@@ -3032,6 +3046,8 @@
         billingNoTrial: 'N/A',
         storageInfoButton: 'Guide de stockage',
         jsonBackupButton: 'Sauvegarde JSON',
+        csvExportButton: 'Exporter CSV',
+        csvExported: 'Fichier CSV téléchargé.',
         jsonRestoreButton: 'Restauration JSON',
         attendanceModalTitle: 'Historique des présences',
         editModalTitle: 'Modifier le membre',
@@ -3045,10 +3061,10 @@
         storageNotice2Item1: 'Connectez-vous avec le même e-mail sur PC, téléphone ou tablette.',
         storageNotice2Item2: 'S’il reste d’anciennes données localStorage, importez-les une fois ci-dessous.',
         storageNotice2Item3: 'Mot de passe oublié ? Utilisez la réinitialisation sur l’écran de connexion.',
-        storageNotice3Title: 'La sauvegarde JSON est une sécurité supplémentaire.',
-        storageNotice3Item1: 'Sauvegarde JSON : enregistre membres/présences/PT/notes dans un fichier.',
-        storageNotice3Item2: 'Restauration JSON : remplace les données Supabase par le fichier.',
-        storageNotice3Item3: 'Conservez les sauvegardes dans un endroit sûr comme iCloud Drive ou Google Drive.',
+        storageNotice3Title: 'Exportez en CSV pour Excel.',
+        storageNotice3Item1: 'Export CSV : membres/échéance/PT/notes/visites pour Excel.',
+        storageNotice3Item2: 'Restauration JSON : remplace Supabase si vous avez une sauvegarde complète.',
+        storageNotice3Item3: 'Conservez les fichiers exportés dans un endroit sûr.',
         dontShowStorageInfo: 'Ne plus afficher automatiquement ce guide la prochaine fois',
         backupNowButton: 'Sauvegarder JSON maintenant',
         confirmStorageInfo: 'J’ai compris',
@@ -4276,23 +4292,64 @@
       }
     }
 
+    function csvEscape(value) {
+      const text = value == null ? '' : String(value);
+      if (/[",\n\r]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+      return text;
+    }
+
     function exportData() {
-      const data = {
-        app: 'boxing-gym-renewal-manager',
-        version: 2,
-        exportedAt: new Date().toISOString(),
-        members
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const headers = [
+        'name',
+        'phone',
+        'start_date',
+        'expire_date',
+        'days_until_expiry',
+        'pt_total',
+        'pt_remaining',
+        'memo',
+        'last_visit',
+        'days_since_last_visit',
+        'total_visits',
+        'attendance_count',
+        'renewal_status'
+      ];
+
+      const rows = members
+        .slice()
+        .sort(compareMembersByPriority)
+        .map(member => {
+          const status = getRenewalStatus(member);
+          return [
+            member.name,
+            member.phone,
+            member.startDate,
+            member.expireDate,
+            getDaysUntilExpiry(member),
+            member.ptTotal,
+            member.ptRemaining,
+            member.memo || '',
+            member.lastVisit || '',
+            getDaysSinceLastVisit(member),
+            member.totalVisits || 0,
+            Array.isArray(member.attendance) ? member.attendance.length : 0,
+            status.label
+          ].map(csvEscape).join(',');
+        });
+
+      const csv = `\uFEFF${headers.join(',')}\n${rows.join('\n')}`;
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `boxing-gym-renewal-backup-${getTodayDateOnly()}.json`;
+      a.download = `sweat-manager-members-${getTodayDateOnly()}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast(t('backupDownloaded'));
+      showToast(t('csvExported'));
     }
 
     function importData(file) {
