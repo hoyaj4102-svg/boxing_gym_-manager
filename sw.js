@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v12-toss-only';
+const CACHE_VERSION = 'sweat-manager-v13-csv-export';
 const APP_SHELL = [
   '/',
   '/index.html',
