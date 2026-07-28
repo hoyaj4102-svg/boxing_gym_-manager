@@ -54,6 +54,7 @@
       memberCount,
       hasPro,
       canAddMember: canAdd,
+      canCancel: Boolean(raw.can_cancel),
       billingProvider: raw.billing_provider || null
     };
   }
@@ -74,6 +75,12 @@
     if (summary.subscriptionStatus === 'trialing' && summary.hasPro) {
       return t('planStatusTrialing');
     }
+    if (summary.subscriptionStatus === 'canceled' && summary.hasPro) {
+      return t('planStatusCanceledActive');
+    }
+    if (summary.subscriptionStatus === 'canceled') {
+      return t('planStatusCanceled');
+    }
     if (summary.hasPro && summary.subscriptionStatus === 'active') {
       return t('planStatusActive');
     }
@@ -81,6 +88,14 @@
       return t('planStatusPastDue');
     }
     return t('planStatusFree');
+  }
+
+  async function cancelSubscription(db) {
+    if (!db || !db.isReady()) throw new Error('Not authenticated');
+    const client = db.client();
+    const { data, error } = await client.rpc('cancel_gym_subscription');
+    if (error) throw error;
+    return data;
   }
 
   async function getAccessToken() {
@@ -315,6 +330,7 @@
     statusLabel,
     fetchBillingSummary,
     startCheckout,
-    confirmTossFromUrl
+    confirmTossFromUrl,
+    cancelSubscription
   };
 })(window);

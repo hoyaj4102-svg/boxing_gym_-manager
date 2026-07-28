@@ -155,3 +155,14 @@ BILLING.md
 3. 앱에서 **토스 월간** → 테스트 카드 결제 → Pro 활성화
 4. 앱에서 **Stripe Monthly** → 테스트 카드 결제 → Webhook 후 Pro 활성화
 5. Free 한도(20명) 차단 확인 (체험/구독 종료 상태)
+
+
+---
+
+## 구독 해지 / 환불 정책 (토스 연간)
+
+추가 SQL: `supabase/cancel_subscription.sql`
+
+- 앱에서 **구독 해지** 가능
+- 해지 후에도 `current_period_end` 까지 Pro 이용
+- 환불/해지 안내 문구는 요금제 패널에 표시
