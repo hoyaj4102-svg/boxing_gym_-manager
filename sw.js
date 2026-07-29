@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v14-cancel-policy';
+const CACHE_VERSION = 'sweat-manager-v15-monthly-subscribe';
 const APP_SHELL = [
   '/',
   '/index.html',

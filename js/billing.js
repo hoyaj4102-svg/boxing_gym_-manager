@@ -1,6 +1,6 @@
 /**
  * Sweat Manager - Billing helpers
- * Supports Toss (KRW prepaid period) + Stripe (subscription checkout)
+ * Toss monthly auto-pay (billing key) + cancel-at-period-end
  */
 (function (global) {
   const PLANS = {
@@ -25,6 +25,8 @@
       tossClientKey: '',
       stripePublishableKey: '',
       checkoutEndpoint: '',
+      startBillingAuthEndpoint: '',
+      confirmBillingAuthEndpoint: '',
       confirmTossEndpoint: '',
       successUrl: '',
       failUrl: ''
@@ -55,6 +57,7 @@
       hasPro,
       canAddMember: canAdd,
       canCancel: Boolean(raw.can_cancel),
+      autoRenew: Boolean(raw.auto_renew),
       billingProvider: raw.billing_provider || null
     };
   }
@@ -105,6 +108,19 @@
     return accessToken;
   }
 
+  async function waitForAccessToken(retries = 8) {
+    for (let i = 0; i < retries; i += 1) {
+      try {
+        const token = await getAccessToken();
+        if (token) return token;
+      } catch {
+        // retry
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    throw new Error('Login required');
+  }
+
   async function fetchBillingSummary(db) {
     if (!db || !db.isReady()) throw new Error('Not authenticated');
     const client = db.client();
@@ -134,7 +150,54 @@
     return global.TossPayments;
   }
 
-  async function openTossWidget(payload) {
+  async function invokeOrFetch(functionName, endpoint, body) {
+    const client = global.SweatManagerDB?.client?.();
+    if (client?.functions?.invoke) {
+      await waitForAccessToken();
+      const { data, error } = await client.functions.invoke(functionName, { body });
+      if (error) {
+        let message = error.message || `${functionName} failed`;
+        try {
+          if (typeof error.context?.json === 'function') {
+            const errBody = await error.context.json();
+            message = errBody?.message || errBody?.error || message;
+          } else if (error.context?.body) {
+            message = String(error.context.body);
+          }
+        } catch {
+          // keep message
+        }
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    if (!endpoint) throw new Error(`${functionName} endpoint missing`);
+    const accessToken = await waitForAccessToken();
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        apikey: (global.SWEAT_MANAGER_SUPABASE || {}).anonKey || ''
+      },
+      body: JSON.stringify(body || {})
+    });
+
+    const rawText = await response.text();
+    let payload;
+    try {
+      payload = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      payload = { message: rawText };
+    }
+    if (!response.ok) {
+      throw new Error(payload.message || payload.error || rawText || `${functionName} failed`);
+    }
+    return payload;
+  }
+
+  async function openTossBillingAuth(payload) {
     const TossPayments = await loadTossSdk();
     const clientKey = payload.clientKey || getBillingConfig().tossClientKey;
     if (!clientKey) throw new Error('TOSS client key missing');
@@ -142,27 +205,53 @@
     const tossPayments = TossPayments(clientKey);
     const payment = tossPayments.payment({ customerKey: payload.customerKey });
 
-    await payment.requestPayment({
+    await payment.requestBillingAuth({
       method: 'CARD',
-      amount: {
-        currency: payload.currency || 'KRW',
-        value: payload.amount
-      },
-      orderId: payload.orderId,
-      orderName: payload.orderName,
       successUrl: payload.successUrl,
       failUrl: payload.failUrl,
-      customerEmail: payload.customerEmail || undefined
+      customerEmail: payload.customerEmail || undefined,
+      customerName: payload.customerName || undefined
     });
 
-    return { mode: 'toss_widget', ...payload };
+    return { mode: 'toss_billing_auth', ...payload };
   }
 
+  /** Netflix-style monthly: register card → billing key → first charge */
+  async function startSubscribe() {
+    const config = getBillingConfig();
+    const successUrl = config.successUrl || `${global.location.origin}${global.location.pathname}?billing=success`;
+    const failUrl = config.failUrl || `${global.location.origin}${global.location.pathname}?billing=fail`;
+
+    if (!config.startBillingAuthEndpoint && !global.SweatManagerDB?.client?.()?.functions?.invoke) {
+      return {
+        mode: 'manual',
+        provider: 'toss',
+        messageKey: 'billingCheckoutNotConfigured',
+        amountKrw: PLANS.pro.priceKrwMonthly,
+        successUrl,
+        failUrl
+      };
+    }
+
+    const payload = await invokeOrFetch(
+      'start-billing-auth',
+      config.startBillingAuthEndpoint,
+      { successUrl, failUrl }
+    );
+
+    return openTossBillingAuth(payload);
+  }
+
+  /** Legacy one-time checkout (kept for compatibility) */
   async function startCheckout({
     plan = 'pro',
     interval = 'monthly',
     provider
   } = {}) {
+    if ((provider || getBillingConfig().provider || 'toss') === 'toss' && interval === 'monthly') {
+      return startSubscribe();
+    }
+
     const config = getBillingConfig();
     const selectedProvider = provider || config.provider || 'toss';
     const successUrl = config.successUrl || `${global.location.origin}${global.location.pathname}?billing=success`;
@@ -211,7 +300,21 @@
     }
 
     if (payload.mode === 'toss_widget' || selectedProvider === 'toss') {
-      return openTossWidget(payload);
+      const TossPayments = await loadTossSdk();
+      const clientKey = payload.clientKey || config.tossClientKey;
+      if (!clientKey) throw new Error('TOSS client key missing');
+      const tossPayments = TossPayments(clientKey);
+      const payment = tossPayments.payment({ customerKey: payload.customerKey });
+      await payment.requestPayment({
+        method: 'CARD',
+        amount: { currency: payload.currency || 'KRW', value: payload.amount },
+        orderId: payload.orderId,
+        orderName: payload.orderName,
+        successUrl: payload.successUrl,
+        failUrl: payload.failUrl,
+        customerEmail: payload.customerEmail || undefined
+      });
+      return { mode: 'toss_widget', ...payload };
     }
 
     if (payload.checkoutUrl) {
@@ -222,20 +325,45 @@
     return payload;
   }
 
-  async function waitForAccessToken(retries = 8) {
-    for (let i = 0; i < retries; i += 1) {
-      try {
-        const token = await getAccessToken();
-        if (token) return token;
-      } catch {
-        // retry
-      }
-      await new Promise((resolve) => setTimeout(resolve, 250));
+  function clearBillingParams(extraKeys = []) {
+    const url = new URL(global.location.href);
+    ['paymentKey', 'orderId', 'amount', 'paymentType', 'billing', 'provider', 'mode', 'authKey', 'customerKey']
+      .concat(extraKeys)
+      .forEach((key) => url.searchParams.delete(key));
+    global.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  async function confirmBillingAuthFromUrl(searchParams = new URLSearchParams(global.location.search)) {
+    const provider = searchParams.get('provider');
+    const billing = searchParams.get('billing');
+    const mode = searchParams.get('mode');
+    const authKey = searchParams.get('authKey');
+    const customerKey = searchParams.get('customerKey');
+
+    if (provider !== 'toss' || billing !== 'success' || mode !== 'billing') {
+      return null;
     }
-    throw new Error('Login required');
+
+    if (!authKey || !customerKey) {
+      const err = new Error('TOSS_BILLING_RETURN_INCOMPLETE');
+      err.code = 'TOSS_BILLING_RETURN_INCOMPLETE';
+      throw err;
+    }
+
+    const config = getBillingConfig();
+    const data = await invokeOrFetch(
+      'confirm-billing-auth',
+      config.confirmBillingAuthEndpoint,
+      { authKey, customerKey }
+    );
+    clearBillingParams();
+    return data;
   }
 
   async function confirmTossFromUrl(searchParams = new URLSearchParams(global.location.search)) {
+    const billingAuth = await confirmBillingAuthFromUrl(searchParams);
+    if (billingAuth) return billingAuth;
+
     const provider = searchParams.get('provider');
     const billing = searchParams.get('billing');
     const paymentKey = searchParams.get('paymentKey');
@@ -247,6 +375,19 @@
       return null;
     }
 
+    // Billing-auth return without mode=billing still has authKey
+    if (searchParams.get('authKey') && searchParams.get('customerKey')) {
+      return confirmBillingAuthFromUrl(
+        new URLSearchParams({
+          provider: 'toss',
+          billing: 'success',
+          mode: 'billing',
+          authKey: searchParams.get('authKey'),
+          customerKey: searchParams.get('customerKey')
+        })
+      );
+    }
+
     if (!paymentKey || !orderId || !Number.isFinite(amount)) {
       const err = new Error('TOSS_RETURN_INCOMPLETE');
       err.code = 'TOSS_RETURN_INCOMPLETE';
@@ -254,71 +395,13 @@
     }
 
     const config = getBillingConfig();
-    const client = global.SweatManagerDB?.client?.();
-
-    // Prefer official invoke (attaches JWT reliably)
-    if (client?.functions?.invoke) {
-      await waitForAccessToken();
-      const { data, error } = await client.functions.invoke('confirm-toss-payment', {
-        body: { paymentKey, orderId, amount }
-      });
-      if (error) {
-        let message = error.message || 'Toss confirm failed';
-        try {
-          if (typeof error.context?.json === 'function') {
-            const body = await error.context.json();
-            message = body?.message || body?.error || message;
-          } else if (error.context?.body) {
-            message = String(error.context.body);
-          }
-        } catch {
-          // keep message
-        }
-        throw new Error(message);
-      }
-
-      const url = new URL(global.location.href);
-      ['paymentKey', 'orderId', 'amount', 'paymentType', 'billing', 'provider'].forEach((key) => {
-        url.searchParams.delete(key);
-      });
-      global.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-      return data;
-    }
-
-    if (!config.confirmTossEndpoint) {
-      throw new Error('confirmTossEndpoint missing');
-    }
-
-    const accessToken = await waitForAccessToken();
-    const response = await fetch(config.confirmTossEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        apikey: (global.SWEAT_MANAGER_SUPABASE || {}).anonKey || ''
-      },
-      body: JSON.stringify({ paymentKey, orderId, amount })
+    const data = await invokeOrFetch('confirm-toss-payment', config.confirmTossEndpoint, {
+      paymentKey,
+      orderId,
+      amount
     });
-
-    const rawText = await response.text();
-    let payload;
-    try {
-      payload = rawText ? JSON.parse(rawText) : {};
-    } catch {
-      payload = { message: rawText };
-    }
-
-    if (!response.ok) {
-      throw new Error(payload.message || rawText || 'Toss confirm failed');
-    }
-
-    const url = new URL(global.location.href);
-    ['paymentKey', 'orderId', 'amount', 'paymentType', 'billing', 'provider'].forEach((key) => {
-      url.searchParams.delete(key);
-    });
-    global.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-
-    return payload;
+    clearBillingParams();
+    return data;
   }
 
   global.SweatManagerBilling = {
@@ -329,8 +412,10 @@
     limitLabel,
     statusLabel,
     fetchBillingSummary,
+    startSubscribe,
     startCheckout,
     confirmTossFromUrl,
+    confirmBillingAuthFromUrl,
     cancelSubscription
   };
 })(window);
