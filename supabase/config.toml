@@ -8,3 +8,7 @@ verify_jwt = true
 
 [functions.billing-webhook]
 verify_jwt = false
+
+# Cron uses CRON_SECRET (not a Supabase JWT)
+[functions.charge-subscriptions]
+verify_jwt = false

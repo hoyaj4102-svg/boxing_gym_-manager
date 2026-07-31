@@ -11,8 +11,18 @@ function tossAuthHeader() {
 
 /**
  * Monthly auto-charge for Toss billing keys.
- * Protect with: Authorization: Bearer <CRON_SECRET>
+ * Protect with either:
+ *   Authorization: Bearer <CRON_SECRET>
+ *   or header x-cron-secret: <CRON_SECRET>
+ * JWT verification is disabled for this function (see config.toml).
  */
+function isAuthorizedCron(req: Request, cronSecret: string) {
+  if (!cronSecret) return false;
+  const auth = req.headers.get('Authorization') || '';
+  const headerSecret = req.headers.get('x-cron-secret') || '';
+  return auth === `Bearer ${cronSecret}` || headerSecret === cronSecret;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -24,8 +34,7 @@ Deno.serve(async (req) => {
 
   try {
     const cronSecret = Deno.env.get('CRON_SECRET') || '';
-    const auth = req.headers.get('Authorization') || '';
-    if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+    if (!isAuthorizedCron(req, cronSecret)) {
       return textResponse('Unauthorized', 401);
     }
 

@@ -25,6 +25,7 @@ jobs:
 
           response="$(curl -sS -w '\n%{http_code}' -X POST \
             -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
             -H "Content-Type: application/json" \
             https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/charge-subscriptions)"
 
