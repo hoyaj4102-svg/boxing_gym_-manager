@@ -52,7 +52,19 @@ Deno.serve(async (req) => {
       .not('billing_subscription_id', 'is', null)
       .lte('current_period_end', nowIso);
 
-    if (error) throw error;
+    if (error) {
+      const detail = [error.message, error.details, error.hint, error.code]
+        .filter(Boolean)
+        .join(' | ');
+      if (String(error.message || '').includes('auto_renew') || error.code === '42703') {
+        return jsonResponse({
+          ok: false,
+          error: 'DB column auto_renew missing. Run supabase/monthly_billing.sql in SQL Editor first.',
+          detail
+        }, 400);
+      }
+      return jsonResponse({ ok: false, error: detail || 'Query failed' }, 400);
+    }
 
     const results: Array<Record<string, unknown>> = [];
 
@@ -160,7 +172,11 @@ Deno.serve(async (req) => {
       results
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return textResponse(message, 400);
+    const message = error instanceof Error
+      ? error.message
+      : (error && typeof error === 'object' && 'message' in error)
+        ? String((error as { message: unknown }).message)
+        : JSON.stringify(error);
+    return jsonResponse({ ok: false, error: message || 'Unknown error' }, 400);
   }
 });
