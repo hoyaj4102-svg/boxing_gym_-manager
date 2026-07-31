@@ -516,6 +516,34 @@
       margin-top: 12px;
     }
 
+    .billing-actions .btn {
+      min-width: 96px;
+    }
+
+    .billing-cancel-panel {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .billing-cancel-panel[hidden] {
+      display: none !important;
+    }
+
+    .billing-cancel-panel h3 {
+      font-size: .92rem;
+      margin: 0 0 10px;
+    }
+
+    .billing-cancel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
     .billing-note {
       margin-top: 10px;
       color: var(--text-muted);
@@ -1378,7 +1406,7 @@
           <div class="panel-header">
             <div>
               <h2 data-i18n="billingTitle">요금제</h2>
-              <p class="panel-subtitle" data-i18n="billingSubtitle">Free 20명 · Pro 연간 구독 (토스)</p>
+              <p class="panel-subtitle" data-i18n="billingSubtitle">Free 20명 · Pro 월간 구독 (토스)</p>
             </div>
           </div>
           <div class="panel-body">
@@ -1401,17 +1429,32 @@
               </div>
             </div>
             <div class="billing-actions">
-              <button type="button" class="btn btn-primary" id="upgradeTossYearlyButton" data-i18n="upgradeTossYearlyButton">토스 연간 구독</button>
-              <button type="button" class="btn btn-danger" id="cancelSubscriptionButton" data-i18n="cancelSubscriptionButton" hidden>구독 해지</button>
-              <button type="button" class="btn btn-ghost" id="upgradeTossMonthlyButton" data-i18n="upgradeTossMonthlyButton" hidden>토스 월간</button>
-              <button type="button" class="btn btn-primary" id="upgradeStripeMonthlyButton" data-i18n="upgradeStripeMonthlyButton" hidden>Stripe Monthly</button>
-              <button type="button" class="btn btn-ghost" id="upgradeStripeYearlyButton" data-i18n="upgradeStripeYearlyButton" hidden>Stripe Yearly</button>
+              <button type="button" class="btn btn-primary" id="subscribeButton" data-i18n="subscribeButton">구독</button>
+              <button type="button" class="btn btn-ghost" id="openCancelPanelButton" data-i18n="openCancelPanelButton">해지</button>
             </div>
-            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">토스 연간 구독으로 이용합니다. 해지해도 현재 결제 기간 종료일까지 사용할 수 있습니다.</p>
+            <div class="billing-cancel-panel" id="billingCancelPanel" hidden>
+              <h3 data-i18n="billingCancelPanelTitle">구독 해지</h3>
+              <div class="billing-grid">
+                <div class="billing-row">
+                  <strong data-i18n="billingStatusLabel">상태</strong>
+                  <span id="cancelPanelStatusValue">-</span>
+                </div>
+                <div class="billing-row">
+                  <strong data-i18n="billingPeriodLabel">이용 종료일</strong>
+                  <span id="cancelPanelPeriodValue">-</span>
+                </div>
+              </div>
+              <p class="billing-note" id="cancelPanelNote" data-i18n="billingCancelPanelNote">해지하면 다음 달부터 자동결제가 중단되며, 현재 기간 종료일까지는 계속 이용할 수 있습니다.</p>
+              <div class="billing-cancel-actions">
+                <button type="button" class="btn btn-danger" id="confirmCancelSubscriptionButton" data-i18n="confirmCancelSubscriptionButton">해지하기</button>
+                <button type="button" class="btn btn-ghost" id="closeCancelPanelButton" data-i18n="closeCancelPanelButton">닫기</button>
+              </div>
+            </div>
+            <p class="billing-note" id="billingNote" data-i18n="billingNoteDefault">월 29,000원 자동결제입니다. 해지해도 현재 결제 기간 종료일까지 사용할 수 있습니다.</p>
             <div class="billing-policy">
               <h3 data-i18n="billingPolicySubscribeTitle">구독 정책</h3>
               <ul>
-                <li data-i18n="billingPolicySubscribe1">연간 자동결제 방식입니다.</li>
+                <li data-i18n="billingPolicySubscribe1">월간 자동결제 방식입니다.</li>
                 <li data-i18n="billingPolicySubscribe2">언제든지 구독을 해지할 수 있습니다.</li>
                 <li data-i18n="billingPolicySubscribe3">해지 후에도 현재 결제 기간 종료일까지 계속 이용할 수 있습니다.</li>
                 <li data-i18n="billingPolicySubscribe4">다음 결제일부터 자동결제가 중단됩니다.</li>
@@ -1639,13 +1682,19 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6자 이상',
         billingTitle: '요금제',
-        billingSubtitle: 'Free 20명 · Pro 연간 구독 (토스)',
+        billingSubtitle: 'Free 20명 · Pro 월간 구독 (토스)',
         billingPlanLabel: '현재 플랜',
         billingStatusLabel: '상태',
         billingUsageLabel: '회원 수',
         billingTrialLabel: '체험 종료',
         billingPeriodLabel: '이용 종료일',
-        billingNoteDefault: '토스 연간 구독으로 이용합니다. 해지해도 현재 결제 기간 종료일까지 사용할 수 있습니다.',
+        billingNoteDefault: '월 29,000원 자동결제입니다. 해지해도 현재 결제 기간 종료일까지 사용할 수 있습니다.',
+        subscribeButton: '구독',
+        openCancelPanelButton: '해지',
+        billingCancelPanelTitle: '구독 해지',
+        billingCancelPanelNote: '해지하면 다음 달부터 자동결제가 중단되며, 현재 기간 종료일까지는 계속 이용할 수 있습니다.',
+        confirmCancelSubscriptionButton: '해지하기',
+        closeCancelPanelButton: '닫기',
         upgradeMonthlyButton: 'Pro 월간 시작',
         upgradeYearlyButton: 'Pro 연간 시작',
         upgradeTossMonthlyButton: '토스 월간',
@@ -1658,7 +1707,7 @@
         planStatusCanceledActive: '해지됨 · 기간 종료까지 이용 가능',
         planStatusCanceled: '해지됨',
         billingPolicySubscribeTitle: '구독 정책',
-        billingPolicySubscribe1: '연간 자동결제 방식입니다.',
+        billingPolicySubscribe1: '월간 자동결제 방식입니다.',
         billingPolicySubscribe2: '언제든지 구독을 해지할 수 있습니다.',
         billingPolicySubscribe3: '해지 후에도 현재 결제 기간 종료일까지 계속 이용할 수 있습니다.',
         billingPolicySubscribe4: '다음 결제일부터 자동결제가 중단됩니다.',
@@ -1673,7 +1722,7 @@
         billingPaymentSuccess: '결제가 완료되었습니다. Pro가 활성화됩니다.',
         billingPaymentFailed: '결제가 취소되었거나 실패했습니다.',
         billingNeedLoginAfterPay: '결제 후 로그인이 필요합니다. 다시 로그인해 주세요.',
-        billingTossReturnIncomplete: '결제 승인 정보가 부족합니다. 토스 결제 후 돌아온 주소에 paymentKey가 있는지 확인해 주세요.',
+        billingTossReturnIncomplete: '결제 승인 정보가 부족합니다. 토스에서 돌아온 주소를 확인해 주세요.',
         planFreeName: 'Free',
         planProName: 'Pro',
         planUnlimitedMembers: '무제한',
@@ -1859,13 +1908,19 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ characters',
         billingTitle: 'Billing',
-        billingSubtitle: 'Free 20 · Pro yearly (Toss)',
+        billingSubtitle: 'Free 20 · Pro monthly (Toss)',
         billingPlanLabel: 'Current plan',
         billingStatusLabel: 'Status',
         billingUsageLabel: 'Members',
         billingTrialLabel: 'Trial ends',
         billingPeriodLabel: 'Access ends',
-        billingNoteDefault: 'Toss yearly subscription. After cancel, access continues until period end.',
+        billingNoteDefault: '₩29,000 / month auto-pay. After cancel, access continues until period end.',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: 'Start Pro monthly',
         upgradeYearlyButton: 'Start Pro yearly',
         upgradeTossMonthlyButton: 'Toss Monthly',
@@ -1878,7 +1933,7 @@
         planStatusCanceledActive: 'Canceled · access until period end',
         planStatusCanceled: 'Canceled',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -2079,12 +2134,18 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ caracteres',
         billingTitle: 'Suscripción',
-        billingSubtitle: 'Free 20 · Pro ilimitado (prueba 14 días)',
+        billingSubtitle: 'Free 20 · Pro mensual (Toss)',
         billingPlanLabel: 'Plan actual',
         billingStatusLabel: 'Estado',
         billingUsageLabel: 'Miembros',
         billingTrialLabel: 'Fin de prueba',
-        billingNoteDefault: 'Suscripción anual con Toss. Tras cancelar, el acceso sigue hasta fin de período.',
+        billingNoteDefault: 'Pago mensual automático con Toss. Tras cancelar, acceso hasta fin de período.',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: 'Pro mensual',
         upgradeYearlyButton: 'Pro anual',
         upgradeTossMonthlyButton: 'Toss mensual',
@@ -2098,7 +2159,7 @@
         planStatusCanceled: 'Canceled',
         billingPeriodLabel: 'Access ends',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -2299,12 +2360,18 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: 'от 6 символов',
         billingTitle: 'Тариф',
-        billingSubtitle: 'Free 20 · Pro без лимита (14 дней)',
+        billingSubtitle: 'Free 20 · Pro месяц (Toss)',
         billingPlanLabel: 'Текущий план',
         billingStatusLabel: 'Статус',
         billingUsageLabel: 'Клиенты',
         billingTrialLabel: 'Конец триала',
-        billingNoteDefault: 'Годовая подписка Toss. После отмены доступ до конца периода.',
+        billingNoteDefault: 'Ежемесячный автоплатеж Toss. После отмены доступ до конца периода.',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: 'Pro помесячно',
         upgradeYearlyButton: 'Pro ежегодно',
         upgradeTossMonthlyButton: 'Toss месяц',
@@ -2318,7 +2385,7 @@
         planStatusCanceled: 'Canceled',
         billingPeriodLabel: 'Access ends',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -2519,12 +2586,18 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ тэмдэгт',
         billingTitle: 'Төлбөрийн төлөвлөгөө',
-        billingSubtitle: 'Free 20 · Pro хязгааргүй (14 хоног)',
+        billingSubtitle: 'Free 20 · Pro сар (Toss)',
         billingPlanLabel: 'Одоогийн төлөвлөгөө',
         billingStatusLabel: 'Төлөв',
         billingUsageLabel: 'Гишүүн',
         billingTrialLabel: 'Туршилт дуусах',
-        billingNoteDefault: 'Toss жилийн захиалга. Цуцалсны дараа хугацаа дуустал ашиглана.',
+        billingNoteDefault: 'Toss сарын авто төлбөр. Цуцалсны дараа хугацаа дуустал ашиглана.',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: 'Pro сар бүр',
         upgradeYearlyButton: 'Pro жил бүр',
         upgradeTossMonthlyButton: 'Toss сар',
@@ -2538,7 +2611,7 @@
         planStatusCanceled: 'Canceled',
         billingPeriodLabel: 'Access ends',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -2739,12 +2812,18 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '至少6位',
         billingTitle: '套餐',
-        billingSubtitle: 'Free 20人 · Pro 不限（14天试用）',
+        billingSubtitle: 'Free 20人 · Pro 月付（Toss）',
         billingPlanLabel: '当前套餐',
         billingStatusLabel: '状态',
         billingUsageLabel: '会员数',
         billingTrialLabel: '试用结束',
-        billingNoteDefault: 'Toss 年付订阅。取消后仍可使用至当前周期结束。',
+        billingNoteDefault: 'Toss 月付自动续费。取消后仍可使用至当前周期结束。',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: '开通 Pro 月付',
         upgradeYearlyButton: '开通 Pro 年付',
         upgradeTossMonthlyButton: 'Toss 月付',
@@ -2758,7 +2837,7 @@
         planStatusCanceled: 'Canceled',
         billingPeriodLabel: 'Access ends',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -2959,12 +3038,18 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ अक्षर',
         billingTitle: 'प्लान',
-        billingSubtitle: 'Free 20 · Pro अनलिमिटेड (14-दिन ट्रायल)',
+        billingSubtitle: 'Free 20 · Pro मासिक (Toss)',
         billingPlanLabel: 'वर्तमान प्लान',
         billingStatusLabel: 'स्थिति',
         billingUsageLabel: 'सदस्य',
         billingTrialLabel: 'ट्रायल समाप्ति',
-        billingNoteDefault: 'Toss वार्षिक सब्सक्रिप्शन। रद्द के बाद अवधि अंत तक उपयोग जारी।',
+        billingNoteDefault: 'Toss मासिक ऑटो-पे। रद्द के बाद अवधि अंत तक उपयोग जारी।',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: 'Pro मासिक',
         upgradeYearlyButton: 'Pro वार्षिक',
         upgradeTossMonthlyButton: 'Toss मासिक',
@@ -2978,7 +3063,7 @@
         planStatusCanceled: 'Canceled',
         billingPeriodLabel: 'Access ends',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -3179,12 +3264,18 @@
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ caractères',
         billingTitle: 'Formule',
-        billingSubtitle: 'Free 20 · Pro illimité (essai 14 jours)',
+        billingSubtitle: 'Free 20 · Pro mensuel (Toss)',
         billingPlanLabel: 'Formule actuelle',
         billingStatusLabel: 'Statut',
         billingUsageLabel: 'Membres',
         billingTrialLabel: 'Fin d’essai',
-        billingNoteDefault: 'Abonnement annuel Toss. Après résiliation, accès jusqu’à la fin de période.',
+        billingNoteDefault: 'Paiement mensuel automatique Toss. Après résiliation, accès jusqu’à la fin de période.',
+        subscribeButton: 'Subscribe',
+        openCancelPanelButton: 'Cancel',
+        billingCancelPanelTitle: 'Cancel subscription',
+        billingCancelPanelNote: 'Canceling stops the next monthly charge. Access continues until period end.',
+        confirmCancelSubscriptionButton: 'Confirm cancel',
+        closeCancelPanelButton: 'Close',
         upgradeMonthlyButton: 'Pro mensuel',
         upgradeYearlyButton: 'Pro annuel',
         upgradeTossMonthlyButton: 'Toss mensuel',
@@ -3198,7 +3289,7 @@
         planStatusCanceled: 'Canceled',
         billingPeriodLabel: 'Access ends',
         billingPolicySubscribeTitle: 'Subscription policy',
-        billingPolicySubscribe1: 'Yearly auto-renewal billing.',
+        billingPolicySubscribe1: 'Monthly auto-renewal billing.',
         billingPolicySubscribe2: 'You can cancel anytime.',
         billingPolicySubscribe3: 'After cancel, you can use the service until the current period ends.',
         billingPolicySubscribe4: 'Auto-renewal stops from the next billing date.',
@@ -3613,8 +3704,12 @@
       const usageEl = document.getElementById('billingUsageValue');
       const periodEl = document.getElementById('billingPeriodValue');
       const noteEl = document.getElementById('billingNote');
-      const cancelButton = document.getElementById('cancelSubscriptionButton');
-      const yearlyButton = document.getElementById('upgradeTossYearlyButton');
+      const subscribeButton = document.getElementById('subscribeButton');
+      const openCancelButton = document.getElementById('openCancelPanelButton');
+      const cancelPanel = document.getElementById('billingCancelPanel');
+      const cancelPanelStatus = document.getElementById('cancelPanelStatusValue');
+      const cancelPanelPeriod = document.getElementById('cancelPanelPeriodValue');
+      const confirmCancelButton = document.getElementById('confirmCancelSubscriptionButton');
       if (!planEl) return;
 
       if (!window.SweatManagerBilling || !SweatManagerDB.isReady()) {
@@ -3622,7 +3717,8 @@
         statusEl.textContent = t('planStatusUnknown');
         usageEl.textContent = '-';
         if (periodEl) periodEl.textContent = '-';
-        if (cancelButton) cancelButton.hidden = true;
+        if (subscribeButton) subscribeButton.disabled = true;
+        if (cancelPanel) cancelPanel.hidden = true;
         return;
       }
 
@@ -3637,19 +3733,31 @@
           periodEl.textContent = periodDate ? formatDateTime(periodDate) : t('billingNoTrial');
         }
 
-        const hideUpgrade = billingSummary.hasPro &&
-          (billingSummary.subscriptionStatus === 'active' || billingSummary.subscriptionStatus === 'canceled');
-        if (yearlyButton) yearlyButton.hidden = hideUpgrade;
-        if (cancelButton) cancelButton.hidden = !billingSummary.canCancel;
+        const isSubscribedAuto =
+          billingSummary.hasPro &&
+          billingSummary.subscriptionStatus === 'active' &&
+          billingSummary.autoRenew;
 
-        ['upgradeTossMonthlyButton', 'upgradeStripeMonthlyButton', 'upgradeStripeYearlyButton'].forEach((id) => {
-          const button = document.getElementById(id);
-          if (button) button.hidden = true;
-        });
+        if (subscribeButton) {
+          subscribeButton.disabled = Boolean(isSubscribedAuto);
+          subscribeButton.hidden = false;
+        }
+        if (openCancelButton) openCancelButton.hidden = false;
 
-        if (!SweatManagerBilling.getBillingConfig().checkoutEndpoint) {
+        if (cancelPanelStatus) {
+          cancelPanelStatus.textContent = SweatManagerBilling.statusLabel(billingSummary, t);
+        }
+        if (cancelPanelPeriod) {
+          cancelPanelPeriod.textContent = periodDate ? formatDateTime(periodDate) : t('billingNoTrial');
+        }
+        if (confirmCancelButton) {
+          confirmCancelButton.disabled = !billingSummary.canCancel;
+        }
+
+        if (!SweatManagerBilling.getBillingConfig().startBillingAuthEndpoint &&
+            !SweatManagerBilling.getBillingConfig().checkoutEndpoint) {
           noteEl.textContent = t('billingCheckoutNotConfigured', {
-            amount: SweatManagerBilling.formatKrw(SweatManagerBilling.PLANS.pro.priceKrwYearly)
+            amount: SweatManagerBilling.formatKrw(SweatManagerBilling.PLANS.pro.priceKrwMonthly)
           });
         } else {
           noteEl.textContent = t('billingNoteDefault');
@@ -3661,13 +3769,31 @@
         statusEl.textContent = t('planStatusUnknown');
         usageEl.textContent = '-';
         if (periodEl) periodEl.textContent = '-';
-        if (cancelButton) cancelButton.hidden = true;
+        if (subscribeButton) subscribeButton.disabled = true;
+        if (cancelPanel) cancelPanel.hidden = true;
         noteEl.textContent = t('billingLoadFailed');
       }
     }
 
+    function openCancelPanel() {
+      if (!requireAuth()) return;
+      const cancelPanel = document.getElementById('billingCancelPanel');
+      if (!cancelPanel) return;
+      cancelPanel.hidden = false;
+      refreshBillingSummary();
+    }
+
+    function closeCancelPanel() {
+      const cancelPanel = document.getElementById('billingCancelPanel');
+      if (cancelPanel) cancelPanel.hidden = true;
+    }
+
     async function handleCancelSubscription() {
       if (!requireAuth()) return;
+      if (!billingSummary?.canCancel) {
+        showToast(t('cancelSubscriptionNothing'), 'warning');
+        return;
+      }
       if (!confirm(t('cancelSubscriptionConfirm'))) return;
       try {
         const result = await SweatManagerBilling.cancelSubscription(SweatManagerDB);
@@ -3676,6 +3802,7 @@
         } else {
           showToast(t('cancelSubscriptionDone'));
         }
+        closeCancelPanel();
         await refreshBillingSummary();
       } catch (error) {
         const message = error?.message || String(error);
@@ -3687,24 +3814,24 @@
       }
     }
 
-    async function handleUpgrade(interval, provider) {
+    async function handleSubscribe() {
       if (!requireAuth()) return;
       try {
-        const result = await SweatManagerBilling.startCheckout({
-          plan: 'pro',
-          interval,
-          provider
-        });
+        const result = await SweatManagerBilling.startSubscribe();
         if (result?.mode === 'manual') {
           showToast(t('billingCheckoutNotConfigured', {
             amount: SweatManagerBilling.formatKrw(result.amountKrw || SweatManagerBilling.PLANS.pro.priceKrwMonthly)
           }), 'warning');
-        } else if (result?.mode === 'toss_widget') {
+        } else if (result?.mode === 'toss_billing_auth' || result?.mode === 'toss_widget') {
           showToast(t('billingTossOpening'));
         }
       } catch (error) {
         showToast(error.message || String(error), 'warning');
       }
+    }
+
+    async function handleUpgrade(interval, provider) {
+      return handleSubscribe();
     }
 
     async function handleBillingReturn() {
@@ -3730,7 +3857,8 @@
             await refreshBillingSummary();
           }
         } catch (error) {
-          if (error?.code === 'TOSS_RETURN_INCOMPLETE' || error?.message === 'TOSS_RETURN_INCOMPLETE') {
+          if (error?.code === 'TOSS_RETURN_INCOMPLETE' || error?.message === 'TOSS_RETURN_INCOMPLETE' ||
+              error?.code === 'TOSS_BILLING_RETURN_INCOMPLETE' || error?.message === 'TOSS_BILLING_RETURN_INCOMPLETE') {
             showToast(t('billingTossReturnIncomplete'), 'warning');
           } else {
             showToast(error.message || String(error), 'warning');
@@ -4590,9 +4718,10 @@
     document.getElementById('authForm').addEventListener('submit', submitAuthForm);
     document.getElementById('signOutButton').addEventListener('click', handleSignOut);
     document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
-    document.getElementById('upgradeTossYearlyButton').addEventListener('click', () => handleUpgrade('yearly', 'toss'));
-    document.getElementById('cancelSubscriptionButton').addEventListener('click', handleCancelSubscription);
-    // Monthly/Stripe buttons stay hidden (Toss yearly only for now).
+    document.getElementById('subscribeButton').addEventListener('click', handleSubscribe);
+    document.getElementById('openCancelPanelButton').addEventListener('click', openCancelPanel);
+    document.getElementById('closeCancelPanelButton').addEventListener('click', closeCancelPanel);
+    document.getElementById('confirmCancelSubscriptionButton').addEventListener('click', handleCancelSubscription);
 
     document.querySelectorAll('[data-auth-tab]').forEach(button => {
       button.addEventListener('click', () => {
