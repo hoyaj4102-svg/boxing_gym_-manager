@@ -70,13 +70,16 @@ supabase functions deploy billing-webhook
 
 ### 월간 자동결제 스케줄
 
-외부 cron(예: GitHub Actions / cron-job.org)에서 매일 1회:
+GitHub Actions 워크플로: `.github/workflows/charge-subscriptions.yml`
 
-```bash
-curl -X POST \
-  -H "Authorization: Bearer $CRON_SECRET" \
-  https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/charge-subscriptions
-```
+- 매일 00:10 KST 자동 실행
+- Actions 탭에서 **Run workflow**로 수동 실행 가능
+- GitHub Secret `CRON_SECRET` 값이 Supabase Edge Secret `CRON_SECRET`과 **같아야** 함
+
+설정 위치: GitHub 저장소 → **Settings → Secrets and variables → Actions → New repository secret**
+- Name: `CRON_SECRET`
+- Value: Supabase에 넣은 것과 동일한 값
+
 
 ---
 
