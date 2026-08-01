@@ -129,7 +129,7 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
       margin-bottom: 14px;
     }
@@ -177,6 +177,7 @@
       background: linear-gradient(145deg, rgba(77, 29, 36, .92), rgba(32, 42, 60, .95));
     }
 
+    .stat-card.total { color: #a3e635; }
     .stat-card.warning { color: var(--warning); }
     .stat-card.expired { color: var(--danger); }
     .stat-card.absent { color: var(--info); }
@@ -1088,8 +1089,9 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .dashboard .stat-card.priority {
-        grid-column: 1 / -1;
+      .dashboard .stat-card.priority,
+      .dashboard .stat-card.total {
+        grid-column: auto;
       }
 
       .layout {
@@ -1243,6 +1245,11 @@
         <div class="label" data-i18n="statRenewalLabel">재등록 예정 회원</div>
         <div class="hint" data-i18n="statRenewalHint">만기 14일 이내</div>
       </article>
+      <article class="stat-card total" data-dashboard-key="total" role="button" tabindex="0">
+        <div class="value" id="statTotalMembers">0</div>
+        <div class="label" data-i18n="statTotalLabel">총회원수</div>
+        <div class="hint" data-i18n="statTotalHint">등록된 전체 회원</div>
+      </article>
       <article class="stat-card warning" data-dashboard-key="urgent" role="button" tabindex="0">
         <div class="value" id="statUrgent">0</div>
         <div class="label" data-i18n="statUrgentLabel">만기 임박 회원</div>
@@ -1261,7 +1268,7 @@
       <article class="stat-card today" data-dashboard-key="today" role="button" tabindex="0">
         <div class="value" id="statToday">0</div>
         <div class="label" data-i18n="statTodayLabel">오늘 출석 인원</div>
-        <div class="hint" id="statTotalMembers">전체 0명</div>
+        <div class="hint" data-i18n="statTodayHint">오늘 체크인한 회원</div>
       </article>
     </section>
 
@@ -1595,6 +1602,8 @@
         dashboardAria: '운영 대시보드',
         statRenewalLabel: '재등록 예정 회원',
         statRenewalHint: '만기 14일 이내',
+        statTotalLabel: '총회원수',
+        statTotalHint: '등록된 전체 회원',
         statUrgentLabel: '만기 임박 회원',
         statUrgentHint: '7일 이내 집중 관리',
         statExpiredLabel: '만기 지난 회원',
@@ -1602,6 +1611,7 @@
         statAbsentLabel: '장기 미방문',
         statAbsentHint: '14일 이상 미방문',
         statTodayLabel: '오늘 출석 인원',
+        statTodayHint: '오늘 체크인한 회원',
         renewalPanelTitle: '재등록 관리 최우선',
         renewalPanelSubtitle: '만기 14일 전부터 자동 표시하고 7일/3일/당일은 색상으로 강조합니다.',
         calendarPanelTitle: '월별 만기 캘린더',
@@ -1821,6 +1831,8 @@
         dashboardAria: 'Operations dashboard',
         statRenewalLabel: 'Renewal candidates',
         statRenewalHint: 'Expiring within 14 days',
+        statTotalLabel: 'Total members',
+        statTotalHint: 'All registered members',
         statUrgentLabel: 'Urgent expiries',
         statUrgentHint: 'Focus within 7 days',
         statExpiredLabel: 'Expired members',
@@ -1828,6 +1840,7 @@
         statAbsentLabel: 'Long absence',
         statAbsentHint: 'No visit for 14+ days',
         statTodayLabel: "Today's check-ins",
+        statTodayHint: 'Checked in today',
         renewalPanelTitle: 'Renewal Management First',
         renewalPanelSubtitle: 'Members appear 14 days before expiry, with 7-day, 3-day, and today highlights.',
         calendarPanelTitle: 'Monthly Expiry Calendar',
@@ -2047,6 +2060,8 @@
         dashboardAria: 'Panel operativo',
         statRenewalLabel: 'Renovaciones previstas',
         statRenewalHint: 'Vencen en 14 días',
+        statTotalLabel: 'Total de socios',
+        statTotalHint: 'Todos los socios registrados',
         statUrgentLabel: 'Vencimientos urgentes',
         statUrgentHint: 'Enfoque en 7 días',
         statExpiredLabel: 'Miembros vencidos',
@@ -2054,6 +2069,7 @@
         statAbsentLabel: 'Ausencia prolongada',
         statAbsentHint: '14+ días sin visita',
         statTodayLabel: 'Asistencias de hoy',
+        statTodayHint: 'Socios que asistieron hoy',
         renewalPanelTitle: 'Renovación como prioridad',
         renewalPanelSubtitle: 'Los miembros aparecen 14 días antes del vencimiento, con alertas de 7 días, 3 días y hoy.',
         calendarPanelTitle: 'Calendario mensual de vencimientos',
@@ -2273,6 +2289,8 @@
         dashboardAria: 'Операционная панель',
         statRenewalLabel: 'К продлению',
         statRenewalHint: 'Истекают за 14 дней',
+        statTotalLabel: 'Всего участников',
+        statTotalHint: 'Все зарегистрированные',
         statUrgentLabel: 'Скоро истекают',
         statUrgentHint: 'Фокус на 7 дней',
         statExpiredLabel: 'Истекшие клиенты',
@@ -2280,6 +2298,7 @@
         statAbsentLabel: 'Долгое отсутствие',
         statAbsentHint: 'Нет визита 14+ дней',
         statTodayLabel: 'Посещения сегодня',
+        statTodayHint: 'Отметившиеся сегодня',
         renewalPanelTitle: 'Продления в приоритете',
         renewalPanelSubtitle: 'Клиенты появляются за 14 дней до истечения, с выделением 7 дней, 3 дней и дня истечения.',
         calendarPanelTitle: 'Календарь истечений по месяцам',
@@ -2499,6 +2518,8 @@
         dashboardAria: 'Үйл ажиллагааны самбар',
         statRenewalLabel: 'Сунгах гишүүд',
         statRenewalHint: '14 хоногт дуусна',
+        statTotalLabel: 'Нийт гишүүд',
+        statTotalHint: 'Бүртгэлтэй бүх гишүүд',
         statUrgentLabel: 'Дуусах дөхсөн',
         statUrgentHint: '7 хоногт анхаарах',
         statExpiredLabel: 'Хугацаа дууссан',
@@ -2506,6 +2527,7 @@
         statAbsentLabel: 'Удаан ирээгүй',
         statAbsentHint: '14+ хоног ирээгүй',
         statTodayLabel: 'Өнөөдрийн ирц',
+        statTodayHint: 'Өнөөдөр ирсэн гишүүд',
         renewalPanelTitle: 'Сунгалтын удирдлага нэн тэргүүнд',
         renewalPanelSubtitle: 'Дуусахаас 14 хоногийн өмнө харуулж, 7 хоног/3 хоног/өнөөдөр өнгөөр ялгана.',
         calendarPanelTitle: 'Сарын дуусах хугацааны календарь',
@@ -2725,6 +2747,8 @@
         dashboardAria: '运营仪表板',
         statRenewalLabel: '待续费会员',
         statRenewalHint: '14天内到期',
+        statTotalLabel: '会员总数',
+        statTotalHint: '全部注册会员',
         statUrgentLabel: '即将到期',
         statUrgentHint: '7天内重点跟进',
         statExpiredLabel: '已过期会员',
@@ -2732,6 +2756,7 @@
         statAbsentLabel: '长期未到访',
         statAbsentHint: '14天以上未到访',
         statTodayLabel: '今日出勤人数',
+        statTodayHint: '今日已签到会员',
         renewalPanelTitle: '续费管理优先',
         renewalPanelSubtitle: '到期前14天自动显示，并用颜色强调7天、3天和到期当天。',
         calendarPanelTitle: '月度到期日历',
@@ -2951,6 +2976,8 @@
         dashboardAria: 'संचालन डैशबोर्ड',
         statRenewalLabel: 'नवीनीकरण सदस्य',
         statRenewalHint: '14 दिनों में समाप्त',
+        statTotalLabel: 'कुल सदस्य',
+        statTotalHint: 'सभी पंजीकृत सदस्य',
         statUrgentLabel: 'जल्द समाप्त',
         statUrgentHint: '7 दिनों में फोकस',
         statExpiredLabel: 'समाप्त सदस्य',
@@ -2958,6 +2985,7 @@
         statAbsentLabel: 'लंबी अनुपस्थिति',
         statAbsentHint: '14+ दिन से नहीं आए',
         statTodayLabel: 'आज की उपस्थिति',
+        statTodayHint: 'आज चेक-इन किए सदस्य',
         renewalPanelTitle: 'नवीनीकरण प्रबंधन प्राथमिक',
         renewalPanelSubtitle: 'समाप्ति से 14 दिन पहले दिखाएं, 7 दिन/3 दिन/आज को रंग से हाइलाइट करें।',
         calendarPanelTitle: 'मासिक समाप्ति कैलेंडर',
@@ -3177,6 +3205,8 @@
         dashboardAria: 'Tableau de bord opérationnel',
         statRenewalLabel: 'Renouvellements prévus',
         statRenewalHint: 'Expire dans 14 jours',
+        statTotalLabel: 'Total adhérents',
+        statTotalHint: 'Tous les adhérents inscrits',
         statUrgentLabel: 'Échéances urgentes',
         statUrgentHint: 'À suivre sous 7 jours',
         statExpiredLabel: 'Membres expirés',
@@ -3184,6 +3214,7 @@
         statAbsentLabel: 'Absence prolongée',
         statAbsentHint: '14+ jours sans visite',
         statTodayLabel: "Présences d'aujourd'hui",
+        statTodayHint: "Présents aujourd'hui",
         renewalPanelTitle: 'Renouvellement en priorité',
         renewalPanelSubtitle: "Les membres apparaissent 14 jours avant l'échéance, avec des alertes à 7 jours, 3 jours et le jour même.",
         calendarPanelTitle: 'Calendrier mensuel des échéances',
@@ -4034,17 +4065,18 @@
 
       document.getElementById('todayLabel').textContent = `${t('todayPrefix')} ${formatDateOnly(getTodayDateOnly())}`;
       document.getElementById('statRenewal').textContent = renewalTargets.length;
+      document.getElementById('statTotalMembers').textContent = members.length;
       document.getElementById('statUrgent').textContent = urgentTargets.length;
       document.getElementById('statExpired').textContent = expiredTargets.length;
       document.getElementById('statAbsent').textContent = absentTargets.length;
       document.getElementById('statToday').textContent = getTodayCount();
-      document.getElementById('statTotalMembers').textContent = t('totalMembers', { count: members.length });
       document.getElementById('renewalSummary').textContent = t('manageCount', { count: renewalTargets.length + expiredTargets.length });
     }
 
     function getDashboardLabel(key) {
       const labels = {
         renewal: t('statRenewalLabel'),
+        total: t('statTotalLabel'),
         urgent: t('statUrgentLabel'),
         expired: t('statExpiredLabel'),
         absent: t('statAbsentLabel'),
@@ -4056,10 +4088,11 @@
     function getDashboardHint(key) {
       const hints = {
         renewal: t('statRenewalHint'),
+        total: t('statTotalHint'),
         urgent: t('statUrgentHint'),
         expired: t('statExpiredHint'),
         absent: t('statAbsentHint'),
-        today: t('statTodayLabel')
+        today: t('statTodayHint')
       };
       return hints[key] || '';
     }
@@ -4070,6 +4103,7 @@
 
       const groups = {
         renewal: () => members.filter(isRenewalTarget),
+        total: () => members.slice(),
         urgent: () => members.filter(isUrgentExpiry),
         expired: () => members.filter(isExpired),
         absent: () => members.filter(member => isLongAbsent(member, 14)),
