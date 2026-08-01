@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'sweat-manager-v16-total-members';
+const CACHE_VERSION = 'sweat-manager-v17-total-first';
 const APP_SHELL = [
   '/',
   '/index.html',
