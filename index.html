@@ -3,14 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>복싱장 재등록 운영 관리</title>
-  <meta name="description" content="복싱장 운영자가 재등록 예정, 만기, 미방문, 출석 회원을 관리하는 스웨트매니저 앱">
-  <meta name="theme-color" content="#ef4444">
+  <title>re;member — 체육관을 위한 가장 간단하고 저렴한 CRM</title>
+  <meta name="description" content="re;member — 체육관을 위한 가장 간단하고 저렴한 CRM. 회원·재등록·출석·미방문을 한 화면에서 관리하세요.">
+  <meta name="theme-color" content="#2B5CFF">
+  <meta name="application-name" content="re;member">
+  <meta property="og:title" content="re;member">
+  <meta property="og:description" content="체육관을 위한 가장 간단하고 저렴한 CRM">
+  <meta property="og:type" content="website">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="스웨트매니저">
+  <meta name="apple-mobile-web-app-title" content="re;member">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/app-icon.svg" type="image/svg+xml">
   <link rel="icon" href="/app-icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="/app-icon-180.png">
@@ -21,17 +29,20 @@
 
     :root {
       color-scheme: dark;
-      --bg: #0a0d14;
-      --bg-soft: #101522;
-      --surface: #151b29;
-      --surface-strong: #1d2637;
-      --surface-card: #202a3c;
-      --border: #2d3950;
-      --border-strong: #40506c;
+      --brand-navy: #0A1628;
+      --brand-blue: #2B5CFF;
+      --brand-blue-hover: #1F4AE0;
+      --bg: #070b14;
+      --bg-soft: #0d1422;
+      --surface: #121a2b;
+      --surface-strong: #182338;
+      --surface-card: #1a2438;
+      --border: #2a3852;
+      --border-strong: #3d4f6e;
       --text: #f4f6fb;
       --text-muted: #9aa6bd;
-      --accent: #ef4444;
-      --accent-hover: #dc2626;
+      --accent: #2B5CFF;
+      --accent-hover: #1F4AE0;
       --success: #22c55e;
       --warning: #facc15;
       --orange: #fb923c;
@@ -40,15 +51,18 @@
       --radius: 16px;
       --shadow: 0 14px 40px rgba(0, 0, 0, .32);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --font-brand: 'Sora', 'Noto Sans KR', sans-serif;
+      --font-body: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
     }
 
     body {
       min-height: 100vh;
       background:
-        radial-gradient(circle at 20% 0%, rgba(239, 68, 68, .16), transparent 32rem),
-        linear-gradient(180deg, #0a0d14 0%, #0d111b 42%, #080b11 100%);
+        radial-gradient(circle at 18% 0%, rgba(43, 92, 255, .22), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(10, 22, 40, .9), transparent 24rem),
+        linear-gradient(180deg, #070b14 0%, #0b1220 42%, #060910 100%);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      font-family: var(--font-body);
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
@@ -74,6 +88,36 @@
       margin-bottom: 18px;
     }
 
+    .brand-lockup {
+      display: grid;
+      gap: 8px;
+    }
+
+    .brand-wordmark {
+      display: inline-flex;
+      align-items: baseline;
+      font-family: var(--font-brand);
+      font-size: clamp(2.1rem, 8vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.06em;
+      color: #f7f9ff;
+    }
+
+    .brand-wordmark .brand-semi {
+      color: var(--brand-blue);
+      margin: 0 .02em;
+    }
+
+    .brand-tagline {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: clamp(.92rem, 2.4vw, 1.05rem);
+      font-weight: 600;
+      letter-spacing: -.01em;
+      max-width: 34ch;
+    }
+
     .eyebrow {
       color: var(--accent);
       font-size: .75rem;
@@ -84,6 +128,7 @@
     }
 
     h1 {
+      font-family: var(--font-brand);
       font-size: clamp(1.65rem, 7vw, 2.8rem);
       line-height: 1.05;
       letter-spacing: -.055em;
@@ -172,8 +217,8 @@
     }
 
     .stat-card.priority {
-      color: var(--accent);
-      border-color: rgba(239, 68, 68, .56);
+      color: var(--danger);
+      border-color: rgba(244, 63, 94, .56);
       background: linear-gradient(145deg, rgba(77, 29, 36, .92), rgba(32, 42, 60, .95));
     }
 
@@ -357,19 +402,22 @@
       border: 1px solid var(--border);
       border-radius: calc(var(--radius) + 4px);
       background:
-        radial-gradient(circle at top right, rgba(239, 68, 68, .18), transparent 42%),
-        linear-gradient(160deg, rgba(32, 42, 60, .98), rgba(15, 20, 32, .98));
+        radial-gradient(circle at top right, rgba(43, 92, 255, .22), transparent 42%),
+        linear-gradient(160deg, rgba(24, 34, 54, .98), rgba(12, 18, 30, .98));
       box-shadow: var(--shadow);
       padding: 28px 22px;
     }
 
-    .auth-card .brand {
-      color: var(--accent);
-      font-size: .78rem;
-      font-weight: 800;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
+    .auth-card .brand-lockup {
+      margin-bottom: 18px;
+    }
+
+    .auth-card .brand-wordmark {
+      font-size: clamp(2rem, 8vw, 2.6rem);
+    }
+
+    .auth-card .brand-tagline {
+      max-width: none;
     }
 
     .auth-card h1 {
@@ -404,8 +452,8 @@
 
     .auth-tab.active {
       color: var(--text);
-      border-color: rgba(239, 68, 68, .55);
-      background: rgba(239, 68, 68, .16);
+      border-color: rgba(43, 92, 255, .55);
+      background: rgba(43, 92, 255, .16);
     }
 
     .auth-form .field { margin-bottom: 12px; }
@@ -1172,8 +1220,12 @@
 <body>
   <div class="auth-gate" id="authGate">
     <div class="auth-card">
-      <div class="brand">Sweat Manager SaaS</div>
-      <h1 data-i18n="authTitle">체육관 로그인</h1>
+      <div class="brand-lockup">
+        <div class="brand-wordmark" aria-label="re;member">
+          <span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span>
+        </div>
+        <p class="brand-tagline" data-i18n="brandTagline">체육관을 위한 가장 간단하고 저렴한 CRM</p>
+      </div>
       <p class="lead" data-i18n="authLead">체육관 계정으로 로그인하면 회원 데이터가 안전하게 분리 저장됩니다.</p>
 
       <div class="auth-tabs" role="tablist">
@@ -1214,10 +1266,11 @@
 
   <div class="app" id="appShell" hidden>
     <header>
-      <div>
-        <div class="eyebrow" data-i18n="eyebrow">Renewal First Operation</div>
-        <h1 data-i18n="appTitle">복싱장 재등록<br>운영 관리</h1>
-        <p data-i18n="appSubtitle">만기 회원을 놓치지 않도록 재등록, 미방문, 출석을 한 화면에서 관리합니다.</p>
+      <div class="brand-lockup">
+        <h1 class="brand-wordmark" aria-label="re;member">
+          <span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span>
+        </h1>
+        <p class="brand-tagline" data-i18n="brandTagline">체육관을 위한 가장 간단하고 저렴한 CRM</p>
       </div>
       <div class="header-actions">
         <select class="language-select" id="languageSelect" aria-label="Language">
@@ -1595,10 +1648,12 @@
     const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
     const TRANSLATIONS = {
       ko: {
-        documentTitle: '복싱장 재등록 운영 관리',
-        eyebrow: 'Renewal First Operation',
-        appTitle: '복싱장 재등록<br>운영 관리',
-        appSubtitle: '만기 회원을 놓치지 않도록 재등록, 미방문, 출석을 한 화면에서 관리합니다.',
+        documentTitle: 're;member — 체육관을 위한 가장 간단하고 저렴한 CRM',
+        brandName: 're;member',
+        brandTagline: '체육관을 위한 가장 간단하고 저렴한 CRM',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: '체육관을 위한 가장 간단하고 저렴한 CRM',
         dashboardAria: '운영 대시보드',
         statRenewalLabel: '재등록 예정 회원',
         statRenewalHint: '만기 14일 이내',
@@ -1679,11 +1734,11 @@
         callAria: '{name} 전화',
         smsAria: '{name} SMS',
         smsPreviewPrefix: 'SMS:',
-        smsAbsent: '안녕하세요 [스웨트매니저] 체육관 {days}일 미방문 알림드립니다.',
-        smsToday: '안녕하세요 [스웨트매니저] 체육관 오늘 출석 확인 안내드립니다.',
-        smsExpired: '안녕하세요 [스웨트매니저] 체육관 만기일이 {days}일 지났습니다. 재등록 안내드립니다.',
-        smsDueToday: '안녕하세요 [스웨트매니저] 체육관 만기일 당일 알림드립니다.',
-        smsDueSoon: '안녕하세요 [스웨트매니저] 체육관 만기일 {days}일 전 알림드립니다.',
+        smsAbsent: '안녕하세요 [re;member] 체육관 {days}일 미방문 알림드립니다.',
+        smsToday: '안녕하세요 [re;member] 체육관 오늘 출석 확인 안내드립니다.',
+        smsExpired: '안녕하세요 [re;member] 체육관 만기일이 {days}일 지났습니다. 재등록 안내드립니다.',
+        smsDueToday: '안녕하세요 [re;member] 체육관 만기일 당일 알림드립니다.',
+        smsDueSoon: '안녕하세요 [re;member] 체육관 만기일 {days}일 전 알림드립니다.',
         newPasswordPrompt: '새 비밀번호를 입력하세요 (6자 이상)',
         passwordUpdated: '비밀번호가 변경되었습니다.',
         gymFallbackName: '체육관',
@@ -1824,10 +1879,12 @@
         importInvalid: '올바른 JSON 파일이 아닙니다.'
       },
       en: {
-        documentTitle: 'Boxing Gym Renewal Manager',
-        eyebrow: 'Renewal First Operation',
-        appTitle: 'Boxing Gym<br>Renewal Manager',
-        appSubtitle: 'Manage renewals, absences, and attendance in one place so no expiring member is missed.',
+        documentTitle: 're;member — Simple affordable gym CRM',
+        brandName: 're;member',
+        brandTagline: 'The simplest, most affordable CRM for gyms',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: 'The simplest, most affordable CRM for gyms',
         dashboardAria: 'Operations dashboard',
         statRenewalLabel: 'Renewal candidates',
         statRenewalHint: 'Expiring within 14 days',
@@ -1908,11 +1965,11 @@
         callAria: 'Call {name}',
         smsAria: 'SMS {name}',
         smsPreviewPrefix: 'SMS:',
-        smsAbsent: 'Hello from [Sweat Manager] gym — it has been {days} days since your last visit.',
-        smsToday: 'Hello from [Sweat Manager] gym — confirming today’s attendance.',
-        smsExpired: 'Hello from [Sweat Manager] gym — your membership expired {days} days ago. Please renew.',
-        smsDueToday: 'Hello from [Sweat Manager] gym — your membership expires today.',
-        smsDueSoon: 'Hello from [Sweat Manager] gym — your membership expires in {days} days.',
+        smsAbsent: 'Hello from [re;member] gym — it has been {days} days since your last visit.',
+        smsToday: 'Hello from [re;member] gym — confirming today’s attendance.',
+        smsExpired: 'Hello from [re;member] gym — your membership expired {days} days ago. Please renew.',
+        smsDueToday: 'Hello from [re;member] gym — your membership expires today.',
+        smsDueSoon: 'Hello from [re;member] gym — your membership expires in {days} days.',
         newPasswordPrompt: 'Enter a new password (6+ characters)',
         passwordUpdated: 'Password updated.',
         gymFallbackName: 'Gym',
@@ -2053,10 +2110,12 @@
         importInvalid: 'This is not a valid JSON file.'
       },
       es: {
-        documentTitle: 'Gestor de Renovaciones del Gimnasio de Boxeo',
-        eyebrow: 'Operación centrada en renovaciones',
-        appTitle: 'Gestor de<br>Renovaciones',
-        appSubtitle: 'Gestiona renovaciones, ausencias y asistencias en un solo lugar para no perder miembros por vencer.',
+        documentTitle: 're;member — CRM simple y asequible para gimnasios',
+        brandName: 're;member',
+        brandTagline: 'El CRM más simple y asequible para gimnasios',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: 'El CRM más simple y asequible para gimnasios',
         dashboardAria: 'Panel operativo',
         statRenewalLabel: 'Renovaciones previstas',
         statRenewalHint: 'Vencen en 14 días',
@@ -2137,11 +2196,11 @@
         callAria: 'Llamar a {name}',
         smsAria: 'SMS a {name}',
         smsPreviewPrefix: 'SMS:',
-        smsAbsent: 'Hola desde el gimnasio [Sweat Manager]: llevas {days} días sin visitar.',
-        smsToday: 'Hola desde el gimnasio [Sweat Manager]: confirmación de asistencia de hoy.',
-        smsExpired: 'Hola desde el gimnasio [Sweat Manager]: tu membresía venció hace {days} días. Renueva por favor.',
-        smsDueToday: 'Hola desde el gimnasio [Sweat Manager]: tu membresía vence hoy.',
-        smsDueSoon: 'Hola desde el gimnasio [Sweat Manager]: tu membresía vence en {days} días.',
+        smsAbsent: 'Hola desde el gimnasio [re;member]: llevas {days} días sin visitar.',
+        smsToday: 'Hola desde el gimnasio [re;member]: confirmación de asistencia de hoy.',
+        smsExpired: 'Hola desde el gimnasio [re;member]: tu membresía venció hace {days} días. Renueva por favor.',
+        smsDueToday: 'Hola desde el gimnasio [re;member]: tu membresía vence hoy.',
+        smsDueSoon: 'Hola desde el gimnasio [re;member]: tu membresía vence en {days} días.',
         newPasswordPrompt: 'Introduce una nueva contraseña (6+ caracteres)',
         passwordUpdated: 'Contraseña actualizada.',
         gymFallbackName: 'Gimnasio',
@@ -2282,10 +2341,12 @@
         importInvalid: 'No es un archivo JSON válido.'
       },
       ru: {
-        documentTitle: 'Менеджер продлений боксерского зала',
-        eyebrow: 'Продления прежде всего',
-        appTitle: 'Менеджер<br>продлений',
-        appSubtitle: 'Управляйте продлениями, отсутствиями и посещениями в одном месте, чтобы не пропустить клиентов с истекающим абонементом.',
+        documentTitle: 're;member — простая и доступная CRM для залов',
+        brandName: 're;member',
+        brandTagline: 'Самая простая и доступная CRM для залов',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: 'Самая простая и доступная CRM для залов',
         dashboardAria: 'Операционная панель',
         statRenewalLabel: 'К продлению',
         statRenewalHint: 'Истекают за 14 дней',
@@ -2366,11 +2427,11 @@
         callAria: 'Позвонить {name}',
         smsAria: 'SMS {name}',
         smsPreviewPrefix: 'SMS:',
-        smsAbsent: 'Здравствуйте! Зал [Sweat Manager]: вы не были {days} дн.',
-        smsToday: 'Здравствуйте! Зал [Sweat Manager]: подтверждение посещения сегодня.',
-        smsExpired: 'Здравствуйте! Зал [Sweat Manager]: абонемент истёк {days} дн. назад. Продлите, пожалуйста.',
-        smsDueToday: 'Здравствуйте! Зал [Sweat Manager]: абонемент заканчивается сегодня.',
-        smsDueSoon: 'Здравствуйте! Зал [Sweat Manager]: абонемент заканчивается через {days} дн.',
+        smsAbsent: 'Здравствуйте! Зал [re;member]: вы не были {days} дн.',
+        smsToday: 'Здравствуйте! Зал [re;member]: подтверждение посещения сегодня.',
+        smsExpired: 'Здравствуйте! Зал [re;member]: абонемент истёк {days} дн. назад. Продлите, пожалуйста.',
+        smsDueToday: 'Здравствуйте! Зал [re;member]: абонемент заканчивается сегодня.',
+        smsDueSoon: 'Здравствуйте! Зал [re;member]: абонемент заканчивается через {days} дн.',
         newPasswordPrompt: 'Введите новый пароль (от 6 символов)',
         passwordUpdated: 'Пароль обновлён.',
         gymFallbackName: 'Зал',
@@ -2511,10 +2572,12 @@
         importInvalid: 'Это некорректный JSON-файл.'
       },
       mn: {
-        documentTitle: 'Боксын заалны сунгалтын менежер',
-        eyebrow: 'Сунгалтыг нэн тэргүүнд',
-        appTitle: 'Боксын заалны<br>сунгалтын менежер',
-        appSubtitle: 'Дуусах гишүүдийг алдахгүй байхын тулд сунгалт, ирээгүй байдал, ирцийг нэг дор удирдана.',
+        documentTitle: 're;member — простая и доступная CRM для залов',
+        brandName: 're;member',
+        brandTagline: 'Заалуудад хамгийн энгийн, хямд CRM',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: 'Заалуудад хамгийн энгийн, хямд CRM',
         dashboardAria: 'Үйл ажиллагааны самбар',
         statRenewalLabel: 'Сунгах гишүүд',
         statRenewalHint: '14 хоногт дуусна',
@@ -2595,11 +2658,11 @@
         callAria: '{name}-д залгах',
         smsAria: '{name}-д SMS',
         smsPreviewPrefix: 'SMS:',
-        smsAbsent: 'Сайн байна уу [Sweat Manager] гимнази: {days} хоног ирээгүй байна.',
-        smsToday: 'Сайн байна уу [Sweat Manager] гимнази: өнөөдрийн ирцийг баталгаажуулж байна.',
-        smsExpired: 'Сайн байна уу [Sweat Manager] гимнази: эрх {days} хоногийн өмнө дууссан. дахин бүртгүүлнэ үү.',
-        smsDueToday: 'Сайн байна уу [Sweat Manager] гимнази: эрх өнөөдөр дуусна.',
-        smsDueSoon: 'Сайн байна уу [Sweat Manager] гимнази: эрх {days} хоногийн дараа дуусна.',
+        smsAbsent: 'Сайн байна уу [re;member] гимнази: {days} хоног ирээгүй байна.',
+        smsToday: 'Сайн байна уу [re;member] гимнази: өнөөдрийн ирцийг баталгаажуулж байна.',
+        smsExpired: 'Сайн байна уу [re;member] гимнази: эрх {days} хоногийн өмнө дууссан. дахин бүртгүүлнэ үү.',
+        smsDueToday: 'Сайн байна уу [re;member] гимнази: эрх өнөөдөр дуусна.',
+        smsDueSoon: 'Сайн байна уу [re;member] гимнази: эрх {days} хоногийн дараа дуусна.',
         newPasswordPrompt: 'Шинэ нууц үг оруулна уу (6+ тэмдэгт)',
         passwordUpdated: 'Нууц үг шинэчлэгдлээ.',
         gymFallbackName: 'Гимнази',
@@ -2740,10 +2803,12 @@
         importInvalid: 'Зөв JSON файл биш байна.'
       },
       zh: {
-        documentTitle: '拳馆续费运营管理',
-        eyebrow: '续费优先运营',
-        appTitle: '拳馆续费<br>运营管理',
-        appSubtitle: '在一个界面管理续费、未到访和出勤，避免错过即将到期的会员。',
+        documentTitle: 're;member — 最简单实惠的健身房 CRM',
+        brandName: 're;member',
+        brandTagline: '最简单实惠的健身房 CRM',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: '最简单实惠的健身房 CRM',
         dashboardAria: '运营仪表板',
         statRenewalLabel: '待续费会员',
         statRenewalHint: '14天内到期',
@@ -2824,11 +2889,11 @@
         callAria: '给 {name} 打电话',
         smsAria: '给 {name} 发短信',
         smsPreviewPrefix: '短信:',
-        smsAbsent: '您好，[Sweat Manager] 健身房提醒：您已 {days} 天未到访。',
-        smsToday: '您好，[Sweat Manager] 健身房：确认今日出勤。',
-        smsExpired: '您好，[Sweat Manager] 健身房：会员已过期 {days} 天，请续费。',
-        smsDueToday: '您好，[Sweat Manager] 健身房：会员今天到期。',
-        smsDueSoon: '您好，[Sweat Manager] 健身房：会员将在 {days} 天后到期。',
+        smsAbsent: '您好，[re;member] 健身房提醒：您已 {days} 天未到访。',
+        smsToday: '您好，[re;member] 健身房：确认今日出勤。',
+        smsExpired: '您好，[re;member] 健身房：会员已过期 {days} 天，请续费。',
+        smsDueToday: '您好，[re;member] 健身房：会员今天到期。',
+        smsDueSoon: '您好，[re;member] 健身房：会员将在 {days} 天后到期。',
         newPasswordPrompt: '请输入新密码（至少6位）',
         passwordUpdated: '密码已更新。',
         gymFallbackName: '健身房',
@@ -2969,10 +3034,12 @@
         importInvalid: '不是有效的JSON文件。'
       },
       hi: {
-        documentTitle: 'बॉक्सिंग जिम नवीनीकरण प्रबंधन',
-        eyebrow: 'नवीनीकरण पहले',
-        appTitle: 'बॉक्सिंग जिम<br>नवीनीकरण प्रबंधन',
-        appSubtitle: 'समाप्ति वाले सदस्यों को न चूकने के लिए नवीनीकरण, अनुपस्थिति और उपस्थिति को एक जगह संभालें।',
+        documentTitle: 're;member — जिम के लिए सरल किफायती CRM',
+        brandName: 're;member',
+        brandTagline: 'जिम के लिए सबसे सरल और किफायती CRM',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: 'जिम के लिए सबसे सरल और किफायती CRM',
         dashboardAria: 'संचालन डैशबोर्ड',
         statRenewalLabel: 'नवीनीकरण सदस्य',
         statRenewalHint: '14 दिनों में समाप्त',
@@ -3053,11 +3120,11 @@
         callAria: '{name} को कॉल',
         smsAria: '{name} को SMS',
         smsPreviewPrefix: 'SMS:',
-        smsAbsent: 'नमस्ते [Sweat Manager] जिम — आप {days} दिनों से नहीं आए।',
-        smsToday: 'नमस्ते [Sweat Manager] जिम — आज की उपस्थिति की पुष्टि।',
-        smsExpired: 'नमस्ते [Sweat Manager] जिम — मेंबरशिप {days} दिन पहले खत्म हो गई। कृपया रिन्यू करें।',
-        smsDueToday: 'नमस्ते [Sweat Manager] जिम — मेंबरशिप आज खत्म हो रही है।',
-        smsDueSoon: 'नमस्ते [Sweat Manager] जिम — मेंबरशिप {days} दिन में खत्म होगी।',
+        smsAbsent: 'नमस्ते [re;member] जिम — आप {days} दिनों से नहीं आए।',
+        smsToday: 'नमस्ते [re;member] जिम — आज की उपस्थिति की पुष्टि।',
+        smsExpired: 'नमस्ते [re;member] जिम — मेंबरशिप {days} दिन पहले खत्म हो गई। कृपया रिन्यू करें।',
+        smsDueToday: 'नमस्ते [re;member] जिम — मेंबरशिप आज खत्म हो रही है।',
+        smsDueSoon: 'नमस्ते [re;member] जिम — मेंबरशिप {days} दिन में खत्म होगी।',
         newPasswordPrompt: 'नया पासवर्ड दर्ज करें (6+ अक्षर)',
         passwordUpdated: 'पासवर्ड अपडेट हो गया।',
         gymFallbackName: 'जिम',
@@ -3198,10 +3265,12 @@
         importInvalid: 'यह सही JSON फाइल नहीं है।'
       },
       fr: {
-        documentTitle: 'Gestion des renouvellements de la salle de boxe',
-        eyebrow: 'Renouvellement en priorité',
-        appTitle: 'Gestion des<br>renouvellements',
-        appSubtitle: 'Gérez les renouvellements, les absences et les présences au même endroit pour ne manquer aucun membre arrivant à échéance.',
+        documentTitle: 're;member — CRM simple et abordable pour les salles',
+        brandName: 're;member',
+        brandTagline: 'Le CRM le plus simple et abordable pour les salles',
+        eyebrow: 're;member',
+        appTitle: 're;member',
+        appSubtitle: 'Le CRM le plus simple et abordable pour les salles',
         dashboardAria: 'Tableau de bord opérationnel',
         statRenewalLabel: 'Renouvellements prévus',
         statRenewalHint: 'Expire dans 14 jours',
@@ -3282,11 +3351,11 @@
         callAria: 'Appeler {name}',
         smsAria: 'SMS {name}',
         smsPreviewPrefix: 'SMS :',
-        smsAbsent: 'Bonjour [Sweat Manager] : cela fait {days} jours sans visite.',
-        smsToday: 'Bonjour [Sweat Manager] : confirmation de présence aujourd’hui.',
-        smsExpired: 'Bonjour [Sweat Manager] : l’abonnement a expiré il y a {days} jours. Merci de renouveler.',
-        smsDueToday: 'Bonjour [Sweat Manager] : l’abonnement expire aujourd’hui.',
-        smsDueSoon: 'Bonjour [Sweat Manager] : l’abonnement expire dans {days} jours.',
+        smsAbsent: 'Bonjour [re;member] : cela fait {days} jours sans visite.',
+        smsToday: 'Bonjour [re;member] : confirmation de présence aujourd’hui.',
+        smsExpired: 'Bonjour [re;member] : l’abonnement a expiré il y a {days} jours. Merci de renouveler.',
+        smsDueToday: 'Bonjour [re;member] : l’abonnement expire aujourd’hui.',
+        smsDueSoon: 'Bonjour [re;member] : l’abonnement expire dans {days} jours.',
         newPasswordPrompt: 'Entrez un nouveau mot de passe (6+ caractères)',
         passwordUpdated: 'Mot de passe mis à jour.',
         gymFallbackName: 'Salle',

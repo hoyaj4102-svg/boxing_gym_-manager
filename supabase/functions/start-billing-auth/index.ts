@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       clientKey,
       customerKey,
       customerEmail: user.email || '',
-      customerName: gym?.name || user.email || 'Sweat Manager',
+      customerName: gym?.name || user.email || 're;member',
       successUrl,
       failUrl,
       amount: 29000,

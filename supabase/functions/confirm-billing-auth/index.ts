@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
         customerKey,
         amount: AMOUNT_KRW,
         orderId,
-        orderName: '복싱짐 매니저 Pro 월간 구독',
+        orderName: 're;member Pro 월간 구독',
         customerEmail: user.email || undefined,
         customerName: gym?.name || undefined
       });

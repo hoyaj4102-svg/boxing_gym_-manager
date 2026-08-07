@@ -1,5 +1,5 @@
 /**
- * Sweat Manager - Billing helpers
+ * re;member - Billing helpers
  * Toss monthly auto-pay (billing key) + cancel-at-period-end
  */
 (function (global) {
