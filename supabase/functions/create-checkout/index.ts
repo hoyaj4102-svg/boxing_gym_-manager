@@ -81,7 +81,7 @@ async function createStripeCheckout(params: {
     form.set('line_items[0][price_data][currency]', 'usd');
     form.set('line_items[0][price_data][unit_amount]', String(amountUsd));
     form.set('line_items[0][price_data][recurring][interval]', params.interval === 'yearly' ? 'year' : 'month');
-    form.set('line_items[0][price_data][product_data][name]', 'Sweat Manager Pro');
+    form.set('line_items[0][price_data][product_data][name]', 're;member Pro');
     form.set('line_items[0][quantity]', '1');
   }
 
@@ -131,8 +131,8 @@ async function createTossCheckout(params: {
   const orderId = makeOrderId('toss');
   const amountKrw = PRICE_KRW[params.interval];
   const orderName = params.interval === 'yearly'
-    ? 'Sweat Manager Pro (Yearly)'
-    : 'Sweat Manager Pro (Monthly)';
+    ? 're;member Pro (Yearly)'
+    : 're;member Pro (Monthly)';
 
   const { error: insertError } = await params.admin
     .from('checkout_sessions')

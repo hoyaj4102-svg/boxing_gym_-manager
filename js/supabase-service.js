@@ -1,5 +1,5 @@
 /**
- * Sweat Manager - Supabase Auth & Data Service
+ * re;member - Supabase Auth & Data Service
  * Multi-tenant gym SaaS (gym_id isolation via RLS)
  */
 (function (global) {

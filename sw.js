@@ -1,10 +1,12 @@
-const CACHE_VERSION = 'sweat-manager-v17-total-first';
+const CACHE_VERSION = 'remember-v18-brand';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
   '/manifest.webmanifest',
+  '/favicon.ico',
   '/app-icon.svg',
+  '/brand-mark.svg',
   '/app-icon-180.png',
   '/app-icon-192.png',
   '/app-icon-512.png',
@@ -35,18 +37,21 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  const request = event.request;
-
+  const { request } = event;
   if (request.method !== 'GET') return;
 
-  // Always network-first for app shell and config so auth settings update quickly.
   event.respondWith(
-    fetch(request)
-      .then(response => {
+    caches.match(request).then(cached => {
+      const fetched = fetch(request).then(response => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
         const copy = response.clone();
         caches.open(CACHE_VERSION).then(cache => cache.put(request, copy));
         return response;
-      })
-      .catch(() => caches.match(request).then(cached => cached || caches.match('/index.html')))
+      }).catch(() => cached);
+
+      return cached || fetched;
+    })
   );
 });
