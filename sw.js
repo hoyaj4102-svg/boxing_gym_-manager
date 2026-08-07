@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v19-dashboard-withdraw';
+const CACHE_VERSION = 'remember-v20-mobile-total-line';
 const APP_SHELL = [
   '/',
   '/index.html',

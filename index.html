@@ -248,6 +248,46 @@
       font-size: .72rem;
     }
 
+    .stat-card-compact {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .stat-card-compact .compact-main {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-card-compact .compact-label {
+      font-size: .92rem;
+    }
+
+    .stat-card-compact .compact-sep {
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .stat-card-compact .compact-value {
+      color: currentColor;
+      font-size: 1.05rem;
+      font-weight: 900;
+      letter-spacing: -.02em;
+    }
+
+    .stat-card-compact .compact-hint {
+      color: var(--text-muted);
+      font-size: .72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
     .dashboard-contact-panel {
       margin-bottom: 14px;
       border-color: rgba(239, 68, 68, .36);
@@ -1153,9 +1193,28 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .dashboard .stat-card.priority,
-      .dashboard .stat-card.total {
+      .dashboard .stat-card.priority {
         grid-column: auto;
+      }
+
+      .dashboard .stat-card.total {
+        grid-column: 1 / -1;
+        min-height: 0;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+      }
+
+      .dashboard .stat-card.total::after {
+        display: none;
+      }
+
+      .dashboard .stat-card.total .stat-card-full {
+        display: none;
+      }
+
+      .dashboard .stat-card.total .stat-card-compact {
+        display: flex;
       }
 
       .layout {
@@ -1198,6 +1257,11 @@
       .stat-card {
         min-height: 104px;
         padding: 14px;
+      }
+
+      .dashboard .stat-card.total {
+        min-height: 0;
+        padding: 11px 12px;
       }
 
       .stat-card .value {
@@ -1310,9 +1374,19 @@
 
     <section class="dashboard" aria-label="운영 대시보드" data-i18n-aria-label="dashboardAria">
       <article class="stat-card total" data-dashboard-key="total" role="button" tabindex="0">
-        <div class="value" id="statTotalMembers">0</div>
-        <div class="label" data-i18n="statTotalLabel">총회원수</div>
-        <div class="hint" data-i18n="statTotalHint">등록된 전체 회원</div>
+        <div class="stat-card-compact">
+          <span class="compact-main">
+            <span class="compact-label" data-i18n="statTotalLabel">총회원수</span>
+            <span class="compact-sep">·</span>
+            <strong class="compact-value" id="statTotalMembersCompact">0</strong>
+          </span>
+          <span class="compact-hint" data-i18n="statTotalHint">등록된 전체 회원</span>
+        </div>
+        <div class="stat-card-full">
+          <div class="value" id="statTotalMembers">0</div>
+          <div class="label" data-i18n="statTotalLabel">총회원수</div>
+          <div class="hint" data-i18n="statTotalHint">등록된 전체 회원</div>
+        </div>
       </article>
       <article class="stat-card priority" data-dashboard-key="renewal" role="button" tabindex="0">
         <div class="value" id="statRenewal">0</div>
@@ -4183,6 +4257,10 @@
       document.getElementById('todayLabel').textContent = `${t('todayPrefix')} ${formatDateOnly(getTodayDateOnly())}`;
       document.getElementById('statRenewal').textContent = renewalTargets.length;
       document.getElementById('statTotalMembers').textContent = members.length;
+      const totalCompact = document.getElementById('statTotalMembersCompact');
+      if (totalCompact) {
+        totalCompact.textContent = t('countPeople', { count: members.length });
+      }
       document.getElementById('statUrgent').textContent = urgentTargets.length;
       document.getElementById('statExpired').textContent = expiredTargets.length;
       document.getElementById('statAbsent').textContent = absentTargets.length;
