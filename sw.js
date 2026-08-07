@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v18-brand';
+const CACHE_VERSION = 'remember-v19-dashboard-withdraw';
 const APP_SHELL = [
   '/',
   '/index.html',
