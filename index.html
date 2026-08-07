@@ -327,6 +327,22 @@
       color: var(--info);
     }
 
+    .contact-action.edit {
+      border-color: rgba(250, 204, 21, .55);
+      color: var(--warning);
+      cursor: pointer;
+    }
+
+    .contact-action.withdraw {
+      border-color: rgba(244, 63, 94, .55);
+      color: var(--danger);
+      cursor: pointer;
+    }
+
+    button.contact-action {
+      font: inherit;
+    }
+
     .contact-icon {
       font-size: 1.05rem;
       line-height: 1;
@@ -1207,7 +1223,7 @@
 
       .contact-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .calendar-day {
@@ -1726,13 +1742,17 @@
         migrateConfirm: '현재 브라우저의 로컬 회원 {count}명을 Supabase로 업로드할까요?',
         migrateDone: '로컬 데이터가 Supabase로 업로드되었습니다.',
         migrateEmpty: '업로드할 로컬 데이터가 없습니다.',
-        contactHelpSuffix: '전화번호 확인 후 전화 또는 SMS 아이콘으로 직접 연락합니다. 문자 API는 사용하지 않습니다.',
+        contactHelpSuffix: '전화·SMS로 연락하거나, 등록정보 확인 후 회원탈퇴할 수 있습니다.',
         noContactTargetsTitle: '대상 회원이 없습니다.',
         noContactTargetsBody: '다른 대시보드 카드를 선택해 주세요.',
         callButton: '전화',
         smsButton: 'SMS',
+        contactEditButton: '정보',
+        contactWithdrawButton: '탈퇴',
         callAria: '{name} 전화',
         smsAria: '{name} SMS',
+        contactEditAria: '{name} 등록정보 확인',
+        contactWithdrawAria: '{name} 회원탈퇴',
         smsPreviewPrefix: 'SMS:',
         smsAbsent: '안녕하세요 [re;member] 체육관 {days}일 미방문 알림드립니다.',
         smsToday: '안녕하세요 [re;member] 체육관 오늘 출석 확인 안내드립니다.',
@@ -1957,13 +1977,17 @@
         migrateConfirm: 'Upload {count} local members to Supabase?',
         migrateDone: 'Local data uploaded to Supabase.',
         migrateEmpty: 'No local data to upload.',
-        contactHelpSuffix: 'Check the phone number, then call or SMS directly. No messaging API is used.',
+        contactHelpSuffix: 'Call, SMS, open registration info, or withdraw the member.',
         noContactTargetsTitle: 'No members in this list.',
         noContactTargetsBody: 'Select another dashboard card.',
         callButton: 'Call',
         smsButton: 'SMS',
+        contactEditButton: 'Info',
+        contactWithdrawButton: 'Withdraw',
         callAria: 'Call {name}',
         smsAria: 'SMS {name}',
+        contactEditAria: 'View {name} registration',
+        contactWithdrawAria: 'Withdraw {name}',
         smsPreviewPrefix: 'SMS:',
         smsAbsent: 'Hello from [re;member] gym — it has been {days} days since your last visit.',
         smsToday: 'Hello from [re;member] gym — confirming today’s attendance.',
@@ -2188,13 +2212,17 @@
         migrateConfirm: '¿Subir {count} miembros locales a Supabase?',
         migrateDone: 'Datos locales subidos a Supabase.',
         migrateEmpty: 'No hay datos locales para subir.',
-        contactHelpSuffix: 'Revisa el teléfono y llama o envía SMS directamente. No usamos API de mensajería.',
+        contactHelpSuffix: 'Llama, envía SMS o abre la ficha para dar de baja.',
         noContactTargetsTitle: 'No hay miembros en esta lista.',
         noContactTargetsBody: 'Selecciona otra tarjeta del panel.',
         callButton: 'Llamar',
         smsButton: 'SMS',
+        contactEditButton: 'Info',
+        contactWithdrawButton: 'Baja',
         callAria: 'Llamar a {name}',
         smsAria: 'SMS a {name}',
+        contactEditAria: 'Ver ficha de {name}',
+        contactWithdrawAria: 'Dar de baja a {name}',
         smsPreviewPrefix: 'SMS:',
         smsAbsent: 'Hola desde el gimnasio [re;member]: llevas {days} días sin visitar.',
         smsToday: 'Hola desde el gimnasio [re;member]: confirmación de asistencia de hoy.',
@@ -2419,13 +2447,17 @@
         migrateConfirm: 'Загрузить {count} локальных клиентов в Supabase?',
         migrateDone: 'Локальные данные загружены в Supabase.',
         migrateEmpty: 'Нет локальных данных для загрузки.',
-        contactHelpSuffix: 'Проверьте телефон и позвоните или отправьте SMS напрямую. Messaging API не используется.',
+        contactHelpSuffix: 'Звоните, пишите SMS или откройте карточку для удаления.',
         noContactTargetsTitle: 'В этом списке нет клиентов.',
         noContactTargetsBody: 'Выберите другую карточку панели.',
         callButton: 'Звонок',
         smsButton: 'SMS',
+        contactEditButton: 'Инфо',
+        contactWithdrawButton: 'Удалить',
         callAria: 'Позвонить {name}',
         smsAria: 'SMS {name}',
+        contactEditAria: 'Карточка {name}',
+        contactWithdrawAria: 'Удалить {name}',
         smsPreviewPrefix: 'SMS:',
         smsAbsent: 'Здравствуйте! Зал [re;member]: вы не были {days} дн.',
         smsToday: 'Здравствуйте! Зал [re;member]: подтверждение посещения сегодня.',
@@ -2650,13 +2682,17 @@
         migrateConfirm: 'Локал гишүүн {count}-г Supabase руу байршуулах уу?',
         migrateDone: 'Локал өгөгдлийг Supabase руу байршууллаа.',
         migrateEmpty: 'Байршуулах локал өгөгдөл алга.',
-        contactHelpSuffix: 'Утасны дугаарыг шалгаад шууд залгах эсвэл SMS илгээнэ. Messaging API ашиглахгүй.',
+        contactHelpSuffix: 'Залгах, SMS, мэдээлэл харах эсвэл гишүүн хасах.',
         noContactTargetsTitle: 'Энэ жагсаалтад гишүүн алга.',
         noContactTargetsBody: 'Өөр самбарын картыг сонгоно уу.',
         callButton: 'Залгах',
         smsButton: 'SMS',
+        contactEditButton: 'Мэдээлэл',
+        contactWithdrawButton: 'Хасах',
         callAria: '{name}-д залгах',
         smsAria: '{name}-д SMS',
+        contactEditAria: '{name}-ийн мэдээлэл',
+        contactWithdrawAria: '{name}-ийг хасах',
         smsPreviewPrefix: 'SMS:',
         smsAbsent: 'Сайн байна уу [re;member] гимнази: {days} хоног ирээгүй байна.',
         smsToday: 'Сайн байна уу [re;member] гимнази: өнөөдрийн ирцийг баталгаажуулж байна.',
@@ -2881,13 +2917,17 @@
         migrateConfirm: '将本地 {count} 名会员上传到 Supabase？',
         migrateDone: '本地数据已上传到 Supabase。',
         migrateEmpty: '没有可上传的本地数据。',
-        contactHelpSuffix: '确认电话后直接拨打或发送短信。不使用短信 API。',
+        contactHelpSuffix: '可拨打电话、发短信，或查看资料后退会。',
         noContactTargetsTitle: '此列表没有会员。',
         noContactTargetsBody: '请选择其他看板卡片。',
         callButton: '电话',
         smsButton: '短信',
+        contactEditButton: '资料',
+        contactWithdrawButton: '退会',
         callAria: '给 {name} 打电话',
         smsAria: '给 {name} 发短信',
+        contactEditAria: '查看 {name} 资料',
+        contactWithdrawAria: '为 {name} 办理退会',
         smsPreviewPrefix: '短信:',
         smsAbsent: '您好，[re;member] 健身房提醒：您已 {days} 天未到访。',
         smsToday: '您好，[re;member] 健身房：确认今日出勤。',
@@ -3112,13 +3152,17 @@
         migrateConfirm: '{count} लोकल सदस्यों को Supabase पर अपलोड करें?',
         migrateDone: 'लोकल डेटा Supabase पर अपलोड हो गया।',
         migrateEmpty: 'अपलोड करने के लिए लोकल डेटा नहीं है।',
-        contactHelpSuffix: 'फोन नंबर देखकर सीधे कॉल या SMS करें। मैसेजिंग API उपयोग नहीं होता।',
+        contactHelpSuffix: 'कॉल, SMS करें या जानकारी देखकर सदस्य हटाएं।',
         noContactTargetsTitle: 'इस सूची में कोई सदस्य नहीं।',
         noContactTargetsBody: 'कोई अन्य डैशबोर्ड कार्ड चुनें।',
         callButton: 'कॉल',
         smsButton: 'SMS',
+        contactEditButton: 'जानकारी',
+        contactWithdrawButton: 'हटाएं',
         callAria: '{name} को कॉल',
         smsAria: '{name} को SMS',
+        contactEditAria: '{name} की जानकारी देखें',
+        contactWithdrawAria: '{name} को हटाएं',
         smsPreviewPrefix: 'SMS:',
         smsAbsent: 'नमस्ते [re;member] जिम — आप {days} दिनों से नहीं आए।',
         smsToday: 'नमस्ते [re;member] जिम — आज की उपस्थिति की पुष्टि।',
@@ -3343,13 +3387,17 @@
         migrateConfirm: 'Importer {count} membres locaux vers Supabase ?',
         migrateDone: 'Données locales importées vers Supabase.',
         migrateEmpty: 'Aucune donnée locale à importer.',
-        contactHelpSuffix: 'Vérifiez le numéro puis appelez ou envoyez un SMS directement. Aucune API de messagerie.',
+        contactHelpSuffix: 'Appelez, envoyez un SMS ou ouvrez la fiche pour retirer le membre.',
         noContactTargetsTitle: 'Aucun membre dans cette liste.',
         noContactTargetsBody: 'Sélectionnez une autre carte du tableau.',
         callButton: 'Appeler',
         smsButton: 'SMS',
+        contactEditButton: 'Fiche',
+        contactWithdrawButton: 'Retirer',
         callAria: 'Appeler {name}',
         smsAria: 'SMS {name}',
+        contactEditAria: 'Voir la fiche de {name}',
+        contactWithdrawAria: 'Retirer {name}',
         smsPreviewPrefix: 'SMS :',
         smsAbsent: 'Bonjour [re;member] : cela fait {days} jours sans visite.',
         smsToday: 'Bonjour [re;member] : confirmation de présence aujourd’hui.',
@@ -4296,6 +4344,14 @@
               <span class="contact-icon">💬</span>
               <span>${t('smsButton')}</span>
             </a>
+            <button type="button" class="contact-action edit" onclick="openEditModal('${member.id}')" aria-label="${escapeHtml(t('contactEditAria', { name: member.name }))}">
+              <span class="contact-icon">📋</span>
+              <span>${t('contactEditButton')}</span>
+            </button>
+            <button type="button" class="contact-action withdraw" onclick="deleteMember('${member.id}')" aria-label="${escapeHtml(t('contactWithdrawAria', { name: member.name }))}">
+              <span class="contact-icon">🚪</span>
+              <span>${t('contactWithdrawButton')}</span>
+            </button>
           </div>
         </article>`;
     }
