@@ -3778,6 +3778,22 @@
       else submit.textContent = t('authSubmitLogin');
     }
 
+    function getInitialAuthMode() {
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const authParam = (params.get('auth') || params.get('mode') || '').toLowerCase();
+
+      if (path.endsWith('/signup') || authParam === 'signup' || params.has('signup')) {
+        return 'signup';
+      }
+
+      if (path.endsWith('/reset-password') || authParam === 'reset' || params.has('reset')) {
+        return 'reset';
+      }
+
+      return 'login';
+    }
+
     function showAuthGate(message = '', type = '') {
       document.getElementById('authGate').hidden = false;
       document.getElementById('appShell').hidden = true;
@@ -5042,7 +5058,7 @@
 
     resetRegisterDates();
     applyTranslations();
-    setAuthMode('login');
+    setAuthMode(getInitialAuthMode());
     refreshAll();
     initAuth();
 

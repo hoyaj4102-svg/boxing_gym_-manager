@@ -93,6 +93,9 @@ python3 -m http.server 5173
 1. `js/config.js`가 포함된 상태로 배포
 2. Supabase Auth Redirect URL에 배포 도메인 추가
 3. 배포 URL에서 회원가입/로그인 재확인
+4. 랜딩페이지의 `14일 무료` CTA는 앱의 `/signup` 경로로 연결
+   - 예: `https://app.re-member.kr/signup`
+   - 앱은 `/signup`으로 들어오면 회원가입 탭을 자동으로 엽니다.
 
 ---
 
