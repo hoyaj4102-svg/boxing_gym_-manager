@@ -1,7 +1,7 @@
 {
-  "name": "re;member — 체육관을 위한 가장 간단하고 저렴한 CRM",
+  "name": "re;member — 재등록 관리에 특화된 가장 간단한 회비관리앱",
   "short_name": "re;member",
-  "description": "체육관을 위한 가장 간단하고 저렴한 CRM. 회원·재등록·출석·미방문을 한 화면에서 관리합니다.",
+  "description": "재등록 관리에 특화된 가장 간단한 회비관리앱. 회원·재등록·출석·미방문을 한 화면에서 관리합니다.",
   "lang": "ko",
   "dir": "ltr",
   "id": "/",
