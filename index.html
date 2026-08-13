@@ -227,6 +227,7 @@
     .stat-card.expired { color: var(--danger); }
     .stat-card.absent { color: var(--info); }
     .stat-card.today { color: var(--success); }
+    .stat-card.action { color: var(--brand-blue); }
 
     .stat-card .value {
       color: currentColor;
@@ -678,6 +679,7 @@
     .billing-policy li { margin: 4px 0; }
 
     .renewal-panel {
+      display: none;
       border-color: rgba(239, 68, 68, .42);
       background: linear-gradient(180deg, rgba(42, 25, 36, .96), rgba(21, 27, 41, .94));
     }
@@ -1377,30 +1379,10 @@
     </header>
 
     <section class="dashboard" aria-label="운영 대시보드" data-i18n-aria-label="dashboardAria">
-      <article class="stat-card total" data-dashboard-key="total" role="button" tabindex="0">
-        <div class="stat-card-compact">
-          <span class="compact-main">
-            <span class="compact-label" data-i18n="statTotalLabel">총회원수</span>
-            <span class="compact-sep">·</span>
-            <strong class="compact-value" id="statTotalMembersCompact">0</strong>
-          </span>
-          <span class="compact-hint" data-i18n="statTotalHint">등록된 전체 회원</span>
-        </div>
-        <div class="stat-card-full">
-          <div class="value" id="statTotalMembers">0</div>
-          <div class="label" data-i18n="statTotalLabel">총회원수</div>
-          <div class="hint" data-i18n="statTotalHint">등록된 전체 회원</div>
-        </div>
-      </article>
-      <article class="stat-card priority" data-dashboard-key="renewal" role="button" tabindex="0">
-        <div class="value" id="statRenewal">0</div>
-        <div class="label" data-i18n="statRenewalLabel">재등록 예정 회원</div>
-        <div class="hint" data-i18n="statRenewalHint">만기 14일 이내</div>
-      </article>
       <article class="stat-card warning" data-dashboard-key="urgent" role="button" tabindex="0">
         <div class="value" id="statUrgent">0</div>
         <div class="label" data-i18n="statUrgentLabel">만기 임박 회원</div>
-        <div class="hint" data-i18n="statUrgentHint">7일 이내 집중 관리</div>
+        <div class="hint">D-7 ~ D-Day</div>
       </article>
       <article class="stat-card expired" data-dashboard-key="expired" role="button" tabindex="0">
         <div class="value" id="statExpired">0</div>
@@ -1416,6 +1398,16 @@
         <div class="value" id="statToday">0</div>
         <div class="label" data-i18n="statTodayLabel">오늘 출석 인원</div>
         <div class="hint" data-i18n="statTodayHint">오늘 체크인한 회원</div>
+      </article>
+      <article class="stat-card action" data-dashboard-key="register" role="button" tabindex="0">
+        <div class="value">+</div>
+        <div class="label" data-i18n="registerTitle">회원 등록</div>
+        <div class="hint">빠른 등록</div>
+      </article>
+      <article class="stat-card action" data-dashboard-key="members" role="button" tabindex="0">
+        <div class="value">⌕</div>
+        <div class="label" data-i18n="memberListTitle">회원 목록</div>
+        <div class="hint">검색 및 상세</div>
       </article>
     </section>
 
@@ -1479,7 +1471,7 @@
               </div>
               <select id="memberFilter" aria-label="회원 필터" data-i18n-aria-label="memberFilterAria">
                 <option value="all" data-i18n="filterAll">전체 회원</option>
-                <option value="renewal" data-i18n="filterRenewal">재등록 예정</option>
+                <option value="renewal" data-i18n="filterRenewal">만기 임박</option>
                 <option value="expired" data-i18n="filterExpired">만기 지난 회원</option>
                 <option value="absent14" data-i18n="filterAbsent14">14일+ 미방문</option>
                 <option value="absent30" data-i18n="filterAbsent30">30일+ 미방문</option>
@@ -1771,7 +1763,7 @@
         searchPlaceholder: '이름, 연락처, 메모 검색',
         memberFilterAria: '회원 필터',
         filterAll: '전체 회원',
-        filterRenewal: '재등록 예정',
+        filterRenewal: '만기 임박',
         filterExpired: '만기 지난 회원',
         filterAbsent14: '14일+ 미방문',
         filterAbsent30: '30일+ 미방문',
@@ -2006,7 +1998,7 @@
         searchPlaceholder: 'Search name, phone, or notes',
         memberFilterAria: 'Member filter',
         filterAll: 'All members',
-        filterRenewal: 'Renewal candidates',
+        filterRenewal: 'Urgent expiries',
         filterExpired: 'Expired members',
         filterAbsent14: '14+ days absent',
         filterAbsent30: '30+ days absent',
@@ -2241,7 +2233,7 @@
         searchPlaceholder: 'Buscar nombre, teléfono o notas',
         memberFilterAria: 'Filtro de miembros',
         filterAll: 'Todos los miembros',
-        filterRenewal: 'Renovaciones previstas',
+        filterRenewal: 'Vencimientos urgentes',
         filterExpired: 'Miembros vencidos',
         filterAbsent14: '14+ días ausente',
         filterAbsent30: '30+ días ausente',
@@ -2476,7 +2468,7 @@
         searchPlaceholder: 'Поиск по имени, телефону или заметкам',
         memberFilterAria: 'Фильтр клиентов',
         filterAll: 'Все клиенты',
-        filterRenewal: 'К продлению',
+        filterRenewal: 'Скоро истекают',
         filterExpired: 'Истекшие',
         filterAbsent14: '14+ дней отсутствует',
         filterAbsent30: '30+ дней отсутствует',
@@ -2711,7 +2703,7 @@
         searchPlaceholder: 'Нэр, утас, тэмдэглэлээр хайх',
         memberFilterAria: 'Гишүүний шүүлтүүр',
         filterAll: 'Бүх гишүүд',
-        filterRenewal: 'Сунгах гишүүд',
+        filterRenewal: 'Дуусах дөхсөн',
         filterExpired: 'Хугацаа дууссан',
         filterAbsent14: '14+ хоног ирээгүй',
         filterAbsent30: '30+ хоног ирээгүй',
@@ -2946,7 +2938,7 @@
         searchPlaceholder: '搜索姓名、电话或备注',
         memberFilterAria: '会员筛选',
         filterAll: '全部会员',
-        filterRenewal: '待续费',
+        filterRenewal: '即将到期',
         filterExpired: '已过期会员',
         filterAbsent14: '14天+未到访',
         filterAbsent30: '30天+未到访',
@@ -3181,7 +3173,7 @@
         searchPlaceholder: 'नाम, फोन या नोट खोजें',
         memberFilterAria: 'सदस्य फिल्टर',
         filterAll: 'सभी सदस्य',
-        filterRenewal: 'नवीनीकरण सदस्य',
+        filterRenewal: 'जल्द समाप्त',
         filterExpired: 'समाप्त सदस्य',
         filterAbsent14: '14+ दिन अनुपस्थित',
         filterAbsent30: '30+ दिन अनुपस्थित',
@@ -3416,7 +3408,7 @@
         searchPlaceholder: 'Rechercher nom, téléphone ou notes',
         memberFilterAria: 'Filtre des membres',
         filterAll: 'Tous les membres',
-        filterRenewal: 'Renouvellements prévus',
+        filterRenewal: 'Échéances urgentes',
         filterExpired: 'Membres expirés',
         filterAbsent14: '14+ jours absent',
         filterAbsent30: '30+ jours absent',
@@ -4192,7 +4184,7 @@
 
     function isRenewalTarget(member) {
       const days = getDaysUntilExpiry(member);
-      return days >= 0 && days <= 14;
+      return days >= 0 && days <= 7;
     }
 
     function isUrgentExpiry(member) {
@@ -4269,45 +4261,41 @@
     }
 
     function updateDashboard() {
-      const renewalTargets = members.filter(isRenewalTarget);
       const urgentTargets = members.filter(isUrgentExpiry);
       const expiredTargets = members.filter(isExpired);
       const absentTargets = members.filter(m => isLongAbsent(m, 14));
 
       document.getElementById('todayLabel').textContent = `${t('todayPrefix')} ${formatDateOnly(getTodayDateOnly())}`;
-      document.getElementById('statRenewal').textContent = renewalTargets.length;
-      document.getElementById('statTotalMembers').textContent = members.length;
-      const totalCompact = document.getElementById('statTotalMembersCompact');
-      if (totalCompact) {
-        totalCompact.textContent = t('countPeople', { count: members.length });
-      }
       document.getElementById('statUrgent').textContent = urgentTargets.length;
       document.getElementById('statExpired').textContent = expiredTargets.length;
       document.getElementById('statAbsent').textContent = absentTargets.length;
       document.getElementById('statToday').textContent = getTodayCount();
-      document.getElementById('renewalSummary').textContent = t('manageCount', { count: renewalTargets.length + expiredTargets.length });
+      const renewalSummary = document.getElementById('renewalSummary');
+      if (renewalSummary) {
+        renewalSummary.textContent = t('manageCount', { count: urgentTargets.length + expiredTargets.length });
+      }
     }
 
     function getDashboardLabel(key) {
       const labels = {
-        renewal: t('statRenewalLabel'),
-        total: t('statTotalLabel'),
         urgent: t('statUrgentLabel'),
         expired: t('statExpiredLabel'),
         absent: t('statAbsentLabel'),
-        today: t('statTodayLabel')
+        today: t('statTodayLabel'),
+        register: t('registerTitle'),
+        members: t('memberListTitle')
       };
       return labels[key] || t('memberListTitle');
     }
 
     function getDashboardHint(key) {
       const hints = {
-        renewal: t('statRenewalHint'),
-        total: t('statTotalHint'),
         urgent: t('statUrgentHint'),
         expired: t('statExpiredHint'),
         absent: t('statAbsentHint'),
-        today: t('statTodayHint')
+        today: t('statTodayHint'),
+        register: t('registerSubtitle'),
+        members: t('memberListSubtitle')
       };
       return hints[key] || '';
     }
@@ -4317,8 +4305,6 @@
         member.attendance.some(attendance => isToday(attendance.date));
 
       const groups = {
-        renewal: () => members.filter(isRenewalTarget),
-        total: () => members.slice(),
         urgent: () => members.filter(isUrgentExpiry),
         expired: () => members.filter(isExpired),
         absent: () => members.filter(member => isLongAbsent(member, 14)),
@@ -4329,6 +4315,22 @@
     }
 
     function selectDashboardList(key) {
+      if (key === 'register') {
+        document.getElementById('registerForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('name')?.focus();
+        activeDashboardKey = '';
+        renderDashboardContactList();
+        return;
+      }
+
+      if (key === 'members') {
+        document.getElementById('memberList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('searchInput')?.focus();
+        activeDashboardKey = '';
+        renderDashboardContactList();
+        return;
+      }
+
       activeDashboardKey = activeDashboardKey === key ? '' : key;
       renderDashboardContactList();
 
