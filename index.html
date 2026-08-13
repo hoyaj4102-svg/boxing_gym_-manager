@@ -298,6 +298,11 @@
       display: none;
     }
 
+    .deferred-panel[hidden],
+    #monthExpiryList[hidden] {
+      display: none !important;
+    }
+
     .contact-list {
       display: flex;
       flex-direction: column;
@@ -1013,6 +1018,7 @@
       background: rgba(255, 255, 255, .025);
       color: var(--text-muted);
       font-size: .72rem;
+      cursor: pointer;
     }
 
     .calendar-day.in-month {
@@ -1027,6 +1033,12 @@
     .calendar-day.has-expiry {
       border-color: rgba(239, 68, 68, .7);
       background: rgba(239, 68, 68, .13);
+    }
+
+    .calendar-day.selected {
+      border-color: var(--brand-blue);
+      box-shadow: 0 0 0 2px rgba(43, 92, 255, .25);
+      background: rgba(43, 92, 255, .14);
     }
 
     .calendar-day .count {
@@ -1438,7 +1450,7 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel" id="calendarPanel">
           <div class="panel-header">
             <div>
               <h2 data-i18n="calendarPanelTitle">월별 만기 캘린더</h2>
@@ -1450,11 +1462,11 @@
           </div>
           <div class="panel-body">
             <div class="calendar-grid" id="calendarGrid"></div>
-            <div class="mini-list" id="monthExpiryList"></div>
+            <div class="mini-list" id="monthExpiryList" hidden></div>
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel deferred-panel" id="memberListPanel" hidden>
           <div class="panel-header">
             <div>
               <h2 data-i18n="memberListTitle">회원 목록</h2>
@@ -1483,7 +1495,7 @@
       </div>
 
       <aside class="stack">
-        <section class="panel">
+        <section class="panel deferred-panel" id="registerPanel" hidden>
           <div class="panel-header">
             <div>
               <h2 data-i18n="registerTitle">회원 등록</h2>
@@ -1527,7 +1539,7 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel deferred-panel" id="absencePanel" hidden>
           <div class="panel-header">
             <div>
               <h2 data-i18n="absenceTitle">장기 미방문 회원</h2>
@@ -3620,6 +3632,7 @@
     let searchQuery = '';
     let memberFilter = 'all';
     let activeDashboardKey = '';
+    let selectedCalendarDate = '';
     let authMode = 'login';
     let isBootstrapping = true;
     let isSaving = false;
@@ -4316,20 +4329,23 @@
 
     function selectDashboardList(key) {
       if (key === 'register') {
-        document.getElementById('registerForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        document.getElementById('name')?.focus();
+        showDeferredPanel('registerPanel', 'name');
         activeDashboardKey = '';
         renderDashboardContactList();
         return;
       }
 
       if (key === 'members') {
-        document.getElementById('memberList')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        document.getElementById('searchInput')?.focus();
+        showDeferredPanel('memberListPanel', 'searchInput');
         activeDashboardKey = '';
         renderDashboardContactList();
         return;
       }
+
+      ['registerPanel', 'memberListPanel'].forEach(id => {
+        const panel = document.getElementById(id);
+        if (panel) panel.hidden = true;
+      });
 
       activeDashboardKey = activeDashboardKey === key ? '' : key;
       renderDashboardContactList();
@@ -4337,6 +4353,23 @@
       const panel = document.getElementById('dashboardContactPanel');
       if (activeDashboardKey && panel && typeof panel.scrollIntoView === 'function') {
         panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function showDeferredPanel(panelId, focusId) {
+      ['registerPanel', 'memberListPanel'].forEach(id => {
+        const panel = document.getElementById(id);
+        if (panel) panel.hidden = id !== panelId;
+      });
+
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.hidden = false;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      if (focusId) {
+        setTimeout(() => document.getElementById(focusId)?.focus(), 250);
       }
     }
 
@@ -4502,6 +4535,10 @@
       const monthValue = input.value || getTodayDateOnly().slice(0, 7);
       input.value = monthValue;
 
+      if (selectedCalendarDate && selectedCalendarDate.slice(0, 7) !== monthValue) {
+        selectedCalendarDate = '';
+      }
+
       const [year, month] = monthValue.split('-').map(Number);
       const first = new Date(year, month - 1, 1);
       const last = new Date(year, month, 0);
@@ -4529,11 +4566,12 @@
           'calendar-day',
           inMonth ? 'in-month' : '',
           dateOnly === getTodayDateOnly() ? 'today' : '',
-          expiries.length ? 'has-expiry' : ''
+          expiries.length ? 'has-expiry' : '',
+          selectedCalendarDate === dateOnly ? 'selected' : ''
         ].filter(Boolean).join(' ');
 
         cells.push(`
-          <div class="${classes}" title="${expiries.map(m => m.name).join(', ')}">
+          <div class="${classes}" title="${expiries.map(m => m.name).join(', ')}" ${inMonth ? `onclick="selectCalendarDate('${dateOnly}')"` : ''}>
             <div>${cursor.getDate()}</div>
             ${expiries.length ? `<span class="count">${t('countPeople', { count: expiries.length })}</span>` : ''}
           </div>`);
@@ -4541,21 +4579,35 @@
       }
 
       document.getElementById('calendarGrid').innerHTML = cells.join('');
-      renderMonthExpiryList(monthValue);
+      renderMonthExpiryList();
     }
 
-    function renderMonthExpiryList(monthValue) {
+    function selectCalendarDate(dateOnly) {
+      selectedCalendarDate = selectedCalendarDate === dateOnly ? '' : dateOnly;
+      renderCalendar();
+    }
+
+    function renderMonthExpiryList() {
       const list = document.getElementById('monthExpiryList');
-      const monthly = members
-        .filter(member => member.expireDate.slice(0, 7) === monthValue)
+
+      if (!selectedCalendarDate) {
+        list.hidden = true;
+        list.innerHTML = '';
+        return;
+      }
+
+      const daily = members
+        .filter(member => member.expireDate === selectedCalendarDate)
         .sort((a, b) => parseDateOnly(a.expireDate) - parseDateOnly(b.expireDate));
 
-      if (monthly.length === 0) {
+      list.hidden = false;
+
+      if (daily.length === 0) {
         list.innerHTML = `<div class="empty-state">${t('noMonthlyExpiry')}</div>`;
         return;
       }
 
-      list.innerHTML = monthly.map(member => {
+      list.innerHTML = daily.map(member => {
         const status = getRenewalStatus(member);
         return `
           <div class="mini-card">
@@ -5017,7 +5069,10 @@
       renderMembers();
     });
 
-    document.getElementById('calendarMonth').addEventListener('change', renderCalendar);
+    document.getElementById('calendarMonth').addEventListener('change', () => {
+      selectedCalendarDate = '';
+      renderCalendar();
+    });
 
     document.querySelectorAll('[data-dashboard-key]').forEach(card => {
       card.addEventListener('click', () => {
