@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v21-tagline';
+const CACHE_VERSION = 'remember-v22-mobile-dashboard';
 const APP_SHELL = [
   '/',
   '/index.html',
