@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v22-mobile-dashboard';
+const CACHE_VERSION = 'remember-v23-click-to-list';
 const APP_SHELL = [
   '/',
   '/index.html',
