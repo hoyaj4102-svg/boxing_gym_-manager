@@ -8,7 +8,7 @@
 |---|---|---|
 | Free | 0 | 회원 20명 |
 | Pro trial | 가입 후 14일 | 무제한 |
-| Pro 월간 | ₩29,000 / 월 자동결제 | 무제한 |
+| Pro 월간 | ₩10,000 / 월 자동결제 | 무제한 |
 
 ## UX
 
@@ -25,7 +25,7 @@
 2. `start-billing-auth`가 `clientKey` + `customerKey` 반환
 3. 브라우저 `requestBillingAuth` (카드 등록)
 4. 성공 리다이렉트(`authKey`) → `confirm-billing-auth`
-5. 서버가 빌링키 발급 + ₩29,000 첫 결제 + `activate_gym_pro(..., auto_renew=true)`
+5. 서버가 빌링키 발급 + ₩10,000 첫 결제 + `activate_gym_pro(..., auto_renew=true)`
 6. 매일/매시간 `charge-subscriptions`(CRON)이 기간 종료분 재청구
 
 시크릿 키는 절대 프론트에 넣지 마세요.

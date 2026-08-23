@@ -5,13 +5,13 @@ type Interval = 'monthly' | 'yearly';
 type Provider = 'toss' | 'stripe';
 
 const PRICE_KRW = {
-  monthly: 29000,
-  yearly: 290000
+  monthly: 10000,
+  yearly: 100000
 } as const;
 
 const PRICE_USD_CENTS = {
-  monthly: 2900, // $29.00 fallback if Stripe Price IDs are not set
-  yearly: 29000 // $290.00
+  monthly: 1000, // $10.00 fallback if Stripe Price IDs are not set
+  yearly: 10000 // $100.00
 } as const;
 
 function makeOrderId(provider: Provider) {

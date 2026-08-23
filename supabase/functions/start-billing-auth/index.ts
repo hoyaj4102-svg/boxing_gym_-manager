@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       customerName: gym?.name || user.email || 're;member',
       successUrl,
       failUrl,
-      amount: 29000,
+      amount: 10000,
       interval: 'monthly'
     });
   } catch (error) {

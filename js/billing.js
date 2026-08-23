@@ -14,8 +14,8 @@
       code: 'pro',
       nameKey: 'planProName',
       memberLimit: -1,
-      priceKrwMonthly: 29000,
-      priceKrwYearly: 290000
+      priceKrwMonthly: 10000,
+      priceKrwYearly: 100000
     }
   };
 

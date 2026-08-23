@@ -1,7 +1,7 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient, getGymIdForUser, requireUser } from '../_shared/supabase.ts';
 
-const AMOUNT_KRW = 29000;
+const AMOUNT_KRW = 10000;
 
 function tossAuthHeader() {
   const secret = Deno.env.get('TOSS_SECRET_KEY') || '';

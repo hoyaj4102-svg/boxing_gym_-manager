@@ -21,7 +21,7 @@ async function activateFromStripeSession(admin: ReturnType<typeof getAdminClient
     }
   }
 
-  const amountKrw = interval === 'yearly' ? 290000 : 29000;
+  const amountKrw = interval === 'yearly' ? 100000 : 10000;
   const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id || null;
   const subscriptionId = typeof session.subscription === 'string'
     ? session.subscription
