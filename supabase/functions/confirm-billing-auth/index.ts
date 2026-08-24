@@ -13,6 +13,55 @@ function customerKeyForGym(gymId: string) {
   return `gym_${gymId.replace(/-/g, '')}`;
 }
 
+const SENSITIVE_KEYS = new Set([
+  'authkey',
+  'authorization',
+  'billingkey',
+  'card',
+  'cardnumber',
+  'customerkey',
+  'secret',
+  'secretkey'
+]);
+
+function sanitizeTossPayload(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sanitizeTossPayload);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
+        const normalizedKey = key.replace(/[_\-\s]/g, '').toLowerCase();
+        if (SENSITIVE_KEYS.has(normalizedKey)) {
+          return [key, '[REDACTED]'];
+        }
+        return [key, sanitizeTossPayload(entry)];
+      })
+    );
+  }
+
+  return value;
+}
+
+function logTossBillingKeyFailure(
+  stage: string,
+  status: number,
+  payload: unknown
+) {
+  const body = payload && typeof payload === 'object'
+    ? payload as Record<string, unknown>
+    : {};
+
+  console.error('TOSS_BILLING_KEY_DEBUG', {
+    stage,
+    status,
+    code: body.code || body.errorCode || null,
+    message: body.message || body.errorMessage || null,
+    raw: sanitizeTossPayload(payload)
+  });
+}
+
 async function tossPost(path: string, body: Record<string, unknown>) {
   const res = await fetch(`https://api.tosspayments.com${path}`, {
     method: 'POST',
@@ -24,6 +73,9 @@ async function tossPost(path: string, body: Record<string, unknown>) {
   });
   const json = await res.json();
   if (!res.ok) {
+    if (path === '/v1/billing/authorizations/issue') {
+      logTossBillingKeyFailure('issue_request_non_2xx', res.status, json);
+    }
     throw new Error(json?.message || json?.code || 'Toss API failed');
   }
   return json;
@@ -84,6 +136,7 @@ Deno.serve(async (req) => {
 
     const billingKey = String(issued.billingKey || '');
     if (!billingKey) {
+      logTossBillingKeyFailure('issue_response_missing_billing_key', 200, issued);
       return textResponse('Failed to issue billing key', 502);
     }
 
