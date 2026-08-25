@@ -1871,7 +1871,11 @@
         cancelSubscriptionDone: '구독이 해지되었습니다. 기간 종료일까지 이용 가능합니다.',
         cancelSubscriptionAlready: '이미 해지된 구독입니다.',
         cancelSubscriptionNothing: '해지할 활성 구독이 없습니다.',
-        planStatusCanceledActive: '해지됨 · 기간 종료까지 이용 가능',
+        resumeSubscriptionButton: '구독 유지',
+        resumeSubscriptionConfirm: '구독 해지를 취소하고 다음 자동결제를 계속 진행할까요?',
+        resumeSubscriptionDone: '구독이 유지됩니다. 다음 자동결제가 다시 진행됩니다.',
+        cancelPendingNote: '해지 예정 상태입니다. 현재 결제기간이 끝나는 {date}까지 Pro를 이용할 수 있습니다. 다음 자동결제는 진행되지 않습니다.',
+        planStatusCanceledActive: '해지 예정',
         planStatusCanceled: '해지됨',
         billingPolicySubscribeTitle: '구독 정책',
         billingPolicySubscribe1: '월간 자동결제 방식입니다.',
@@ -2106,7 +2110,11 @@
         cancelSubscriptionDone: 'Subscription canceled. Access continues until period end.',
         cancelSubscriptionAlready: 'Subscription is already canceled.',
         cancelSubscriptionNothing: 'No active subscription to cancel.',
-        planStatusCanceledActive: 'Canceled · access until period end',
+        resumeSubscriptionButton: 'Keep subscription',
+        resumeSubscriptionConfirm: 'Resume auto-renewal for this subscription?',
+        resumeSubscriptionDone: 'Subscription will continue. Auto-renewal is enabled again.',
+        cancelPendingNote: 'Cancellation scheduled. You can use Pro until {date}. The next auto-payment will not run.',
+        planStatusCanceledActive: 'Cancellation scheduled',
         planStatusCanceled: 'Canceled',
         billingPolicySubscribeTitle: 'Subscription policy',
         billingPolicySubscribe1: 'Monthly auto-renewal billing.',
@@ -3984,12 +3992,21 @@
           billingSummary.hasPro &&
           billingSummary.subscriptionStatus === 'active' &&
           billingSummary.autoRenew;
+        const isCancelPending =
+          billingSummary.hasPro &&
+          billingSummary.subscriptionStatus === 'canceled' &&
+          billingSummary.currentPeriodEnd;
 
         if (subscribeButton) {
+          subscribeButton.textContent = billingSummary.canResume
+            ? t('resumeSubscriptionButton')
+            : t('subscribeButton');
           subscribeButton.disabled = Boolean(isSubscribedAuto);
           subscribeButton.hidden = false;
         }
-        if (openCancelButton) openCancelButton.hidden = false;
+        if (openCancelButton) {
+          openCancelButton.hidden = !billingSummary.canCancel;
+        }
 
         if (cancelPanelStatus) {
           cancelPanelStatus.textContent = SweatManagerBilling.statusLabel(billingSummary, t);
@@ -4001,7 +4018,11 @@
           confirmCancelButton.disabled = !billingSummary.canCancel;
         }
 
-        if (!SweatManagerBilling.getBillingConfig().startBillingAuthEndpoint &&
+        if (isCancelPending) {
+          noteEl.textContent = t('cancelPendingNote', {
+            date: formatDateTime(billingSummary.currentPeriodEnd)
+          });
+        } else if (!SweatManagerBilling.getBillingConfig().startBillingAuthEndpoint &&
             !SweatManagerBilling.getBillingConfig().checkoutEndpoint) {
           noteEl.textContent = t('billingCheckoutNotConfigured', {
             amount: SweatManagerBilling.formatKrw(SweatManagerBilling.PLANS.pro.priceKrwMonthly)
@@ -4064,6 +4085,14 @@
     async function handleSubscribe() {
       if (!requireAuth()) return;
       try {
+        if (billingSummary?.canResume) {
+          if (!confirm(t('resumeSubscriptionConfirm'))) return;
+          await SweatManagerBilling.resumeSubscription(SweatManagerDB);
+          showToast(t('resumeSubscriptionDone'));
+          await refreshBillingSummary();
+          return;
+        }
+
         const result = await SweatManagerBilling.startSubscribe();
         if (result?.mode === 'manual') {
           showToast(t('billingCheckoutNotConfigured', {

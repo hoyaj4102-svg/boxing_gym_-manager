@@ -41,6 +41,20 @@ Deno.serve(async (req) => {
     const admin = getAdminClient();
     const nowIso = new Date().toISOString();
 
+    await admin
+      .from('gyms')
+      .update({
+        plan_code: 'free',
+        member_limit: 20,
+        subscription_status: 'expired',
+        auto_renew: false,
+        updated_at: nowIso
+      })
+      .in('subscription_status', ['canceled', 'past_due'])
+      .eq('auto_renew', false)
+      .not('current_period_end', 'is', null)
+      .lte('current_period_end', nowIso);
+
     const { data: gyms, error } = await admin
       .from('gyms')
       .select(

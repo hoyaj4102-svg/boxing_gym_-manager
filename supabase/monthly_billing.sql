@@ -6,6 +6,25 @@
 alter table public.gyms
   add column if not exists auto_renew boolean not null default false;
 
+create or replace function public.gym_has_pro_access(p_gym public.gyms)
+returns boolean
+language sql
+stable
+as $$
+  select
+    case
+      when p_gym.subscription_status = 'trialing'
+           and p_gym.trial_ends_at > now() then true
+      when p_gym.plan_code = 'pro'
+           and p_gym.subscription_status = 'active' then true
+      when p_gym.plan_code = 'pro'
+           and p_gym.subscription_status = 'canceled'
+           and p_gym.current_period_end is not null
+           and p_gym.current_period_end > now() then true
+      else false
+    end
+$$;
+
 create or replace function public.protect_gym_billing_columns()
 returns trigger
 language plpgsql
@@ -201,6 +220,76 @@ begin
 end;
 $$;
 
+create or replace function public.resume_gym_subscription()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_gym public.gyms%rowtype;
+begin
+  select * into v_gym
+  from public.gyms
+  where id = public.current_gym_id()
+  for update;
+
+  if not found then
+    raise exception 'Gym not found';
+  end if;
+
+  if v_gym.subscription_status <> 'canceled'
+     or v_gym.current_period_end is null
+     or v_gym.current_period_end <= now() then
+    raise exception 'NOTHING_TO_RESUME';
+  end if;
+
+  if v_gym.billing_subscription_id is null
+     or v_gym.billing_customer_id is null then
+    raise exception 'BILLING_KEY_NOT_FOUND';
+  end if;
+
+  perform set_config('app.allow_billing_update', '1', true);
+
+  update public.gyms
+  set
+    plan_code = 'pro',
+    member_limit = -1,
+    subscription_status = 'active',
+    auto_renew = true,
+    updated_at = now()
+  where id = v_gym.id;
+
+  insert into public.subscriptions (
+    gym_id,
+    plan_code,
+    status,
+    provider,
+    provider_ref,
+    amount_krw,
+    started_at,
+    ends_at,
+    raw
+  )
+  values (
+    v_gym.id,
+    'pro',
+    'active',
+    coalesce(v_gym.billing_provider, 'toss'),
+    v_gym.billing_subscription_id,
+    0,
+    now(),
+    v_gym.current_period_end,
+    jsonb_build_object('resumed_by', auth.uid(), 'reason', 'user_resume')
+  );
+
+  return jsonb_build_object(
+    'ok', true,
+    'current_period_end', v_gym.current_period_end
+  );
+end;
+$$;
+
 create or replace function public.get_billing_summary()
 returns jsonb
 language plpgsql
@@ -240,8 +329,18 @@ begin
     'has_pro', v_pro,
     'can_add_member', (v_limit = -1 or v_count < v_limit),
     'can_cancel', (v_gym.subscription_status in ('active', 'past_due')),
+    'can_resume', (
+      v_gym.subscription_status = 'canceled'
+      and v_gym.current_period_end is not null
+      and v_gym.current_period_end > now()
+      and v_gym.billing_subscription_id is not null
+      and v_gym.billing_customer_id is not null
+    ),
     'auto_renew', coalesce(v_gym.auto_renew, false),
     'billing_provider', v_gym.billing_provider
   );
 end;
 $$;
+
+revoke all on function public.resume_gym_subscription() from public;
+grant execute on function public.resume_gym_subscription() to authenticated;

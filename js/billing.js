@@ -57,6 +57,7 @@
       hasPro,
       canAddMember: canAdd,
       canCancel: Boolean(raw.can_cancel),
+      canResume: Boolean(raw.can_resume),
       autoRenew: Boolean(raw.auto_renew),
       billingProvider: raw.billing_provider || null
     };
@@ -97,6 +98,14 @@
     if (!db || !db.isReady()) throw new Error('Not authenticated');
     const client = db.client();
     const { data, error } = await client.rpc('cancel_gym_subscription');
+    if (error) throw error;
+    return data;
+  }
+
+  async function resumeSubscription(db) {
+    if (!db || !db.isReady()) throw new Error('Not authenticated');
+    const client = db.client();
+    const { data, error } = await client.rpc('resume_gym_subscription');
     if (error) throw error;
     return data;
   }
@@ -416,6 +425,7 @@
     startCheckout,
     confirmTossFromUrl,
     confirmBillingAuthFromUrl,
-    cancelSubscription
+    cancelSubscription,
+    resumeSubscription
   };
 })(window);
