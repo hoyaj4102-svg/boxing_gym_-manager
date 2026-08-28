@@ -29,6 +29,7 @@ create table if not exists public.members (
   gym_id uuid not null references public.gyms (id) on delete cascade,
   name text not null,
   phone text not null default '',
+  address text not null default '',
   start_date date not null,
   expire_date date not null,
   pt_total integer not null default 0 check (pt_total >= 0),

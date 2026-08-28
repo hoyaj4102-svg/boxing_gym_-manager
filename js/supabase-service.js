@@ -81,6 +81,7 @@
       id: row.id,
       name: row.name || '',
       phone: row.phone || '',
+      address: row.address || '',
       startDate: row.start_date,
       expireDate: row.expire_date,
       ptTotal: Number(row.pt_total) || 0,
@@ -99,6 +100,7 @@
       gym_id: gymId,
       name: member.name,
       phone: member.phone || '',
+      address: member.address || '',
       start_date: member.startDate,
       expire_date: member.expireDate,
       pt_total: member.ptTotal || 0,
@@ -113,6 +115,7 @@
     return {
       name: member.name,
       phone: member.phone || '',
+      address: member.address || '',
       start_date: member.startDate,
       expire_date: member.expireDate,
       pt_total: member.ptTotal || 0,

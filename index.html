@@ -1479,7 +1479,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <input type="text" id="searchInput" placeholder="이름, 연락처, 메모 검색" data-i18n-placeholder="searchPlaceholder">
+                <input type="text" id="searchInput" placeholder="이름, 연락처, 주소, 메모 검색" data-i18n-placeholder="searchPlaceholder">
               </div>
               <select id="memberFilter" aria-label="회원 필터" data-i18n-aria-label="memberFilterAria">
                 <option value="all" data-i18n="filterAll">전체 회원</option>
@@ -1511,6 +1511,10 @@
               <div class="field">
                 <label for="phone" data-i18n="phoneLabel">연락처</label>
                 <input type="tel" id="phone" placeholder="010-1234-5678" autocomplete="tel" required>
+              </div>
+              <div class="field form-full">
+                <label for="address" data-i18n="addressLabel">주소</label>
+                <input type="text" id="address" placeholder="서울시 강남구..." data-i18n-placeholder="addressPlaceholder" autocomplete="street-address">
               </div>
               <div class="field">
                 <label for="startDate" data-i18n="startDateLabel">등록일</label>
@@ -1699,6 +1703,10 @@
             <label for="editPhone" data-i18n="phoneLabel">연락처</label>
             <input type="tel" id="editPhone" required>
           </div>
+          <div class="field">
+            <label for="editAddress" data-i18n="addressLabel">주소</label>
+            <input type="text" id="editAddress" data-i18n-placeholder="addressPlaceholder" autocomplete="street-address">
+          </div>
           <div class="two-column">
             <div class="field">
               <label for="editStartDate" data-i18n="startDateLabel">등록일</label>
@@ -1772,7 +1780,7 @@
         calendarMonthAria: '만기 월 선택',
         memberListTitle: '회원 목록',
         memberListSubtitle: '출석, PT, 만기, 메모를 빠르게 확인하고 수정합니다.',
-        searchPlaceholder: '이름, 연락처, 메모 검색',
+        searchPlaceholder: '이름, 연락처, 주소, 메모 검색',
         memberFilterAria: '회원 필터',
         filterAll: '전체 회원',
         filterRenewal: '만기 임박',
@@ -1784,6 +1792,8 @@
         nameLabel: '이름',
         namePlaceholder: '홍길동',
         phoneLabel: '연락처',
+        addressLabel: '주소',
+        addressPlaceholder: '서울시 강남구...',
         startDateLabel: '등록일',
         expireDateLabel: '만기일',
         ptTotalLabel: 'PT 총 횟수',
@@ -2011,7 +2021,7 @@
         calendarMonthAria: 'Select expiry month',
         memberListTitle: 'Member List',
         memberListSubtitle: 'Quickly review and edit attendance, PT, expiry, and notes.',
-        searchPlaceholder: 'Search name, phone, or notes',
+        searchPlaceholder: 'Search name, phone, address, or notes',
         memberFilterAria: 'Member filter',
         filterAll: 'All members',
         filterRenewal: 'Urgent expiries',
@@ -2023,6 +2033,8 @@
         nameLabel: 'Name',
         namePlaceholder: 'John Kim',
         phoneLabel: 'Phone',
+        addressLabel: 'Address',
+        addressPlaceholder: 'Street address...',
         startDateLabel: 'Registration date',
         expireDateLabel: 'Expiry date',
         ptTotalLabel: 'Total PT sessions',
@@ -2250,7 +2262,7 @@
         calendarMonthAria: 'Seleccionar mes de vencimiento',
         memberListTitle: 'Lista de miembros',
         memberListSubtitle: 'Revisa y edita asistencia, PT, vencimiento y notas rápidamente.',
-        searchPlaceholder: 'Buscar nombre, teléfono o notas',
+        searchPlaceholder: 'Buscar nombre, teléfono, dirección o notas',
         memberFilterAria: 'Filtro de miembros',
         filterAll: 'Todos los miembros',
         filterRenewal: 'Vencimientos urgentes',
@@ -2262,6 +2274,8 @@
         nameLabel: 'Nombre',
         namePlaceholder: 'Juan Kim',
         phoneLabel: 'Teléfono',
+        addressLabel: 'Dirección',
+        addressPlaceholder: 'Dirección...',
         startDateLabel: 'Fecha de registro',
         expireDateLabel: 'Fecha de vencimiento',
         ptTotalLabel: 'Total de sesiones PT',
@@ -2485,7 +2499,7 @@
         calendarMonthAria: 'Выбрать месяц истечения',
         memberListTitle: 'Список клиентов',
         memberListSubtitle: 'Быстро проверяйте и редактируйте посещения, PT, истечение и заметки.',
-        searchPlaceholder: 'Поиск по имени, телефону или заметкам',
+        searchPlaceholder: 'Поиск по имени, телефону, адресу или заметкам',
         memberFilterAria: 'Фильтр клиентов',
         filterAll: 'Все клиенты',
         filterRenewal: 'Скоро истекают',
@@ -2497,6 +2511,8 @@
         nameLabel: 'Имя',
         namePlaceholder: 'Иван Ким',
         phoneLabel: 'Телефон',
+        addressLabel: 'Адрес',
+        addressPlaceholder: 'Адрес...',
         startDateLabel: 'Дата регистрации',
         expireDateLabel: 'Дата истечения',
         ptTotalLabel: 'Всего PT занятий',
@@ -2720,7 +2736,7 @@
         calendarMonthAria: 'Дуусах сарыг сонгох',
         memberListTitle: 'Гишүүдийн жагсаалт',
         memberListSubtitle: 'Ирц, PT, дуусах хугацаа, тэмдэглэлийг хурдан шалгаж засна.',
-        searchPlaceholder: 'Нэр, утас, тэмдэглэлээр хайх',
+        searchPlaceholder: 'Нэр, утас, хаяг, тэмдэглэлээр хайх',
         memberFilterAria: 'Гишүүний шүүлтүүр',
         filterAll: 'Бүх гишүүд',
         filterRenewal: 'Дуусах дөхсөн',
@@ -2732,6 +2748,8 @@
         nameLabel: 'Нэр',
         namePlaceholder: 'Бат',
         phoneLabel: 'Утас',
+        addressLabel: 'Хаяг',
+        addressPlaceholder: 'Хаяг...',
         startDateLabel: 'Бүртгэлийн огноо',
         expireDateLabel: 'Дуусах огноо',
         ptTotalLabel: 'Нийт PT тоо',
@@ -2955,7 +2973,7 @@
         calendarMonthAria: '选择到期月份',
         memberListTitle: '会员列表',
         memberListSubtitle: '快速查看和编辑出勤、PT、到期日和备注。',
-        searchPlaceholder: '搜索姓名、电话或备注',
+        searchPlaceholder: '搜索姓名、电话、地址或备注',
         memberFilterAria: '会员筛选',
         filterAll: '全部会员',
         filterRenewal: '即将到期',
@@ -2967,6 +2985,8 @@
         nameLabel: '姓名',
         namePlaceholder: '张三',
         phoneLabel: '联系方式',
+        addressLabel: '地址',
+        addressPlaceholder: '地址...',
         startDateLabel: '登记日',
         expireDateLabel: '到期日',
         ptTotalLabel: 'PT总次数',
@@ -3190,7 +3210,7 @@
         calendarMonthAria: 'समाप्ति महीना चुनें',
         memberListTitle: 'सदस्य सूची',
         memberListSubtitle: 'उपस्थिति, PT, समाप्ति और नोट्स को जल्दी देखें और संपादित करें।',
-        searchPlaceholder: 'नाम, फोन या नोट खोजें',
+        searchPlaceholder: 'नाम, फोन, पता या नोट खोजें',
         memberFilterAria: 'सदस्य फिल्टर',
         filterAll: 'सभी सदस्य',
         filterRenewal: 'जल्द समाप्त',
@@ -3202,6 +3222,8 @@
         nameLabel: 'नाम',
         namePlaceholder: 'राहुल',
         phoneLabel: 'संपर्क',
+        addressLabel: 'पता',
+        addressPlaceholder: 'पता...',
         startDateLabel: 'पंजीकरण तारीख',
         expireDateLabel: 'समाप्ति तारीख',
         ptTotalLabel: 'कुल PT सत्र',
@@ -3425,7 +3447,7 @@
         calendarMonthAria: "Sélectionner le mois d'échéance",
         memberListTitle: 'Liste des membres',
         memberListSubtitle: 'Consultez et modifiez rapidement les présences, PT, échéances et notes.',
-        searchPlaceholder: 'Rechercher nom, téléphone ou notes',
+        searchPlaceholder: 'Rechercher nom, téléphone, adresse ou notes',
         memberFilterAria: 'Filtre des membres',
         filterAll: 'Tous les membres',
         filterRenewal: 'Échéances urgentes',
@@ -3437,6 +3459,8 @@
         nameLabel: 'Nom',
         namePlaceholder: 'Jean Dupont',
         phoneLabel: 'Téléphone',
+        addressLabel: 'Adresse',
+        addressPlaceholder: 'Adresse...',
         startDateLabel: "Date d'inscription",
         expireDateLabel: "Date d'échéance",
         ptTotalLabel: 'Total des séances PT',
@@ -3722,6 +3746,7 @@
           id: m.id || generateId(),
           name: m.name || '',
           phone: m.phone || '',
+          address: m.address || '',
           startDate,
           expireDate,
           ptTotal,
@@ -4686,6 +4711,7 @@
         const matchesSearch = !q ||
           member.name.toLowerCase().includes(q) ||
           member.phone.includes(q) ||
+          (member.address && member.address.toLowerCase().includes(q)) ||
           (member.memo && member.memo.toLowerCase().includes(q));
 
         if (!matchesSearch) return false;
@@ -4735,6 +4761,7 @@
               <span>${t('attendanceCount', { count: member.attendance.length })}</span>
               <span>${t('lastPrefix')} ${formatDateOnly(member.lastVisit)}</span>
             </div>
+            ${member.address ? `<div class="meta-line"><span>${t('addressLabel')} ${escapeHtml(member.address)}</span></div>` : ''}
             ${member.memo ? `<div class="member-memo">${escapeHtml(member.memo)}</div>` : ''}
           </div>
           <div class="member-actions">
@@ -4767,6 +4794,7 @@
 
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
+      const address = document.getElementById('address').value.trim();
       const startDate = document.getElementById('startDate').value;
       const expireDate = document.getElementById('expireDate').value;
       const ptTotal = parseInt(document.getElementById('ptTotal').value, 10);
@@ -4793,6 +4821,7 @@
         const created = await SweatManagerDB.createMember({
           name,
           phone,
+          address,
           startDate,
           expireDate,
           ptTotal,
@@ -4872,6 +4901,7 @@
       document.getElementById('editId').value = member.id;
       document.getElementById('editName').value = member.name;
       document.getElementById('editPhone').value = member.phone;
+      document.getElementById('editAddress').value = member.address || '';
       document.getElementById('editStartDate').value = member.startDate;
       document.getElementById('editExpireDate').value = member.expireDate;
       document.getElementById('editPtTotal').value = member.ptTotal;
@@ -4891,6 +4921,7 @@
 
       const name = document.getElementById('editName').value.trim();
       const phone = document.getElementById('editPhone').value.trim();
+      const address = document.getElementById('editAddress').value.trim();
       const startDate = document.getElementById('editStartDate').value;
       const expireDate = document.getElementById('editExpireDate').value;
       const ptTotal = parseInt(document.getElementById('editPtTotal').value, 10);
@@ -4918,6 +4949,7 @@
           ...member,
           name,
           phone,
+          address,
           startDate,
           expireDate,
           ptTotal,
@@ -4977,6 +5009,7 @@
       const headers = [
         'name',
         'phone',
+        'address',
         'start_date',
         'expire_date',
         'days_until_expiry',
@@ -4998,6 +5031,7 @@
           return [
             member.name,
             member.phone,
+            member.address || '',
             member.startDate,
             member.expireDate,
             getDaysUntilExpiry(member),
