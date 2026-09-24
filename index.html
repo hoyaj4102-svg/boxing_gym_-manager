@@ -1112,6 +1112,393 @@
       padding: 16px;
     }
 
+    .install-guide-modal {
+      width: min(560px, 100%);
+      max-height: min(90vh, 820px);
+    }
+
+    .install-guide-intro,
+    .install-guide-step {
+      display: grid;
+      gap: 16px;
+    }
+
+    .install-hero {
+      padding: 18px;
+      border: 1px solid rgba(43, 92, 255, .34);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(43, 92, 255, .24), transparent 16rem),
+        linear-gradient(145deg, rgba(26, 36, 56, .98), rgba(13, 20, 34, .98));
+      text-align: center;
+    }
+
+    .install-hero-icon {
+      width: 70px;
+      height: 70px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(43, 92, 255, .95), rgba(31, 74, 224, .95));
+      box-shadow: 0 16px 34px rgba(43, 92, 255, .26);
+      font-size: 2.1rem;
+    }
+
+    .install-hero h4 {
+      margin-bottom: 7px;
+      font-size: clamp(1.24rem, 5vw, 1.62rem);
+      line-height: 1.18;
+      letter-spacing: -.04em;
+    }
+
+    .install-hero p,
+    .install-step-copy {
+      color: var(--text-muted);
+      font-size: .94rem;
+    }
+
+    .install-choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .install-later-button {
+      width: 100%;
+    }
+
+    .install-step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .install-step-kicker {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(43, 92, 255, .16);
+      color: #93c5fd;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .install-step-title {
+      margin: 8px 0 4px;
+      font-size: clamp(1.28rem, 6vw, 1.72rem);
+      line-height: 1.14;
+      letter-spacing: -.05em;
+    }
+
+    .install-example-label {
+      color: var(--text-muted);
+      font-size: .72rem;
+      font-weight: 800;
+    }
+
+    .phone-mockup {
+      position: relative;
+      width: min(310px, 100%);
+      min-height: 430px;
+      margin: 0 auto;
+      padding: 13px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 36px;
+      background: linear-gradient(145deg, #111827, #050816);
+      box-shadow: 0 24px 54px rgba(0, 0, 0, .42);
+    }
+
+    .phone-screen {
+      position: relative;
+      min-height: 402px;
+      overflow: hidden;
+      border-radius: 27px;
+      background: #07111f;
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .phone-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 6px;
+      color: rgba(255, 255, 255, .78);
+      font-size: .68rem;
+      font-weight: 900;
+    }
+
+    .phone-page {
+      margin: 10px;
+      padding: 16px;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(43, 92, 255, .2), transparent 9rem),
+        linear-gradient(180deg, #121a2b, #0b1220);
+      min-height: 248px;
+    }
+
+    .phone-logo {
+      font-family: var(--font-brand);
+      font-size: 1.38rem;
+      font-weight: 900;
+      letter-spacing: -.07em;
+    }
+
+    .phone-card-lines {
+      display: grid;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .phone-card-lines span {
+      display: block;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .14);
+    }
+
+    .phone-card-lines span:nth-child(1) { width: 74%; background: rgba(43, 92, 255, .42); }
+    .phone-card-lines span:nth-child(2) { width: 54%; }
+    .phone-card-lines span:nth-child(3) { width: 86%; }
+
+    .browser-bar,
+    .bottom-toolbar,
+    .android-toolbar,
+    .share-sheet,
+    .install-confirm {
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .08);
+      backdrop-filter: blur(10px);
+    }
+
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px;
+      padding: 9px 11px;
+      border-radius: 999px;
+      color: rgba(255, 255, 255, .8);
+      font-size: .72rem;
+      font-weight: 800;
+    }
+
+    .android-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px;
+      padding: 8px 9px;
+      border-radius: 16px;
+      color: rgba(255, 255, 255, .82);
+      font-size: .72rem;
+      font-weight: 800;
+    }
+
+    .android-toolbar .address {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .bottom-toolbar {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      padding: 10px;
+      border-radius: 18px;
+      color: rgba(255, 255, 255, .76);
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .share-sheet {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      padding: 13px;
+      border-radius: 22px;
+      background: rgba(15, 23, 42, .96);
+      box-shadow: 0 -18px 42px rgba(0, 0, 0, .34);
+    }
+
+    .sheet-handle {
+      width: 42px;
+      height: 4px;
+      margin: 0 auto 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .24);
+    }
+
+    .sheet-row,
+    .menu-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 0 11px;
+      border-radius: 13px;
+      color: rgba(255, 255, 255, .9);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .android-menu {
+      position: absolute;
+      top: 58px;
+      right: 14px;
+      width: 210px;
+      padding: 8px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, .96);
+      border: 1px solid rgba(255, 255, 255, .12);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .36);
+    }
+
+    .install-confirm {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 28px;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, .97);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .38);
+    }
+
+    .install-confirm strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: .98rem;
+    }
+
+    .install-confirm p {
+      color: var(--text-muted);
+      font-size: .78rem;
+    }
+
+    .install-confirm .btn {
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .ios-add-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      color: rgba(255, 255, 255, .88);
+      font-size: .82rem;
+      font-weight: 900;
+    }
+
+    .ios-add-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .ios-add-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--brand-blue);
+      font-size: 1.4rem;
+    }
+
+    .install-highlight {
+      position: relative;
+      z-index: 1;
+      outline: 3px solid rgba(250, 204, 21, .95);
+      box-shadow: 0 0 0 8px rgba(250, 204, 21, .18);
+      background: rgba(250, 204, 21, .16) !important;
+    }
+
+    .tap-target {
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      border: 3px solid rgba(250, 204, 21, .96);
+      border-radius: 999px;
+      box-shadow: 0 0 0 12px rgba(250, 204, 21, .16);
+      pointer-events: none;
+      animation: tapPulse 1.7s ease-in-out infinite;
+    }
+
+    .tap-target::after {
+      content: '👆';
+      position: absolute;
+      right: -18px;
+      bottom: -24px;
+      font-size: 1.75rem;
+      transform: rotate(-18deg);
+    }
+
+    .tap-target.ios-share { left: 50%; bottom: 14px; transform: translateX(-50%); }
+    .tap-target.android-menu-button { right: 4px; top: 48px; }
+    .tap-target.ios-add-button { right: 4px; top: 4px; width: 62px; height: 44px; border-radius: 14px; }
+
+    @keyframes tapPulse {
+      0%, 100% { opacity: .78; transform: translateX(-50%) scale(1); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+    }
+
+    .tap-target.android-menu-button,
+    .tap-target.ios-add-button {
+      animation-name: tapPulseNoTranslate;
+    }
+
+    @keyframes tapPulseNoTranslate {
+      0%, 100% { opacity: .78; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.06); }
+    }
+
+    .install-step-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .install-platform-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .install-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .install-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .18);
+    }
+
+    .install-dot.active {
+      width: 22px;
+      background: var(--brand-blue);
+    }
+
     .edit-form {
       display: flex;
       flex-direction: column;
@@ -1306,6 +1693,32 @@
       .contact-actions {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .install-choice-grid,
+      .install-step-actions,
+      .install-platform-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .install-guide-modal {
+        max-height: calc(100vh - 24px);
+      }
+
+      .phone-mockup {
+        width: min(286px, 100%);
+        min-height: 390px;
+        border-radius: 30px;
+        padding: 10px;
+      }
+
+      .phone-screen {
+        min-height: 370px;
+        border-radius: 23px;
+      }
+
+      .phone-page {
+        min-height: 218px;
       }
 
       .calendar-day {
@@ -1663,6 +2076,7 @@
               </div>
             </div>
             <div class="backup-actions">
+              <button type="button" class="btn btn-primary" id="openInstallGuideButton" data-i18n="installGuideSettingsButton">📱 휴대폰에 앱처럼 설치하기</button>
               <button type="button" class="btn btn-ghost" onclick="exportData()" data-i18n="csvExportButton">CSV 내보내기</button>
               <button type="button" class="btn btn-ghost" onclick="document.getElementById('importFile').click()" data-i18n="jsonRestoreButton">JSON 복원</button>
               <button type="button" class="btn btn-primary" id="migrateLocalButton" data-i18n="migrateLocalButton">로컬 데이터 업로드</button>
@@ -1740,6 +2154,55 @@
     </div>
   </div>
 
+  <div class="modal-overlay install-guide-overlay" id="installGuideModal" aria-hidden="true">
+    <div class="modal install-guide-modal" role="dialog" aria-modal="true" aria-labelledby="installGuideTitle">
+      <div class="modal-header">
+        <h3 id="installGuideTitle" data-i18n="installGuideTitle">📱 Re;Member를 휴대폰에 설치하세요</h3>
+        <button type="button" class="btn btn-ghost btn-sm" id="closeInstallGuideButton" data-i18n="closeButton">닫기</button>
+      </div>
+      <div class="modal-body">
+        <div class="install-guide-intro" id="installGuideIntro">
+          <div class="install-hero">
+            <div class="install-hero-icon">📱</div>
+            <h4 data-i18n="installGuideTitle">📱 Re;Member를 휴대폰에 설치하세요</h4>
+            <p data-i18n="installGuideDescription">홈 화면에 추가하면 매일 앱처럼 바로 사용할 수 있습니다.</p>
+          </div>
+          <div class="install-choice-grid">
+            <button type="button" class="btn btn-primary" id="openIphoneInstallGuideButton" data-i18n="installGuideIphoneButton">iPhone 설치 방법</button>
+            <button type="button" class="btn btn-primary" id="openAndroidInstallGuideButton" data-i18n="installGuideAndroidButton">Android 설치 방법</button>
+          </div>
+          <button type="button" class="btn btn-ghost install-later-button" id="dismissInstallGuideButton" data-i18n="installGuideLaterButton">나중에 하기</button>
+        </div>
+
+        <div class="install-guide-step" id="installGuideSteps" hidden>
+          <div class="install-step-header">
+            <span class="install-step-kicker" id="installStepKicker">STEP 1</span>
+            <span class="install-example-label" data-i18n="installGuideExampleLabel">예시 화면</span>
+          </div>
+          <div>
+            <h4 class="install-step-title" id="installStepTitle">iPhone에 Re;Member 추가하기</h4>
+            <p class="install-step-copy" id="installStepCopy">① 아래 공유 버튼을 눌러주세요.</p>
+          </div>
+          <div class="phone-mockup" id="installPhoneMockup"></div>
+          <div class="notice-card" id="installCompleteCard" hidden>
+            <strong data-i18n="installGuideCompleteTitle">🎉 설치 완료!</strong>
+            <p data-i18n="installGuideCompleteBody">이제 휴대폰 홈 화면의 Re;Member 아이콘을 눌러 바로 사용할 수 있습니다.</p>
+          </div>
+          <div class="install-dots" id="installStepDots" aria-hidden="true"></div>
+          <div class="install-step-actions">
+            <button type="button" class="btn btn-ghost" id="installStepBackButton" data-i18n="installGuideBackButton">이전</button>
+            <button type="button" class="btn btn-primary" id="installStepNextButton" data-i18n="installGuideNextButton">다음</button>
+          </div>
+          <div class="install-platform-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="switchIphoneGuideButton" data-i18n="installGuideIphoneButton">iPhone 설치 방법</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="switchAndroidGuideButton" data-i18n="installGuideAndroidButton">Android 설치 방법</button>
+          </div>
+          <button type="button" class="btn btn-ghost install-later-button" id="dismissInstallGuideFromStepsButton" data-i18n="installGuideLaterButton">나중에 하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1750,6 +2213,7 @@
   <script>
     const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
+    const INSTALL_GUIDE_DISMISSED_KEY = 'remember_install_guide_dismissed';
     const DAY_MS = 24 * 60 * 60 * 1000;
     const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
     const TRANSLATIONS = {
@@ -1917,6 +2381,18 @@
         memberLimitReached: 'Free 플랜 회원 한도({limit}명)에 도달했습니다. Pro로 업그레이드하세요.',
         billingLoadFailed: '요금제 정보를 불러오지 못했습니다. supabase/billing.sql 실행 여부를 확인하세요.',
         billingNoTrial: '해당 없음',
+        installGuideTitle: '📱 Re;Member를 휴대폰에 설치하세요',
+        installGuideDescription: '홈 화면에 추가하면 매일 앱처럼 바로 사용할 수 있습니다.',
+        installGuideIphoneButton: 'iPhone 설치 방법',
+        installGuideAndroidButton: 'Android 설치 방법',
+        installGuideLaterButton: '나중에 하기',
+        installGuideSettingsButton: '📱 휴대폰에 앱처럼 설치하기',
+        installGuideExampleLabel: '예시 화면',
+        installGuideBackButton: '이전',
+        installGuideNextButton: '다음',
+        installGuideDoneButton: '완료',
+        installGuideCompleteTitle: '🎉 설치 완료!',
+        installGuideCompleteBody: '이제 휴대폰 홈 화면의 Re;Member 아이콘을 눌러 바로 사용할 수 있습니다.',
         storageInfoButton: '저장 방식 안내',
         jsonBackupButton: 'JSON 백업',
         csvExportButton: 'CSV 내보내기',
@@ -3669,6 +4145,46 @@
     let isBootstrapping = true;
     let isSaving = false;
     let billingSummary = null;
+    let installGuidePlatform = 'iphone';
+    let installGuideStep = 0;
+    let installGuideOpenedManually = false;
+
+    const INSTALL_GUIDE_STEPS = {
+      iphone: [
+        {
+          title: 'iPhone에 Re;Member 추가하기',
+          copy: '① 아래 공유 버튼을 눌러주세요.',
+          mockup: 'iphone-share'
+        },
+        {
+          title: '공유 메뉴에서 선택하기',
+          copy: "② '홈 화면에 추가'를 눌러주세요.",
+          mockup: 'iphone-sheet'
+        },
+        {
+          title: '마지막으로 추가하기',
+          copy: "③ 오른쪽 위 '추가'를 눌러주세요.",
+          mockup: 'iphone-add'
+        }
+      ],
+      android: [
+        {
+          title: 'Android에 Re;Member 추가하기',
+          copy: '① Chrome에서 Re;Member를 열고 오른쪽 위 메뉴를 눌러주세요.',
+          mockup: 'android-menu-button'
+        },
+        {
+          title: '설치 메뉴 찾기',
+          copy: "② '앱 설치' 또는 '홈 화면에 추가'를 찾아 눌러주세요.",
+          mockup: 'android-menu'
+        },
+        {
+          title: '설치 확인하기',
+          copy: "③ 확인 화면에서 '설치'를 눌러주세요.",
+          mockup: 'android-confirm'
+        }
+      ]
+    };
 
     function loadLegacyLocalMembers() {
       try {
@@ -3847,6 +4363,203 @@
       document.getElementById('accountEmailLabel').textContent = user?.email || '';
     }
 
+    function isStandaloneMode() {
+      return window.matchMedia?.('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+    }
+
+    function isMobileInstallGuideTarget() {
+      const ua = navigator.userAgent || '';
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+        window.matchMedia?.('(max-width: 760px)').matches;
+    }
+
+    function hasDismissedInstallGuide() {
+      return localStorage.getItem(INSTALL_GUIDE_DISMISSED_KEY) === '1';
+    }
+
+    function dismissInstallGuide() {
+      localStorage.setItem(INSTALL_GUIDE_DISMISSED_KEY, '1');
+      closeInstallGuide();
+    }
+
+    function maybeShowInstallGuideAfterLogin() {
+      if (!isMobileInstallGuideTarget() || isStandaloneMode() || hasDismissedInstallGuide()) return;
+      window.setTimeout(() => openInstallGuide(false), 550);
+    }
+
+    function openInstallGuide(manual = true) {
+      if (!manual && (!isMobileInstallGuideTarget() || isStandaloneMode() || hasDismissedInstallGuide())) return;
+      installGuideOpenedManually = manual;
+      document.getElementById('installGuideIntro').hidden = false;
+      document.getElementById('installGuideSteps').hidden = true;
+      document.getElementById('installGuideTitle').textContent = t('installGuideTitle');
+      const modal = document.getElementById('installGuideModal');
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeInstallGuide() {
+      const modal = document.getElementById('installGuideModal');
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function closeInstallGuideFromButton() {
+      if (!installGuideOpenedManually) {
+        localStorage.setItem(INSTALL_GUIDE_DISMISSED_KEY, '1');
+      }
+      closeInstallGuide();
+    }
+
+    function showInstallGuideSteps(platform) {
+      installGuidePlatform = platform;
+      installGuideStep = 0;
+      document.getElementById('installGuideIntro').hidden = true;
+      document.getElementById('installGuideSteps').hidden = false;
+      renderInstallGuideStep();
+    }
+
+    function switchInstallGuidePlatform(platform) {
+      installGuidePlatform = platform;
+      installGuideStep = 0;
+      renderInstallGuideStep();
+    }
+
+    function moveInstallGuideStep(delta) {
+      const steps = INSTALL_GUIDE_STEPS[installGuidePlatform];
+      if (installGuideStep === steps.length - 1 && delta > 0) {
+        localStorage.setItem(INSTALL_GUIDE_DISMISSED_KEY, '1');
+        closeInstallGuide();
+        showToast(t('installGuideCompleteTitle'));
+        return;
+      }
+      installGuideStep = Math.min(Math.max(installGuideStep + delta, 0), steps.length - 1);
+      renderInstallGuideStep();
+    }
+
+    function renderInstallGuideStep() {
+      const steps = INSTALL_GUIDE_STEPS[installGuidePlatform];
+      const current = steps[installGuideStep];
+      const isLast = installGuideStep === steps.length - 1;
+      document.getElementById('installGuideTitle').textContent =
+        installGuidePlatform === 'iphone' ? 'iPhone에 Re;Member 추가하기' : 'Android에 Re;Member 추가하기';
+      document.getElementById('installStepKicker').textContent = `STEP ${installGuideStep + 1}`;
+      document.getElementById('installStepTitle').textContent = current.title;
+      document.getElementById('installStepCopy').textContent = current.copy;
+      document.getElementById('installPhoneMockup').innerHTML = getInstallMockup(current.mockup);
+      document.getElementById('installStepBackButton').disabled = installGuideStep === 0;
+      document.getElementById('installStepNextButton').textContent = isLast ? t('installGuideDoneButton') : t('installGuideNextButton');
+      document.getElementById('installCompleteCard').hidden = !isLast;
+      document.getElementById('installStepDots').innerHTML = steps
+        .map((_, index) => `<span class="install-dot ${index === installGuideStep ? 'active' : ''}"></span>`)
+        .join('');
+    }
+
+    function getInstallMockup(type) {
+      if (type === 'iphone-share') {
+        return `
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
+            <div class="browser-bar">🔒 app.re-member.kr</div>
+            ${mockReMemberPage()}
+            <div class="bottom-toolbar">
+              <span>‹</span><span>›</span><span class="install-highlight">⇧</span><span>▢</span><span>☰</span>
+            </div>
+            <span class="tap-target ios-share"></span>
+          </div>`;
+      }
+
+      if (type === 'iphone-sheet') {
+        return `
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
+            ${mockReMemberPage()}
+            <div class="share-sheet">
+              <div class="sheet-handle"></div>
+              <div class="sheet-row">💬 메시지</div>
+              <div class="sheet-row install-highlight">➕ 홈 화면에 추가</div>
+              <div class="sheet-row">🔖 즐겨찾기에 추가</div>
+            </div>
+          </div>`;
+      }
+
+      if (type === 'iphone-add') {
+        return `
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
+            <div class="ios-add-bar">
+              <span>취소</span>
+              <span>홈 화면에 추가</span>
+              <span class="install-highlight">추가</span>
+            </div>
+            <span class="tap-target ios-add-button"></span>
+            <div class="ios-add-card">
+              <div class="ios-add-icon">R</div>
+              <div>
+                <strong>Re;Member</strong>
+                <p class="install-step-copy">app.re-member.kr</p>
+              </div>
+            </div>
+            ${mockReMemberPage()}
+          </div>`;
+      }
+
+      if (type === 'android-menu-button') {
+        return `
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span>5G 100%</span></div>
+            <div class="android-toolbar">
+              <span class="address">🔒 app.re-member.kr</span>
+              <span class="install-highlight">⋮</span>
+            </div>
+            <span class="tap-target android-menu-button"></span>
+            ${mockReMemberPage()}
+          </div>`;
+      }
+
+      if (type === 'android-menu') {
+        return `
+          <div class="phone-screen">
+            <div class="phone-status"><span>9:41</span><span>5G 100%</span></div>
+            <div class="android-toolbar">
+              <span class="address">🔒 app.re-member.kr</span>
+              <span>⋮</span>
+            </div>
+            ${mockReMemberPage()}
+            <div class="android-menu">
+              <div class="menu-row">↻ 새로고침</div>
+              <div class="menu-row install-highlight">📱 앱 설치</div>
+              <div class="menu-row install-highlight">➕ 홈 화면에 추가</div>
+              <div class="menu-row">⚙ 설정</div>
+            </div>
+          </div>`;
+      }
+
+      return `
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>5G 100%</span></div>
+          ${mockReMemberPage()}
+          <div class="install-confirm">
+            <strong>Re;Member 설치</strong>
+            <p>홈 화면에서 바로 열 수 있습니다.</p>
+            <button type="button" class="btn btn-primary install-highlight">설치</button>
+          </div>
+        </div>`;
+    }
+
+    function mockReMemberPage() {
+      return `
+        <div class="phone-page">
+          <div class="phone-logo"><span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span></div>
+          <div class="phone-card-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>`;
+    }
+
     async function handleSignedIn(sessionUser) {
       try {
         setAuthMessage(t('authLoading'));
@@ -3856,6 +4569,7 @@
         await reloadMembersFromServer();
         await refreshBillingSummary();
         setAuthMessage('');
+        maybeShowInstallGuideAfterLogin();
       } catch (error) {
         console.error(error);
         showAuthGate(error.message || String(error), 'error');
@@ -5096,6 +5810,16 @@
     document.getElementById('openCancelPanelButton').addEventListener('click', openCancelPanel);
     document.getElementById('closeCancelPanelButton').addEventListener('click', closeCancelPanel);
     document.getElementById('confirmCancelSubscriptionButton').addEventListener('click', handleCancelSubscription);
+    document.getElementById('openInstallGuideButton').addEventListener('click', () => openInstallGuide(true));
+    document.getElementById('openIphoneInstallGuideButton').addEventListener('click', () => showInstallGuideSteps('iphone'));
+    document.getElementById('openAndroidInstallGuideButton').addEventListener('click', () => showInstallGuideSteps('android'));
+    document.getElementById('switchIphoneGuideButton').addEventListener('click', () => switchInstallGuidePlatform('iphone'));
+    document.getElementById('switchAndroidGuideButton').addEventListener('click', () => switchInstallGuidePlatform('android'));
+    document.getElementById('installStepBackButton').addEventListener('click', () => moveInstallGuideStep(-1));
+    document.getElementById('installStepNextButton').addEventListener('click', () => moveInstallGuideStep(1));
+    document.getElementById('dismissInstallGuideButton').addEventListener('click', dismissInstallGuide);
+    document.getElementById('dismissInstallGuideFromStepsButton').addEventListener('click', dismissInstallGuide);
+    document.getElementById('closeInstallGuideButton').addEventListener('click', closeInstallGuideFromButton);
 
     document.querySelectorAll('[data-auth-tab]').forEach(button => {
       button.addEventListener('click', () => {
@@ -5168,6 +5892,10 @@
 
     document.getElementById('editModal').addEventListener('click', e => {
       if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+    });
+
+    document.getElementById('installGuideModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeInstallGuideFromButton();
     });
 
     document.getElementById('importFile').addEventListener('change', e => {
