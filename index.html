@@ -2200,7 +2200,7 @@
           </div>
           <div>
             <h4 class="install-step-title" id="installStepTitle">iPhone에 Re;Member 추가하기</h4>
-            <p class="install-step-copy" id="installStepCopy">① 아래 공유 버튼을 눌러주세요.</p>
+            <p class="install-step-copy" id="installStepCopy">휴대폰 종류를 선택하면 단계별 설치 방법을 보여드립니다.</p>
           </div>
           <div class="phone-mockup" id="installPhoneMockup"></div>
           <div class="notice-card" id="installCompleteCard" hidden>
@@ -4522,33 +4522,6 @@
               <div class="sheet-row">즐겨찾기에 추가</div>
               <div class="sheet-row">페이지에서 찾기</div>
               <div class="sheet-row install-highlight">＋ 홈 화면에 추가</div>
-            </div>
-          </div>`;
-      }
-
-      if (type === 'iphone-share') {
-        return `
-          <div class="phone-screen">
-            <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
-            <div class="browser-bar">🔒 app.re-member.kr</div>
-            ${mockReMemberPage()}
-            <div class="bottom-toolbar">
-              <span>‹</span><span>›</span><span class="install-highlight">⇧</span><span>▢</span><span>☰</span>
-            </div>
-            <span class="tap-target ios-share"></span>
-          </div>`;
-      }
-
-      if (type === 'iphone-sheet') {
-        return `
-          <div class="phone-screen">
-            <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
-            ${mockReMemberPage()}
-            <div class="share-sheet">
-              <div class="sheet-handle"></div>
-              <div class="sheet-row">💬 메시지</div>
-              <div class="sheet-row install-highlight">➕ 홈 화면에 추가</div>
-              <div class="sheet-row">🔖 즐겨찾기에 추가</div>
             </div>
           </div>`;
       }
