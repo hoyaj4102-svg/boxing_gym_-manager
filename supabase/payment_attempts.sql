@@ -78,6 +78,7 @@ as $$
 declare
   v_attempt public.payment_attempts%rowtype;
   v_error_message text;
+  v_period_end timestamptz;
 begin
   select * into v_attempt
   from public.payment_attempts
@@ -105,6 +106,12 @@ begin
     raise exception 'PAYMENT_KEY_REQUIRED';
   end if;
 
+  if v_attempt.target_period_end is null then
+    raise exception 'TARGET_PERIOD_END_REQUIRED';
+  end if;
+
+  v_period_end := v_attempt.target_period_end;
+
   update public.payment_attempts
   set
     status = 'recovery_pending',
@@ -115,16 +122,46 @@ begin
   where id = v_attempt.id;
 
   begin
-    perform public.activate_gym_pro(
+    perform set_config('app.allow_billing_update', '1', true);
+
+    update public.gyms
+    set
+      plan_code = 'pro',
+      member_limit = -1,
+      subscription_status = 'active',
+      current_period_end = v_period_end,
+      billing_provider = v_attempt.provider,
+      billing_customer_id = coalesce(v_attempt.customer_key, billing_customer_id),
+      billing_subscription_id = coalesce(v_attempt.billing_key_ref, billing_subscription_id),
+      auto_renew = true,
+      updated_at = now()
+    where id = v_attempt.gym_id;
+
+    insert into public.subscriptions (
+      gym_id,
+      plan_code,
+      status,
+      provider,
+      provider_ref,
+      amount_krw,
+      started_at,
+      ends_at,
+      raw
+    )
+    values (
       v_attempt.gym_id,
+      'pro',
+      'active',
       v_attempt.provider,
-      v_attempt.billing_interval,
+      coalesce(v_attempt.payment_key, v_attempt.billing_key_ref),
       v_attempt.amount_krw,
-      v_attempt.customer_key,
-      v_attempt.billing_key_ref,
-      v_attempt.payment_key,
-      coalesce(v_attempt.provider_response, '{}'::jsonb),
-      true
+      coalesce(v_attempt.target_period_start, v_attempt.created_at, now()),
+      v_period_end,
+      jsonb_build_object(
+        'recovered_from_payment_attempt', v_attempt.id,
+        'payment_key', v_attempt.payment_key,
+        'provider_response', coalesce(v_attempt.provider_response, '{}'::jsonb)
+      )
     );
 
     update public.payment_attempts
