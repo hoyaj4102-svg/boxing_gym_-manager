@@ -19,7 +19,7 @@
 1. Supabase 프로젝트 생성
 2. `supabase/schema.sql` 실행
 3. `supabase/billing.sql` 실행 (요금제/회원 한도)
-4. `supabase/checkout_sessions.sql` / `cancel_subscription.sql` / `monthly_billing.sql` 실행
+4. `supabase/checkout_sessions.sql` / `cancel_subscription.sql` / `monthly_billing.sql` / `payment_attempts.sql` 실행
 5. Edge Functions 배포 + Toss 시크릿 설정 ([BILLING.md](./BILLING.md))
 6. `js/config.js`에 Project URL / anon key 입력
 7. 앱 접속 → 회원가입 → 회원 관리

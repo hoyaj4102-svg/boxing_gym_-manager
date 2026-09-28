@@ -62,6 +62,76 @@ function logTossBillingKeyFailure(
   });
 }
 
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function nextMonthlyPeriodEnd() {
+  const date = new Date();
+  date.setDate(date.getDate() + 30);
+  return date.toISOString();
+}
+
+async function updatePaymentAttempt(
+  admin: ReturnType<typeof getAdminClient>,
+  attemptId: string | null,
+  values: Record<string, unknown>
+) {
+  if (!attemptId) return;
+  const { error } = await admin
+    .from('payment_attempts')
+    .update(values)
+    .eq('id', attemptId);
+  if (error) {
+    console.error('PAYMENT_ATTEMPT_UPDATE_FAILED', {
+      attemptId,
+      error: error.message
+    });
+  }
+}
+
+async function activateGymProWithFallback(
+  admin: ReturnType<typeof getAdminClient>,
+  params: {
+    gymId: string;
+    customerKey: string;
+    billingKey: string;
+    paymentKey: string;
+    charged: Record<string, unknown>;
+  }
+) {
+  const rpcPayload = {
+    p_gym_id: params.gymId,
+    p_provider: 'toss',
+    p_interval: 'monthly',
+    p_amount_krw: AMOUNT_KRW,
+    p_customer_id: params.customerKey,
+    p_subscription_id: params.billingKey,
+    p_provider_ref: params.paymentKey,
+    p_raw: params.charged
+  };
+
+  const { error: activateError } = await admin.rpc('activate_gym_pro', {
+    ...rpcPayload,
+    p_auto_renew: true
+  });
+
+  if (!activateError) return null;
+
+  if (String(activateError.message || '').includes('p_auto_renew') ||
+      String(activateError.message || '').includes('Could not find')) {
+    const { error: fallbackError } = await admin.rpc('activate_gym_pro', rpcPayload);
+    if (fallbackError) return fallbackError;
+    await admin
+      .from('gyms')
+      .update({ auto_renew: true, updated_at: new Date().toISOString() })
+      .eq('id', params.gymId);
+    return null;
+  }
+
+  return activateError;
+}
+
 async function tossPost(path: string, body: Record<string, unknown>) {
   const res = await fetch(`https://api.tosspayments.com${path}`, {
     method: 'POST',
@@ -129,6 +199,36 @@ Deno.serve(async (req) => {
       });
     }
 
+    const orderId = `toss_bill_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+    let paymentAttemptId: string | null = null;
+
+    const { data: paymentAttempt, error: attemptError } = await admin
+      .from('payment_attempts')
+      .insert({
+        gym_id: gymId,
+        user_id: user.id,
+        provider: 'toss',
+        payment_type: 'initial_billing',
+        billing_interval: 'monthly',
+        amount_krw: AMOUNT_KRW,
+        currency: 'KRW',
+        order_id: orderId,
+        customer_key: customerKey,
+        target_period_start: new Date().toISOString(),
+        target_period_end: nextMonthlyPeriodEnd(),
+        status: 'initiated',
+        activation_status: 'not_started',
+        recovery_status: 'none',
+        provider_response: { mode: 'billing_auth_start' }
+      })
+      .select('id')
+      .single();
+
+    if (attemptError) {
+      return textResponse(attemptError.message, 500);
+    }
+    paymentAttemptId = paymentAttempt.id;
+
     const issued = await tossPost('/v1/billing/authorizations/issue', {
       authKey,
       customerKey
@@ -137,10 +237,23 @@ Deno.serve(async (req) => {
     const billingKey = String(issued.billingKey || '');
     if (!billingKey) {
       logTossBillingKeyFailure('issue_response_missing_billing_key', 200, issued);
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: 'charge_failed',
+        activation_status: 'not_started',
+        error_message: 'Failed to issue billing key',
+        provider_response: sanitizeTossPayload(issued)
+      });
       return textResponse('Failed to issue billing key', 502);
     }
 
-    const orderId = `toss_bill_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: 'auth_issued',
+      billing_key_ref: billingKey,
+      provider_response: {
+        mode: 'billing_key_issued',
+        response: sanitizeTossPayload(issued)
+      }
+    });
 
     const { data: sessionRow, error: insertError } = await admin
       .from('checkout_sessions')
@@ -185,46 +298,51 @@ Deno.serve(async (req) => {
           raw: { error: String(chargeError) }
         })
         .eq('id', sessionRow.id);
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: 'charge_failed',
+        activation_status: 'not_started',
+        recovery_status: 'none',
+        error_message: errorMessage(chargeError)
+      });
       throw chargeError;
     }
 
     const paymentKey = String(charged.paymentKey || orderId);
 
-    const { error: activateError } = await admin.rpc('activate_gym_pro', {
-      p_gym_id: gymId,
-      p_provider: 'toss',
-      p_interval: 'monthly',
-      p_amount_krw: AMOUNT_KRW,
-      p_customer_id: customerKey,
-      p_subscription_id: billingKey,
-      p_provider_ref: paymentKey,
-      p_raw: charged,
-      p_auto_renew: true
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: 'activation_pending',
+      activation_status: 'pending',
+      recovery_status: 'none',
+      payment_key: paymentKey,
+      provider_response: sanitizeTossPayload(charged)
+    });
+
+    const activateError = await activateGymProWithFallback(admin, {
+      gymId,
+      customerKey,
+      billingKey,
+      paymentKey,
+      charged
     });
 
     if (activateError) {
-      // Older SQL without p_auto_renew — fall back then set auto_renew
-      if (String(activateError.message || '').includes('p_auto_renew') ||
-          String(activateError.message || '').includes('Could not find')) {
-        const { error: fallbackError } = await admin.rpc('activate_gym_pro', {
-          p_gym_id: gymId,
-          p_provider: 'toss',
-          p_interval: 'monthly',
-          p_amount_krw: AMOUNT_KRW,
-          p_customer_id: customerKey,
-          p_subscription_id: billingKey,
-          p_provider_ref: paymentKey,
-          p_raw: charged
-        });
-        if (fallbackError) return textResponse(fallbackError.message, 500);
-        await admin
-          .from('gyms')
-          .update({ auto_renew: true, updated_at: new Date().toISOString() })
-          .eq('id', gymId);
-      } else {
-        return textResponse(activateError.message, 500);
-      }
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: 'activation_failed',
+        activation_status: 'failed',
+        recovery_status: 'pending',
+        error_message: activateError.message
+      });
+      return textResponse(activateError.message, 500);
     }
+
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: 'completed',
+      activation_status: 'succeeded',
+      recovery_status: 'none',
+      activated_at: new Date().toISOString(),
+      error_code: null,
+      error_message: null
+    });
 
     await admin
       .from('checkout_sessions')

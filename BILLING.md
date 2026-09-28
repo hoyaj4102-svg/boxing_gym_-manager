@@ -41,6 +41,7 @@
 3. `supabase/checkout_sessions.sql`
 4. `supabase/cancel_subscription.sql`
 5. **`supabase/monthly_billing.sql`** ← 월간 자동결제 / 해지 필드
+6. **`supabase/payment_attempts.sql`** ← 결제 성공 후 Pro 활성화 실패 복구 기록
 
 ---
 
@@ -111,6 +112,7 @@ supabase/
   checkout_sessions.sql
   cancel_subscription.sql
   monthly_billing.sql
+  payment_attempts.sql
   functions/
     start-billing-auth/
     confirm-billing-auth/
