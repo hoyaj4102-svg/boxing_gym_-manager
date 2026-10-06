@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v23-click-to-list';
+const CACHE_VERSION = 'remember-v24-install-guide';
 const APP_SHELL = [
   '/',
   '/index.html',
