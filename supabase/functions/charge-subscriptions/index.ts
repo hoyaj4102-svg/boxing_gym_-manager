@@ -2,6 +2,19 @@ import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
 
 const AMOUNT_KRW = 10000;
+const CLAIM_LIMIT = 50;
+
+type ClaimedSubscriptionCharge = {
+  payment_attempt_id: string;
+  gym_id: string;
+  user_id: string | null;
+  order_id: string;
+  customer_key: string;
+  billing_key_ref: string;
+  target_period_start: string;
+  target_period_end: string;
+  amount_krw: number;
+};
 
 function tossAuthHeader() {
   const secret = Deno.env.get('TOSS_SECRET_KEY') || '';
@@ -57,18 +70,18 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-function nextMonthlyPeriodEnd() {
-  const date = new Date();
-  date.setDate(date.getDate() + 30);
-  return date.toISOString();
-}
-
 async function updatePaymentAttempt(
   admin: ReturnType<typeof getAdminClient>,
   attemptId: string | null,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  options: { throwOnError?: boolean } = {}
 ) {
-  if (!attemptId) return;
+  if (!attemptId) {
+    if (options.throwOnError) {
+      throw new Error('PAYMENT_ATTEMPT_ID_REQUIRED');
+    }
+    return;
+  }
   const { error } = await admin
     .from('payment_attempts')
     .update(values)
@@ -78,6 +91,9 @@ async function updatePaymentAttempt(
       attemptId,
       error: error.message
     });
+    if (options.throwOnError) {
+      throw new Error(`PAYMENT_ATTEMPT_UPDATE_FAILED: ${error.message}`);
+    }
   }
 }
 
@@ -155,16 +171,14 @@ Deno.serve(async (req) => {
       .not('current_period_end', 'is', null)
       .lte('current_period_end', nowIso);
 
-    const { data: gyms, error } = await admin
-      .from('gyms')
-      .select(
-        'id, name, subscription_status, auto_renew, billing_provider, billing_customer_id, billing_subscription_id, current_period_end'
-      )
-      .eq('billing_provider', 'toss')
-      .eq('auto_renew', true)
-      .eq('subscription_status', 'active')
-      .not('billing_subscription_id', 'is', null)
-      .lte('current_period_end', nowIso);
+    const { data: claimedCharges, error } = await admin.rpc(
+      'claim_due_toss_subscription_charges',
+      {
+        p_now: nowIso,
+        p_limit: CLAIM_LIMIT,
+        p_amount_krw: AMOUNT_KRW
+      }
+    );
 
     if (error) {
       const detail = [error.message, error.details, error.hint, error.code]
@@ -182,52 +196,22 @@ Deno.serve(async (req) => {
 
     const results: Array<Record<string, unknown>> = [];
 
-    for (const gym of gyms || []) {
-      const billingKey = String(gym.billing_subscription_id || '');
-      const customerKey = String(gym.billing_customer_id || '');
-      const orderId = `toss_renew_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 10)}`;
-      let paymentAttemptId: string | null = null;
+    for (const claim of (claimedCharges || []) as ClaimedSubscriptionCharge[]) {
+      const gymId = String(claim.gym_id || '');
+      const ownerId = claim.user_id ? String(claim.user_id) : '';
+      const billingKey = String(claim.billing_key_ref || '');
+      const customerKey = String(claim.customer_key || '');
+      const orderId = String(claim.order_id || '');
+      const paymentAttemptId = String(claim.payment_attempt_id || '');
+      const amountKrw = Number(claim.amount_krw || AMOUNT_KRW);
       let chargeSucceeded = false;
 
       try {
-        if (!billingKey || !customerKey) {
+        if (!paymentAttemptId || !billingKey || !customerKey || !orderId) {
           throw new Error('Missing billing key');
         }
 
-        const { data: owner } = await admin
-          .from('profiles')
-          .select('id')
-          .eq('gym_id', gym.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (!owner?.id) throw new Error('Gym owner not found');
-
-        const { data: paymentAttempt, error: attemptError } = await admin
-          .from('payment_attempts')
-          .insert({
-            gym_id: gym.id,
-            user_id: owner.id,
-            provider: 'toss',
-            payment_type: 'auto_renewal',
-            billing_interval: 'monthly',
-            amount_krw: AMOUNT_KRW,
-            currency: 'KRW',
-            order_id: orderId,
-            customer_key: customerKey,
-            billing_key_ref: billingKey,
-            target_period_start: gym.current_period_end,
-            target_period_end: nextMonthlyPeriodEnd(),
-            status: 'initiated',
-            activation_status: 'not_started',
-            recovery_status: 'none',
-            provider_response: { mode: 'auto_renew_start' }
-          })
-          .select('id')
-          .single();
-
-        if (attemptError) throw attemptError;
-        paymentAttemptId = paymentAttempt.id;
+        if (!ownerId) throw new Error('Gym owner not found');
 
         const chargeRes = await fetch(`https://api.tosspayments.com/v1/billing/${billingKey}`, {
           method: 'POST',
@@ -237,7 +221,7 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             customerKey,
-            amount: AMOUNT_KRW,
+            amount: amountKrw,
             orderId,
             orderName: 're;member Pro 월간 자동결제'
           })
@@ -264,14 +248,14 @@ Deno.serve(async (req) => {
           recovery_status: 'none',
           payment_key: paymentKey,
           provider_response: sanitizeProviderPayload(charged)
-        });
+        }, { throwOnError: true });
 
         await admin.from('checkout_sessions').insert({
-          gym_id: gym.id,
-          user_id: owner.id,
+          gym_id: gymId,
+          user_id: ownerId,
           provider: 'toss',
           interval: 'monthly',
-          amount_krw: AMOUNT_KRW,
+          amount_krw: amountKrw,
           amount_usd_cents: 0,
           currency: 'KRW',
           status: 'completed',
@@ -282,7 +266,7 @@ Deno.serve(async (req) => {
         });
 
         const activateError = await activateGymProWithFallback(admin, {
-          gymId: gym.id,
+          gymId,
           customerKey,
           billingKey,
           paymentKey,
@@ -308,7 +292,7 @@ Deno.serve(async (req) => {
           error_message: null
         });
 
-        results.push({ gymId: gym.id, ok: true, orderId });
+        results.push({ gymId, ok: true, orderId, paymentAttemptId });
       } catch (chargeError) {
         const message = chargeError instanceof Error ? chargeError.message : 'charge failed';
         if (!chargeSucceeded) {
@@ -326,8 +310,8 @@ Deno.serve(async (req) => {
             subscription_status: 'past_due',
             updated_at: new Date().toISOString()
           })
-          .eq('id', gym.id);
-        results.push({ gymId: gym.id, ok: false, error: message });
+          .eq('id', gymId);
+        results.push({ gymId, ok: false, orderId, paymentAttemptId, error: message });
       }
     }
 
