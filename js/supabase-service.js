@@ -215,8 +215,15 @@
 
   async function resetPassword(email) {
     if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
-    const redirectTo = `${global.location.origin}${global.location.pathname}`;
+    const redirectTo = new URL('/reset-password', global.location.origin).toString();
     const { data, error } = await STATE.client.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+    return data;
+  }
+
+  async function exchangeCodeForSession(code) {
+    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    const { data, error } = await STATE.client.auth.exchangeCodeForSession(code);
     if (error) throw error;
     return data;
   }
@@ -445,6 +452,7 @@
     signIn,
     signOut,
     resetPassword,
+    exchangeCodeForSession,
     updatePassword,
     onAuthStateChange,
     fetchMembers,
