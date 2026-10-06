@@ -156,7 +156,22 @@ Deno.serve(async (req) => {
 
     const admin = getAdminClient();
     const nowIso = new Date().toISOString();
+const { data: trialCleanup, error: trialCleanupError } = await admin.rpc(
+  'expire_unpaid_trial_gyms',
+  {
+    p_now: nowIso,
+    p_limit: 500
+  }
+);
 
+if (trialCleanupError) {
+  console.error('UNPAID_TRIAL_CLEANUP_FAILED', {
+    error: trialCleanupError.message,
+    code: trialCleanupError.code
+  });
+} else {
+  console.log('UNPAID_TRIAL_CLEANUP_COMPLETED', trialCleanup);
+}
     await admin
       .from('gyms')
       .update({
