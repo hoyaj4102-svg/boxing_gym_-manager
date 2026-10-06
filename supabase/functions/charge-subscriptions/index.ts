@@ -73,9 +73,15 @@ function errorMessage(error: unknown) {
 async function updatePaymentAttempt(
   admin: ReturnType<typeof getAdminClient>,
   attemptId: string | null,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  options: { throwOnError?: boolean } = {}
 ) {
-  if (!attemptId) return;
+  if (!attemptId) {
+    if (options.throwOnError) {
+      throw new Error('PAYMENT_ATTEMPT_ID_REQUIRED');
+    }
+    return;
+  }
   const { error } = await admin
     .from('payment_attempts')
     .update(values)
@@ -85,6 +91,9 @@ async function updatePaymentAttempt(
       attemptId,
       error: error.message
     });
+    if (options.throwOnError) {
+      throw new Error(`PAYMENT_ATTEMPT_UPDATE_FAILED: ${error.message}`);
+    }
   }
 }
 
@@ -239,7 +248,7 @@ Deno.serve(async (req) => {
           recovery_status: 'none',
           payment_key: paymentKey,
           provider_response: sanitizeProviderPayload(charged)
-        });
+        }, { throwOnError: true });
 
         await admin.from('checkout_sessions').insert({
           gym_id: gymId,
