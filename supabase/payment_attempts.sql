@@ -79,6 +79,8 @@ declare
   v_attempt public.payment_attempts%rowtype;
   v_error_message text;
   v_period_end timestamptz;
+  v_gym_auto_renew boolean;
+  v_gym_subscription_status text;
 begin
   select * into v_attempt
   from public.payment_attempts
@@ -122,18 +124,34 @@ begin
   where id = v_attempt.id;
 
   begin
+    select auto_renew, subscription_status
+    into v_gym_auto_renew, v_gym_subscription_status
+    from public.gyms
+    where id = v_attempt.gym_id
+    for update;
+
+    if not found then
+      raise exception 'GYM_NOT_FOUND';
+    end if;
+
     perform set_config('app.allow_billing_update', '1', true);
 
     update public.gyms
     set
       plan_code = 'pro',
       member_limit = -1,
-      subscription_status = 'active',
+      subscription_status = case
+        when v_gym_subscription_status = 'canceled' then 'canceled'
+        else 'active'
+      end,
       current_period_end = v_period_end,
       billing_provider = v_attempt.provider,
       billing_customer_id = coalesce(v_attempt.customer_key, billing_customer_id),
       billing_subscription_id = coalesce(v_attempt.billing_key_ref, billing_subscription_id),
-      auto_renew = true,
+      auto_renew = case
+        when v_gym_auto_renew = false then false
+        else true
+      end,
       updated_at = now()
     where id = v_attempt.gym_id;
 

@@ -21,11 +21,6 @@ type PaymentAttempt = {
   recovery_status: string;
 };
 
-type GymBillingState = {
-  auto_renew: boolean | null;
-  subscription_status: string | null;
-};
-
 type TossLookupResult =
   | { kind: 'found'; payment: Record<string, unknown> }
   | { kind: 'not_found'; status: number; payload: unknown }
@@ -40,6 +35,16 @@ const SENSITIVE_KEYS = new Set([
   'secret',
   'secretkey'
 ]);
+
+class DbWriteError extends Error {
+  code: string | null;
+
+  constructor(message: string, code: string | null = null) {
+    super(message);
+    this.name = 'DbWriteError';
+    this.code = code;
+  }
+}
 
 function tossAuthHeader() {
   const secret = Deno.env.get('TOSS_SECRET_KEY') || '';
@@ -257,7 +262,7 @@ async function updatePaymentAttempt(
     .update(values)
     .eq('id', attemptId);
   if (error) {
-    throw new Error(`PAYMENT_ATTEMPT_UPDATE_FAILED: ${error.message}`);
+    throw new DbWriteError(`PAYMENT_ATTEMPT_UPDATE_FAILED: ${error.message}`, error.code || null);
   }
 }
 
@@ -278,49 +283,6 @@ async function findAutoRenewalAttempt(
   }
 
   return data as PaymentAttempt | null;
-}
-
-async function getGymBillingState(
-  admin: ReturnType<typeof getAdminClient>,
-  gymId: string
-) {
-  const { data, error } = await admin
-    .from('gyms')
-    .select('auto_renew, subscription_status')
-    .eq('id', gymId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data || { auto_renew: null, subscription_status: null }) as GymBillingState;
-}
-
-async function preserveCanceledAutoRenewState(
-  admin: ReturnType<typeof getAdminClient>,
-  gymId: string,
-  previous: GymBillingState
-) {
-  if (previous.auto_renew !== false) return;
-
-  const values: Record<string, unknown> = {
-    auto_renew: false,
-    updated_at: new Date().toISOString()
-  };
-
-  if (previous.subscription_status === 'canceled') {
-    values.subscription_status = 'canceled';
-  }
-
-  const { error } = await admin
-    .from('gyms')
-    .update(values)
-    .eq('id', gymId);
-
-  if (error) {
-    throw new Error(`GYM_CANCEL_STATE_RESTORE_FAILED: ${error.message}`);
-  }
 }
 
 function isRecoverableAttempt(attempt: PaymentAttempt) {
@@ -359,7 +321,7 @@ Deno.serve(async (req) => {
       payload: parsedPayload
     });
 
-    if (duplicate && event.processing_status !== 'retryable_error') {
+    if (duplicate && !['received', 'processing', 'retryable_error'].includes(event.processing_status)) {
       return jsonResponse({
         ok: true,
         duplicate: true,
@@ -467,48 +429,65 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, alreadyCompleted: true });
     }
 
-    const gymBeforeRecovery = await getGymBillingState(admin, attempt.gym_id);
-
-    if (attempt.status === 'initiated') {
-      await updatePaymentAttempt(admin, attempt.id, {
-        status: 'activation_pending',
-        activation_status: 'pending',
-        recovery_status: 'none',
-        payment_key: validation.paymentKey,
-        error_code: null,
-        error_message: null,
-        provider_response: sanitizePayload({
-          webhook: {
-            transmission_id: transmissionId,
-            event_type: eventType,
-            mid_check: validation.midCheck
-          },
-          payment: lookup.payment
-        })
-      });
-    } else if (isRecoverableAttempt(attempt)) {
-      await updatePaymentAttempt(admin, attempt.id, {
-        payment_key: validation.paymentKey,
-        error_code: null,
-        error_message: null,
-        provider_response: sanitizePayload({
-          webhook: {
-            transmission_id: transmissionId,
-            event_type: eventType,
-            mid_check: validation.midCheck
-          },
-          payment: lookup.payment
-        })
-      });
-    } else {
+    try {
+      if (attempt.status === 'initiated') {
+        await updatePaymentAttempt(admin, attempt.id, {
+          status: 'activation_pending',
+          activation_status: 'pending',
+          recovery_status: 'none',
+          payment_key: validation.paymentKey,
+          error_code: null,
+          error_message: null,
+          provider_response: sanitizePayload({
+            webhook: {
+              transmission_id: transmissionId,
+              event_type: eventType,
+              mid_check: validation.midCheck
+            },
+            payment: lookup.payment
+          })
+        });
+      } else if (isRecoverableAttempt(attempt)) {
+        await updatePaymentAttempt(admin, attempt.id, {
+          payment_key: validation.paymentKey,
+          error_code: null,
+          error_message: null,
+          provider_response: sanitizePayload({
+            webhook: {
+              transmission_id: transmissionId,
+              event_type: eventType,
+              mid_check: validation.midCheck
+            },
+            payment: lookup.payment
+          })
+        });
+      } else {
+        await updateWebhookEvent(admin, event.id, {
+          verification_status: 'verified_by_toss_lookup',
+          processing_status: 'not_recoverable',
+          payment_key: validation.paymentKey,
+          error_code: 'PAYMENT_ATTEMPT_NOT_RECOVERABLE',
+          error_message: `payment_attempt status is ${attempt.status}`
+        });
+        return jsonResponse({ ok: true, ignored: true, reason: 'payment_attempt_not_recoverable' });
+      }
+    } catch (error) {
+      const dbError = error as Partial<DbWriteError>;
+      const isUniqueViolation = dbError.code === '23505';
       await updateWebhookEvent(admin, event.id, {
         verification_status: 'verified_by_toss_lookup',
-        processing_status: 'not_recoverable',
+        processing_status: isUniqueViolation ? 'data_conflict' : 'retryable_error',
         payment_key: validation.paymentKey,
-        error_code: 'PAYMENT_ATTEMPT_NOT_RECOVERABLE',
-        error_message: `payment_attempt status is ${attempt.status}`
+        error_code: isUniqueViolation
+          ? 'PAYMENT_KEY_CONFLICT'
+          : (dbError.code || 'PAYMENT_ATTEMPT_UPDATE_FAILED'),
+        error_message: errorMessage(error)
       });
-      return jsonResponse({ ok: true, ignored: true, reason: 'payment_attempt_not_recoverable' });
+      return jsonResponse({
+        ok: false,
+        retryable: !isUniqueViolation,
+        error: errorMessage(error)
+      }, isUniqueViolation ? 200 : 500);
     }
 
     const { data: recoveryResult, error: recoveryError } = await admin.rpc(
@@ -533,8 +512,6 @@ Deno.serve(async (req) => {
       });
       return jsonResponse({ ok: false, recoveredPayment: true, error: recoveryError.message }, 500);
     }
-
-    await preserveCanceledAutoRenewState(admin, attempt.gym_id, gymBeforeRecovery);
 
     await updateWebhookEvent(admin, event.id, {
       verification_status: 'verified_by_toss_lookup',

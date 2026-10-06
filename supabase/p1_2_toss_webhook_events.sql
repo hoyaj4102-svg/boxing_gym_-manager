@@ -36,4 +36,8 @@ execute function public.set_updated_at();
 
 alter table public.toss_webhook_events enable row level security;
 
+revoke all on table public.toss_webhook_events from public;
+revoke all on table public.toss_webhook_events from anon, authenticated;
+grant select, insert, update on table public.toss_webhook_events to service_role;
+
 -- No anon/authenticated policies. Webhook audit writes are service-role only.
