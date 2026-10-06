@@ -543,9 +543,65 @@
       border-color: rgba(239, 68, 68, .55);
     }
 
+    .password-input-wrap {
+      position: relative;
+    }
+
+    .password-input-wrap input {
+      padding-right: 48px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .password-toggle:focus-visible {
+      outline: 2px solid rgba(239, 68, 68, .6);
+      outline-offset: 2px;
+    }
+
+    .auth-inline-action {
+      display: inline-flex;
+      align-items: center;
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      padding: 2px 0;
+      cursor: pointer;
+    }
+
+    .auth-field-hint {
+      margin: 6px 0 0;
+      min-height: 1em;
+      color: var(--text-muted);
+      font-size: .76rem;
+    }
+
+    .auth-field-hint.error {
+      color: var(--danger);
+    }
+
     .auth-form .btn {
       width: 100%;
       margin-top: 6px;
+    }
+
+    .auth-form .btn:disabled {
+      cursor: not-allowed;
+      opacity: .55;
     }
 
     .auth-message {
@@ -560,7 +616,8 @@
 
     .signup-only[hidden],
     .login-only[hidden],
-    .reset-only[hidden] {
+    .reset-only[hidden],
+    .recovery-only[hidden] {
       display: none !important;
     }
 
@@ -1777,16 +1834,33 @@
           <label for="authGymPhone" data-i18n="authGymPhoneLabel">체육관 연락처</label>
           <input type="tel" id="authGymPhone" autocomplete="tel" placeholder="010-0000-0000">
         </div>
-        <div class="field">
+        <div class="field" id="authEmailField">
           <label for="authEmail" data-i18n="authEmailLabel">이메일</label>
           <input type="email" id="authEmail" autocomplete="email" required placeholder="owner@example.com" data-i18n-placeholder="authEmailPlaceholder">
         </div>
-        <div class="field login-only signup-only">
-          <label for="authPassword" data-i18n="authPasswordLabel">비밀번호</label>
-          <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상" data-i18n-placeholder="authPasswordPlaceholder">
+        <div class="field" id="authPasswordField">
+          <label for="authPassword" id="authPasswordLabel" data-i18n="authPasswordLabel">비밀번호</label>
+          <div class="password-input-wrap">
+            <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상" data-i18n-placeholder="authPasswordPlaceholder">
+            <button type="button" class="password-toggle" data-toggle-password="authPassword" data-i18n-aria-label="authPasswordShow">👁</button>
+          </div>
+        </div>
+        <div class="field" id="authPasswordConfirmField" hidden>
+          <label for="authPasswordConfirm" id="authPasswordConfirmLabel" data-i18n="authPasswordConfirmLabel">비밀번호 확인</label>
+          <div class="password-input-wrap">
+            <input type="password" id="authPasswordConfirm" autocomplete="new-password" placeholder="비밀번호를 다시 입력" data-i18n-placeholder="authPasswordConfirmPlaceholder">
+            <button type="button" class="password-toggle" data-toggle-password="authPasswordConfirm" data-i18n-aria-label="authPasswordShow">👁</button>
+          </div>
+          <p class="auth-field-hint" id="authPasswordHint"></p>
+        </div>
+        <div class="field login-only" id="authForgotField">
+          <button type="button" class="auth-inline-action" id="forgotPasswordButton" data-i18n="authForgotPassword">비밀번호를 잊으셨나요?</button>
         </div>
         <div class="field reset-only" hidden>
           <p class="lead" style="margin:0;" data-i18n="authResetHelp">가입한 이메일로 비밀번호 재설정 링크를 보냅니다.</p>
+        </div>
+        <div class="field recovery-only" hidden>
+          <p class="lead" style="margin:0;" data-i18n="authRecoveryHelp">새 비밀번호를 입력해 주세요.</p>
         </div>
         <button type="submit" class="btn btn-primary" id="authSubmitButton" data-i18n="authSubmitLogin">로그인</button>
       </form>
@@ -2301,18 +2375,35 @@
         authGymPhoneLabel: '체육관 연락처',
         authEmailLabel: '이메일',
         authPasswordLabel: '비밀번호',
+        authPasswordConfirmLabel: '비밀번호 확인',
+        authNewPasswordLabel: '새 비밀번호',
+        authNewPasswordConfirmLabel: '새 비밀번호 확인',
         authResetHelp: '가입한 이메일로 비밀번호 재설정 링크를 보냅니다.',
+        authRecoveryHelp: '새 비밀번호와 확인 값을 입력해 주세요.',
+        authForgotPassword: '비밀번호를 잊으셨나요?',
         authSubmitLogin: '로그인',
         authSubmitSignup: '회원가입',
         authSubmitReset: '재설정 메일 보내기',
+        authSubmitUpdatePassword: '비밀번호 변경',
         signOutButton: '로그아웃',
         migrateLocalButton: '로컬 데이터 업로드',
         authConfigMissing: 'Supabase 설정이 필요합니다. js/config.js에 URL과 anon key를 입력하세요.',
         authLoginSuccess: '로그인되었습니다.',
         authSignupSuccess: '회원가입이 완료되었습니다. 이메일 확인이 켜져 있으면 메일을 확인해 주세요.',
-        authResetSent: '비밀번호 재설정 메일을 보냈습니다.',
+        authResetSent: '비밀번호 재설정 링크를 이메일로 보냈습니다. 이메일을 확인해주세요.',
         authSignedOut: '로그아웃되었습니다.',
         authNeedFields: '필수 항목을 입력해 주세요.',
+        authInvalidEmail: '올바른 이메일 주소를 입력해 주세요.',
+        authPasswordTooShort: '비밀번호는 6자 이상이어야 합니다.',
+        authPasswordMismatch: '비밀번호가 일치하지 않습니다.',
+        authPasswordMatch: '비밀번호가 일치합니다.',
+        authRecoveryReady: '새 비밀번호를 설정해 주세요.',
+        authRecoveryInvalid: '비밀번호 재설정 링크가 만료되었거나 유효하지 않습니다. 다시 요청해 주세요.',
+        authInvalidLogin: '이메일 또는 비밀번호를 확인해 주세요.',
+        authResetFailed: '비밀번호 재설정 메일을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        authUpdatePasswordFailed: '비밀번호를 변경하지 못했습니다. 링크가 만료되었으면 다시 요청해 주세요.',
+        authNetworkError: '네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
+        authGenericError: '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
         authLoading: '데이터를 불러오는 중...',
         migrateConfirm: '현재 브라우저의 로컬 회원 {count}명을 Supabase로 업로드할까요?',
         migrateDone: '로컬 데이터가 Supabase로 업로드되었습니다.',
@@ -2335,12 +2426,15 @@
         smsDueToday: '안녕하세요 [re;member] 체육관 만기일 당일 알림드립니다.',
         smsDueSoon: '안녕하세요 [re;member] 체육관 만기일 {days}일 전 알림드립니다.',
         newPasswordPrompt: '새 비밀번호를 입력하세요 (6자 이상)',
-        passwordUpdated: '비밀번호가 변경되었습니다.',
+        passwordUpdated: '비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.',
         gymFallbackName: '체육관',
         authGymNamePlaceholder: '예: 강남 복싱짐',
         authOwnerNamePlaceholder: '홍길동',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6자 이상',
+        authPasswordConfirmPlaceholder: '비밀번호를 다시 입력',
+        authPasswordShow: '비밀번호 표시',
+        authPasswordHide: '비밀번호 숨기기',
         billingTitle: '요금제',
         billingSubtitle: 'Free 20명 · Pro 월간 구독 (토스)',
         billingPlanLabel: '현재 플랜',
@@ -2554,18 +2648,35 @@
         authGymPhoneLabel: 'Gym phone',
         authEmailLabel: 'Email',
         authPasswordLabel: 'Password',
+        authPasswordConfirmLabel: 'Confirm password',
+        authNewPasswordLabel: 'New password',
+        authNewPasswordConfirmLabel: 'Confirm new password',
         authResetHelp: 'We will send a password reset link to your email.',
+        authRecoveryHelp: 'Enter and confirm your new password.',
+        authForgotPassword: 'Forgot your password?',
         authSubmitLogin: 'Log in',
         authSubmitSignup: 'Create account',
         authSubmitReset: 'Send reset email',
+        authSubmitUpdatePassword: 'Update password',
         signOutButton: 'Log out',
         migrateLocalButton: 'Upload local data',
         authConfigMissing: 'Supabase config required. Add URL and anon key in js/config.js.',
         authLoginSuccess: 'Signed in.',
         authSignupSuccess: 'Account created. Check email if confirmation is enabled.',
-        authResetSent: 'Password reset email sent.',
+        authResetSent: 'Password reset link sent. Please check your email.',
         authSignedOut: 'Signed out.',
         authNeedFields: 'Please fill in required fields.',
+        authInvalidEmail: 'Please enter a valid email address.',
+        authPasswordTooShort: 'Password must be at least 6 characters.',
+        authPasswordMismatch: 'Passwords do not match.',
+        authPasswordMatch: 'Passwords match.',
+        authRecoveryReady: 'Set your new password.',
+        authRecoveryInvalid: 'The password reset link is expired or invalid. Please request a new one.',
+        authInvalidLogin: 'Please check your email or password.',
+        authResetFailed: 'Could not send the password reset email. Please try again later.',
+        authUpdatePasswordFailed: 'Could not update the password. Request a new link if this one expired.',
+        authNetworkError: 'Check your network connection and try again.',
+        authGenericError: 'Could not process the request. Please try again later.',
         authLoading: 'Loading data...',
         migrateConfirm: 'Upload {count} local members to Supabase?',
         migrateDone: 'Local data uploaded to Supabase.',
@@ -2588,12 +2699,15 @@
         smsDueToday: 'Hello from [re;member] gym — your membership expires today.',
         smsDueSoon: 'Hello from [re;member] gym — your membership expires in {days} days.',
         newPasswordPrompt: 'Enter a new password (6+ characters)',
-        passwordUpdated: 'Password updated.',
+        passwordUpdated: 'Password updated. Please sign in with the new password.',
         gymFallbackName: 'Gym',
         authGymNamePlaceholder: 'e.g. Downtown Boxing',
         authOwnerNamePlaceholder: 'Owner name',
         authEmailPlaceholder: 'owner@example.com',
         authPasswordPlaceholder: '6+ characters',
+        authPasswordConfirmPlaceholder: 'Enter password again',
+        authPasswordShow: 'Show password',
+        authPasswordHide: 'Hide password',
         billingTitle: 'Billing',
         billingSubtitle: 'Free 20 · Pro monthly (Toss)',
         billingPlanLabel: 'Current plan',
@@ -4161,6 +4275,8 @@
     let activeDashboardKey = '';
     let selectedCalendarDate = '';
     let authMode = 'login';
+    let recoverySessionReady = false;
+    let pendingSignedOutMessage = '';
     let isBootstrapping = true;
     let isSaving = false;
     let billingSummary = null;
@@ -4330,6 +4446,107 @@
       el.className = 'auth-message' + (type ? ' ' + type : '');
     }
 
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function isRecoveryRoute() {
+      return window.location.pathname.toLowerCase().endsWith('/reset-password');
+    }
+
+    function hasRecoveryUrlToken() {
+      const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      return params.has('code') ||
+        params.get('type') === 'recovery' ||
+        hashParams.get('type') === 'recovery' ||
+        hashParams.has('access_token') ||
+        hashParams.has('refresh_token');
+    }
+
+    function cleanAuthUrl(path = window.location.pathname) {
+      if (!window.history?.replaceState) return;
+      window.history.replaceState({}, '', path);
+    }
+
+    function friendlyAuthError(error, fallbackKey = 'authGenericError') {
+      console.error('Supabase auth error:', error);
+      const message = String(error?.message || '').toLowerCase();
+
+      if (message.includes('failed to fetch') || message.includes('network')) {
+        return t('authNetworkError');
+      }
+      if (message.includes('invalid login') || message.includes('invalid credentials')) {
+        return t('authInvalidLogin');
+      }
+      if (message.includes('password') && (
+        message.includes('weak') ||
+        message.includes('short') ||
+        message.includes('6')
+      )) {
+        return t('authPasswordTooShort');
+      }
+      if (message.includes('expired') || message.includes('invalid') || message.includes('session')) {
+        return t('authRecoveryInvalid');
+      }
+
+      return t(fallbackKey);
+    }
+
+    function getPasswordValidation() {
+      const password = document.getElementById('authPassword').value;
+      const confirm = document.getElementById('authPasswordConfirm').value;
+
+      if (password.length < 6) {
+        return { ok: false, message: t('authPasswordTooShort') };
+      }
+      if (password !== confirm) {
+        return { ok: false, message: t('authPasswordMismatch') };
+      }
+      return { ok: true, message: t('authPasswordMatch') };
+    }
+
+    function syncAuthPasswordValidation() {
+      const confirmField = document.getElementById('authPasswordConfirmField');
+      const hint = document.getElementById('authPasswordHint');
+      const submit = document.getElementById('authSubmitButton');
+      const needsConfirm = authMode === 'signup' || authMode === 'recovery';
+
+      if (!needsConfirm) {
+        confirmField.hidden = true;
+        hint.textContent = '';
+        hint.className = 'auth-field-hint';
+        submit.disabled = false;
+        return true;
+      }
+
+      confirmField.hidden = false;
+      const password = document.getElementById('authPassword').value;
+      const confirm = document.getElementById('authPasswordConfirm').value;
+
+      if (!password && !confirm) {
+        hint.textContent = '';
+        hint.className = 'auth-field-hint';
+        submit.disabled = true;
+        return false;
+      }
+
+      const validation = getPasswordValidation();
+      hint.textContent = validation.message;
+      hint.className = 'auth-field-hint' + (validation.ok ? '' : ' error');
+      submit.disabled = !validation.ok;
+      return validation.ok;
+    }
+
+    function setPasswordVisibility(inputId, visible) {
+      const input = document.getElementById(inputId);
+      const button = document.querySelector(`[data-toggle-password="${inputId}"]`);
+      if (!input || !button) return;
+      input.type = visible ? 'text' : 'password';
+      button.setAttribute('aria-label', visible ? t('authPasswordHide') : t('authPasswordShow'));
+      button.textContent = visible ? '🙈' : '👁';
+    }
+
     function setAuthMode(mode) {
       authMode = mode;
       document.querySelectorAll('[data-auth-tab]').forEach(btn => {
@@ -4340,20 +4557,39 @@
         el.hidden = mode !== 'signup';
       });
       document.querySelectorAll('.login-only').forEach(el => {
-        el.hidden = mode !== 'login' && mode !== 'signup';
+        el.hidden = mode !== 'login';
       });
       document.querySelectorAll('.reset-only').forEach(el => {
         el.hidden = mode !== 'reset';
       });
+      document.querySelectorAll('.recovery-only').forEach(el => {
+        el.hidden = mode !== 'recovery';
+      });
 
+      const emailField = document.getElementById('authEmail');
+      document.getElementById('authEmailField').hidden = mode === 'recovery';
+      emailField.required = mode !== 'recovery';
       const passwordField = document.getElementById('authPassword');
-      passwordField.required = mode !== 'reset';
-      passwordField.closest('.field').hidden = mode === 'reset';
+      const passwordConfirmField = document.getElementById('authPasswordConfirm');
+      const passwordFieldWrap = document.getElementById('authPasswordField');
+      const passwordLabel = document.getElementById('authPasswordLabel');
+      const confirmLabel = document.getElementById('authPasswordConfirmLabel');
+      const isPasswordMode = mode === 'login' || mode === 'signup' || mode === 'recovery';
+
+      passwordField.required = isPasswordMode;
+      passwordConfirmField.required = mode === 'signup' || mode === 'recovery';
+      passwordFieldWrap.hidden = !isPasswordMode;
+      passwordField.autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+      passwordLabel.textContent = mode === 'recovery' ? t('authNewPasswordLabel') : t('authPasswordLabel');
+      confirmLabel.textContent = mode === 'recovery' ? t('authNewPasswordConfirmLabel') : t('authPasswordConfirmLabel');
 
       const submit = document.getElementById('authSubmitButton');
       if (mode === 'signup') submit.textContent = t('authSubmitSignup');
       else if (mode === 'reset') submit.textContent = t('authSubmitReset');
+      else if (mode === 'recovery') submit.textContent = t('authSubmitUpdatePassword');
       else submit.textContent = t('authSubmitLogin');
+
+      syncAuthPasswordValidation();
     }
 
     function getInitialAuthMode() {
@@ -4365,7 +4601,11 @@
         return 'signup';
       }
 
-      if (path.endsWith('/reset-password') || authParam === 'reset' || params.has('reset')) {
+      if (isRecoveryRoute()) {
+        return 'recovery';
+      }
+
+      if (authParam === 'reset' || params.has('reset')) {
         return 'reset';
       }
 
@@ -4663,34 +4903,48 @@
       }
 
       try {
+        if (authMode === 'recovery' && hasRecoveryUrlToken()) {
+          recoverySessionReady = true;
+          const code = new URLSearchParams(window.location.search).get('code');
+          if (code) {
+            await SweatManagerDB.exchangeCodeForSession(code);
+            cleanAuthUrl('/reset-password');
+          }
+        }
+
         const session = await SweatManagerDB.getSession();
-        if (session?.user) {
+        if (authMode === 'recovery') {
+          if (session?.user && recoverySessionReady) {
+            showAuthGate(t('authRecoveryReady'), 'success');
+          } else {
+            showAuthGate(t('authRecoveryInvalid'), 'error');
+          }
+        } else if (session?.user) {
           await handleSignedIn(session.user);
         } else {
           showAuthGate();
         }
       } catch (error) {
-        showAuthGate(error.message || String(error), 'error');
+        showAuthGate(friendlyAuthError(error), 'error');
       }
 
       SweatManagerDB.onAuthStateChange(async (event, session) => {
         if (event === 'PASSWORD_RECOVERY' && session?.user) {
-          const nextPassword = window.prompt(t('newPasswordPrompt'));
-          if (nextPassword && nextPassword.length >= 6) {
-            try {
-              await SweatManagerDB.updatePassword(nextPassword);
-              showToast(t('passwordUpdated'));
-            } catch (error) {
-              showToast(error.message || String(error), 'warning');
-            }
-          }
+          recoverySessionReady = true;
+          setAuthMode('recovery');
+          cleanAuthUrl('/reset-password');
+          showAuthGate(t('authRecoveryReady'), 'success');
+          return;
         }
 
         if (isBootstrapping && event === 'INITIAL_SESSION') return;
+        if (authMode === 'recovery') return;
         if (session?.user) {
           await handleSignedIn(session.user);
         } else {
-          await handleSignedOut();
+          const message = pendingSignedOutMessage;
+          pendingSignedOutMessage = '';
+          await handleSignedOut(message);
         }
       });
 
@@ -4706,6 +4960,7 @@
 
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value;
+      const passwordConfirm = document.getElementById('authPasswordConfirm').value;
       const gymName = document.getElementById('authGymName').value.trim();
       const ownerName = document.getElementById('authOwnerName').value.trim();
       const phone = document.getElementById('authGymPhone').value.trim();
@@ -4716,9 +4971,38 @@
             setAuthMessage(t('authNeedFields'), 'error');
             return;
           }
+          if (!isValidEmail(email)) {
+            setAuthMessage(t('authInvalidEmail'), 'error');
+            return;
+          }
           await SweatManagerDB.resetPassword(email);
           setAuthMessage(t('authResetSent'), 'success');
           showToast(t('authResetSent'));
+          return;
+        }
+
+        if (authMode === 'recovery') {
+          if (!recoverySessionReady) {
+            setAuthMessage(t('authRecoveryInvalid'), 'error');
+            return;
+          }
+          if (!password || !passwordConfirm) {
+            setAuthMessage(t('authNeedFields'), 'error');
+            return;
+          }
+          if (!syncAuthPasswordValidation()) {
+            setAuthMessage(getPasswordValidation().message, 'error');
+            return;
+          }
+
+          await SweatManagerDB.updatePassword(password);
+          pendingSignedOutMessage = t('passwordUpdated');
+          recoverySessionReady = false;
+          await SweatManagerDB.signOut();
+          cleanAuthUrl('/login');
+          setAuthMode('login');
+          showAuthGate(t('passwordUpdated'), 'success');
+          showToast(t('passwordUpdated'));
           return;
         }
 
@@ -4726,10 +5010,22 @@
           setAuthMessage(t('authNeedFields'), 'error');
           return;
         }
+        if (!isValidEmail(email)) {
+          setAuthMessage(t('authInvalidEmail'), 'error');
+          return;
+        }
 
         if (authMode === 'signup') {
           if (!gymName) {
             setAuthMessage(t('authNeedFields'), 'error');
+            return;
+          }
+          if (!passwordConfirm) {
+            setAuthMessage(t('authNeedFields'), 'error');
+            return;
+          }
+          if (!syncAuthPasswordValidation()) {
+            setAuthMessage(getPasswordValidation().message, 'error');
             return;
           }
           await SweatManagerDB.signUp({
@@ -4747,8 +5043,14 @@
         await SweatManagerDB.signIn(email, password);
         showToast(t('authLoginSuccess'));
       } catch (error) {
-        setAuthMessage(error.message || String(error), 'error');
-        showToast(error.message || String(error), 'warning');
+        const message = friendlyAuthError(
+          error,
+          authMode === 'reset'
+            ? 'authResetFailed'
+            : (authMode === 'recovery' ? 'authUpdatePasswordFailed' : 'authGenericError')
+        );
+        setAuthMessage(message, 'error');
+        showToast(message, 'warning');
       }
     }
 
@@ -5894,6 +6196,23 @@
       button.addEventListener('click', () => {
         setAuthMode(button.dataset.authTab);
         setAuthMessage('');
+      });
+    });
+
+    document.getElementById('forgotPasswordButton').addEventListener('click', () => {
+      setAuthMode('reset');
+      setAuthMessage('');
+      document.getElementById('authEmail').focus();
+    });
+
+    document.getElementById('authPassword').addEventListener('input', syncAuthPasswordValidation);
+    document.getElementById('authPasswordConfirm').addEventListener('input', syncAuthPasswordValidation);
+
+    document.querySelectorAll('[data-toggle-password]').forEach(button => {
+      button.addEventListener('click', () => {
+        const inputId = button.dataset.togglePassword;
+        const input = document.getElementById(inputId);
+        setPasswordVisibility(inputId, input?.type === 'password');
       });
     });
 
