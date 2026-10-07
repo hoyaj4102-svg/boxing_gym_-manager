@@ -100,11 +100,19 @@ begin
     return 0;
   end if;
 
-  if public.gym_has_pro_access(v_gym) then
-    return -1; -- unlimited
+  if v_gym.plan_code = 'pro'
+     and v_gym.subscription_status = 'active' then
+    return -1; -- paid Pro unlimited
   end if;
 
-  return coalesce(nullif(v_gym.member_limit, 0), 20);
+  if v_gym.plan_code = 'pro'
+     and v_gym.subscription_status = 'canceled'
+     and v_gym.current_period_end is not null
+     and v_gym.current_period_end > now() then
+    return -1; -- paid Pro remains available until period end
+  end if;
+
+  return 20;
 end;
 $$;
 
