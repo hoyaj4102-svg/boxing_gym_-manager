@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v24-auth-reset';
+const CACHE_VERSION = 'remember-v25-payment-history';
 const APP_SHELL = [
   '/',
   '/index.html',
