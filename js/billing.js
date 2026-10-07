@@ -138,6 +138,14 @@
     return normalizeSummary(data);
   }
 
+  async function fetchPaymentHistory(db) {
+    if (!db || !db.isReady()) throw new Error('Not authenticated');
+    const client = db.client();
+    const { data, error } = await client.rpc('get_payment_history');
+    if (error) throw error;
+    return Array.isArray(data) ? data : [];
+  }
+
   async function loadTossSdk() {
     if (global.TossPayments) return global.TossPayments;
     await new Promise((resolve, reject) => {
@@ -421,6 +429,7 @@
     limitLabel,
     statusLabel,
     fetchBillingSummary,
+    fetchPaymentHistory,
     startSubscribe,
     startCheckout,
     confirmTossFromUrl,
