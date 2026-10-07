@@ -6188,7 +6188,11 @@
           showToast(t('importDone'));
           refreshAll();
         } catch (error) {
-          showToast(error.message || t('importInvalid'), 'warning');
+          if (error?.code === 'MEMBER_LIMIT_REACHED' || error?.message === 'MEMBER_LIMIT_REACHED') {
+            showToast(t('memberLimitReached', { limit: error.limit || 20 }), 'warning');
+          } else {
+            showToast(error.message || t('importInvalid'), 'warning');
+          }
         } finally {
           isSaving = false;
         }

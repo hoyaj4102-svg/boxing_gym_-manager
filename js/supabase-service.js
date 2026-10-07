@@ -341,55 +341,29 @@
     return data;
   }
 
-  async function replaceAllMembers(memberList) {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+async function replaceAllMembers(memberList) {
+  if (!isReady()) throw new Error('로그인이 필요합니다.');
 
-    const gymId = getGymId();
+  const { error } = await STATE.client.rpc('restore_gym_members_from_json', {
+    p_members: memberList
+  });
 
-    const { error: deleteError } = await STATE.client
-      .from('members')
-      .delete()
-      .eq('gym_id', gymId);
+  if (error) {
+    if (String(error.message || '').includes('MEMBER_LIMIT_REACHED')) {
+      const err = new Error('MEMBER_LIMIT_REACHED');
+      err.code = 'MEMBER_LIMIT_REACHED';
 
-    if (deleteError) throw deleteError;
+      const match = String(error.message || '').match(/MEMBER_LIMIT_REACHED:(\d+)/);
+      if (match) err.limit = Number(match[1]);
 
-    if (!memberList.length) return [];
-
-    const inserts = memberList.map(m => memberToInsert(m, gymId));
-    const { data: created, error: insertError } = await STATE.client
-      .from('members')
-      .insert(inserts)
-      .select('*');
-
-    if (insertError) throw insertError;
-
-    const attendancePayload = [];
-    (created || []).forEach((row, index) => {
-      const source = memberList[index];
-      const records = Array.isArray(source?.attendance) ? source.attendance : [];
-      records.forEach(item => {
-        attendancePayload.push({
-          member_id: row.id,
-          gym_id: gymId,
-          attendance_date: item.visitDate || (item.date ? String(item.date).slice(0, 10) : null),
-          pt_used: item.ptDeducted === false ? 0 : (Number(item.ptUsed) > 0 ? Number(item.ptUsed) : 1),
-          created_at: item.date || new Date().toISOString()
-        });
-      });
-    });
-
-    if (attendancePayload.length) {
-      const valid = attendancePayload.filter(a => a.attendance_date);
-      if (valid.length) {
-        const { error: attendanceError } = await STATE.client
-          .from('attendance')
-          .insert(valid);
-        if (attendanceError) throw attendanceError;
-      }
+      throw err;
     }
 
-    return fetchMembers();
+    throw error;
   }
+
+  return fetchMembers();
+}
 
   async function migrateLocalMembers(localMembers) {
     if (!isReady()) throw new Error('로그인이 필요합니다.');
