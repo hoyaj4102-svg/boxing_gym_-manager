@@ -70,10 +70,12 @@ as $$
 declare
   v_ends timestamptz;
 begin
+  -- Legacy non-payment_attempt callers use this calendar-month fallback.
+  -- Toss BillingKey flows should activate via activate_payment_attempt().
   if p_interval = 'yearly' then
     v_ends := now() + interval '365 days';
   else
-    v_ends := now() + interval '30 days';
+    v_ends := public.billing_period_end(now(), 'monthly');
   end if;
 
   perform set_config('app.allow_billing_update', '1', true);
@@ -117,6 +119,7 @@ end;
 $$;
 
 revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb, boolean) from public;
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb, boolean) from anon, authenticated;
 grant execute on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb, boolean) to service_role;
 
 -- Keep backward-compatible 8-arg wrapper
@@ -149,6 +152,10 @@ begin
   );
 end;
 $$;
+
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) from public;
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) from anon, authenticated;
+grant execute on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) to service_role;
 
 create or replace function public.cancel_gym_subscription()
 returns jsonb

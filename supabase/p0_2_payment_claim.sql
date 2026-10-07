@@ -21,9 +21,9 @@
 --   target_period_end
 -- having count(*) > 1;
 --
--- The unique claim key below uses target_period_start because the existing
--- auto-renewal period end is intentionally calculated from the charge attempt
--- time and can differ between retrying workers.
+-- The unique claim key below uses target_period_start, the existing
+-- current_period_end anchor. target_period_end is derived from that anchor so
+-- late cron runs do not move the subscription schedule.
 --
 -- select
 --   gym_id,
@@ -127,7 +127,7 @@ as $$
       customer_key,
       billing_key_ref,
       target_period_start,
-      p_now + interval '30 days' as target_period_end,
+      public.billing_period_end(target_period_start, 'monthly') as target_period_end,
       coalesce(p_amount_krw, 10000) as amount_krw
     from locked_due_gyms
   ),
@@ -197,4 +197,5 @@ as $$
 $$;
 
 revoke all on function public.claim_due_toss_subscription_charges(timestamptz, integer, integer) from public;
+revoke all on function public.claim_due_toss_subscription_charges(timestamptz, integer, integer) from anon, authenticated;
 grant execute on function public.claim_due_toss_subscription_charges(timestamptz, integer, integer) to service_role;

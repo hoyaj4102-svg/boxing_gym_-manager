@@ -43,6 +43,9 @@ using (
 );
 
 -- Writes are done by Edge Functions with service role.
+-- Backward-compatible legacy wrapper. The implementation lives in
+-- monthly_billing.sql / p1_5_calendar_month_billing.sql so rerunning this file
+-- cannot overwrite the P1-5 calendar-month billing semantics.
 
 create or replace function public.activate_gym_pro(
   p_gym_id uuid,
@@ -59,52 +62,22 @@ language plpgsql
 security definer
 set search_path = public
 as $$
-declare
-  v_ends timestamptz;
 begin
-  if p_interval = 'yearly' then
-    v_ends := now() + interval '365 days';
-  else
-    v_ends := now() + interval '30 days';
-  end if;
-
-  update public.gyms
-  set
-    plan_code = 'pro',
-    member_limit = -1,
-    subscription_status = 'active',
-    current_period_end = v_ends,
-    billing_provider = p_provider,
-    billing_customer_id = coalesce(p_customer_id, billing_customer_id),
-    billing_subscription_id = coalesce(p_subscription_id, billing_subscription_id),
-    updated_at = now()
-  where id = p_gym_id;
-
-  insert into public.subscriptions (
-    gym_id,
-    plan_code,
-    status,
-    provider,
-    provider_ref,
-    amount_krw,
-    started_at,
-    ends_at,
-    raw
-  )
-  values (
+  perform public.activate_gym_pro(
     p_gym_id,
-    'pro',
-    'active',
     p_provider,
-    coalesce(p_provider_ref, p_subscription_id),
-    coalesce(p_amount_krw, 0),
-    now(),
-    v_ends,
-    coalesce(p_raw, '{}'::jsonb)
+    p_interval,
+    p_amount_krw,
+    p_customer_id,
+    p_subscription_id,
+    p_provider_ref,
+    p_raw,
+    true
   );
 end;
 $$;
 
 revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) from public;
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) from anon, authenticated;
 grant execute on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) to service_role;
 -- Only service role should call this from Edge Functions.

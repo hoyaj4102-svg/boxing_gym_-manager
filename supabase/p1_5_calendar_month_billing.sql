@@ -1,73 +1,19 @@
 -- =============================================================================
--- Durable payment attempt tracking + activation recovery
--- Run after monthly_billing.sql
+-- P1-5 calendar-month billing periods
+--
+-- Purpose:
+-- - Monthly billing uses PostgreSQL calendar-month arithmetic, not fixed 30 days.
+-- - Existing customer data is not updated by this script.
+-- - payment_attempt target_period_start/end are the source of truth for
+--   activation and recovery.
+--
+-- Run after:
+--   billing.sql
+--   checkout_sessions.sql
+--   monthly_billing.sql
+--   payment_attempts.sql
+--   p0_2_payment_claim.sql
 -- =============================================================================
-
-create table if not exists public.payment_attempts (
-  id uuid primary key default gen_random_uuid(),
-  gym_id uuid not null references public.gyms (id) on delete cascade,
-  user_id uuid references auth.users (id) on delete set null,
-  provider text not null check (provider in ('toss', 'stripe')),
-  payment_type text not null check (payment_type in ('initial_billing', 'auto_renewal', 'legacy_checkout')),
-  billing_interval text not null default 'monthly' check (billing_interval in ('monthly', 'yearly')),
-  amount_krw integer not null check (amount_krw >= 0),
-  currency text not null default 'KRW',
-  order_id text not null unique,
-  payment_key text unique,
-  customer_key text,
-  billing_key_ref text,
-  target_period_start timestamptz,
-  target_period_end timestamptz,
-  status text not null default 'initiated'
-    check (status in (
-      'initiated',
-      'auth_issued',
-      'charge_succeeded',
-      'activation_pending',
-      'completed',
-      'charge_failed',
-      'activation_failed',
-      'recovery_pending'
-    )),
-  activation_status text not null default 'not_started'
-    check (activation_status in ('not_started', 'pending', 'succeeded', 'failed')),
-  recovery_status text not null default 'none'
-    check (recovery_status in ('none', 'pending', 'completed', 'failed')),
-  error_code text,
-  error_message text,
-  provider_response jsonb not null default '{}'::jsonb,
-  activated_at timestamptz,
-  recovered_at timestamptz,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists payment_attempts_gym_created_idx
-  on public.payment_attempts (gym_id, created_at desc);
-
-create index if not exists payment_attempts_status_idx
-  on public.payment_attempts (status);
-
-create index if not exists payment_attempts_recovery_idx
-  on public.payment_attempts (recovery_status, status)
-  where status in ('activation_failed', 'recovery_pending');
-
-drop trigger if exists payment_attempts_set_updated_at on public.payment_attempts;
-create trigger payment_attempts_set_updated_at
-before update on public.payment_attempts
-for each row
-execute function public.set_updated_at();
-
-alter table public.payment_attempts enable row level security;
-
-drop policy if exists "Gym can view own payment attempts" on public.payment_attempts;
-create policy "Gym can view own payment attempts"
-on public.payment_attempts
-for select
-to authenticated
-using (gym_id = public.current_gym_id());
-
--- Writes and recovery are performed by service role Edge Functions / operators.
 
 create or replace function public.billing_period_end(
   p_period_start timestamptz,
@@ -124,6 +70,112 @@ $$;
 revoke all on function public.billing_period_bounds(text, timestamptz) from public;
 revoke all on function public.billing_period_bounds(text, timestamptz) from anon, authenticated;
 grant execute on function public.billing_period_bounds(text, timestamptz) to service_role;
+
+create or replace function public.activate_gym_pro(
+  p_gym_id uuid,
+  p_provider text,
+  p_interval text,
+  p_amount_krw integer default 0,
+  p_customer_id text default null,
+  p_subscription_id text default null,
+  p_provider_ref text default null,
+  p_raw jsonb default '{}'::jsonb,
+  p_auto_renew boolean default true
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_ends timestamptz;
+begin
+  -- Legacy non-payment_attempt callers (for example old one-time Toss flows)
+  -- use this calendar-month fallback. Toss BillingKey flows must activate via
+  -- activate_payment_attempt(), using stored target_period_start/end.
+  if p_interval = 'yearly' then
+    v_ends := now() + interval '365 days';
+  else
+    v_ends := public.billing_period_end(now(), 'monthly');
+  end if;
+
+  perform set_config('app.allow_billing_update', '1', true);
+
+  update public.gyms
+  set
+    plan_code = 'pro',
+    member_limit = -1,
+    subscription_status = 'active',
+    current_period_end = v_ends,
+    billing_provider = p_provider,
+    billing_customer_id = coalesce(p_customer_id, billing_customer_id),
+    billing_subscription_id = coalesce(p_subscription_id, billing_subscription_id),
+    auto_renew = coalesce(p_auto_renew, true),
+    updated_at = now()
+  where id = p_gym_id;
+
+  insert into public.subscriptions (
+    gym_id,
+    plan_code,
+    status,
+    provider,
+    provider_ref,
+    amount_krw,
+    started_at,
+    ends_at,
+    raw
+  )
+  values (
+    p_gym_id,
+    'pro',
+    'active',
+    p_provider,
+    coalesce(p_provider_ref, p_subscription_id),
+    coalesce(p_amount_krw, 0),
+    now(),
+    v_ends,
+    coalesce(p_raw, '{}'::jsonb)
+  );
+end;
+$$;
+
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb, boolean) from public;
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb, boolean) from anon, authenticated;
+grant execute on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb, boolean) to service_role;
+
+create or replace function public.activate_gym_pro(
+  p_gym_id uuid,
+  p_provider text,
+  p_interval text,
+  p_amount_krw integer default 0,
+  p_customer_id text default null,
+  p_subscription_id text default null,
+  p_provider_ref text default null,
+  p_raw jsonb default '{}'::jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.activate_gym_pro(
+    p_gym_id,
+    p_provider,
+    p_interval,
+    p_amount_krw,
+    p_customer_id,
+    p_subscription_id,
+    p_provider_ref,
+    p_raw,
+    true
+  );
+end;
+$$;
+
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) from public;
+revoke all on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) from anon, authenticated;
+grant execute on function public.activate_gym_pro(uuid, text, text, integer, text, text, text, jsonb) to service_role;
 
 create or replace function public.activate_payment_attempt_core(
   p_attempt_id uuid,
@@ -320,3 +372,130 @@ $$;
 revoke all on function public.recover_payment_attempt_activation(uuid) from public;
 revoke all on function public.recover_payment_attempt_activation(uuid) from anon, authenticated;
 grant execute on function public.recover_payment_attempt_activation(uuid) to service_role;
+
+create or replace function public.claim_due_toss_subscription_charges(
+  p_now timestamptz default now(),
+  p_limit integer default 50,
+  p_amount_krw integer default 10000
+)
+returns table (
+  payment_attempt_id uuid,
+  gym_id uuid,
+  user_id uuid,
+  order_id text,
+  customer_key text,
+  billing_key_ref text,
+  target_period_start timestamptz,
+  target_period_end timestamptz,
+  amount_krw integer
+)
+language sql
+security definer
+set search_path = public
+as $$
+  with locked_due_gyms as (
+    select
+      g.id as gym_id,
+      owner_profile.id as user_id,
+      g.billing_customer_id as customer_key,
+      g.billing_subscription_id as billing_key_ref,
+      g.current_period_end as target_period_start
+    from public.gyms g
+    left join lateral (
+      select p.id
+      from public.profiles p
+      where p.gym_id = g.id
+      order by p.created_at asc
+      limit 1
+    ) owner_profile on true
+    where g.billing_provider = 'toss'
+      and g.auto_renew = true
+      and g.subscription_status = 'active'
+      and g.billing_customer_id is not null
+      and g.billing_subscription_id is not null
+      and g.current_period_end is not null
+      and g.current_period_end <= p_now
+    order by g.current_period_end asc, g.id asc
+    limit greatest(least(coalesce(p_limit, 50), 100), 1)
+    for update of g skip locked
+  ),
+  claim_rows as (
+    select
+      gen_random_uuid() as payment_attempt_id,
+      gym_id,
+      user_id,
+      customer_key,
+      billing_key_ref,
+      target_period_start,
+      public.billing_period_end(target_period_start, 'monthly') as target_period_end,
+      coalesce(p_amount_krw, 10000) as amount_krw
+    from locked_due_gyms
+  ),
+  inserted_attempts as (
+    insert into public.payment_attempts (
+      id,
+      gym_id,
+      user_id,
+      provider,
+      payment_type,
+      billing_interval,
+      amount_krw,
+      currency,
+      order_id,
+      customer_key,
+      billing_key_ref,
+      target_period_start,
+      target_period_end,
+      status,
+      activation_status,
+      recovery_status,
+      provider_response
+    )
+    select
+      cr.payment_attempt_id,
+      cr.gym_id,
+      cr.user_id,
+      'toss',
+      'auto_renewal',
+      'monthly',
+      cr.amount_krw,
+      'KRW',
+      'toss_renew_' || replace(cr.payment_attempt_id::text, '-', ''),
+      cr.customer_key,
+      cr.billing_key_ref,
+      cr.target_period_start,
+      cr.target_period_end,
+      'initiated',
+      'not_started',
+      'none',
+      jsonb_build_object('mode', 'auto_renew_claim')
+    from claim_rows cr
+    on conflict do nothing
+    returning
+      id,
+      gym_id,
+      user_id,
+      order_id,
+      customer_key,
+      billing_key_ref,
+      target_period_start,
+      target_period_end,
+      amount_krw
+  )
+  select
+    ia.id as payment_attempt_id,
+    ia.gym_id,
+    ia.user_id,
+    ia.order_id,
+    ia.customer_key,
+    ia.billing_key_ref,
+    ia.target_period_start,
+    ia.target_period_end,
+    ia.amount_krw
+  from inserted_attempts ia
+  order by ia.target_period_start asc, ia.gym_id asc;
+$$;
+
+revoke all on function public.claim_due_toss_subscription_charges(timestamptz, integer, integer) from public;
+revoke all on function public.claim_due_toss_subscription_charges(timestamptz, integer, integer) from anon, authenticated;
+grant execute on function public.claim_due_toss_subscription_charges(timestamptz, integer, integer) to service_role;

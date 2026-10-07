@@ -63,6 +63,62 @@ using (gym_id = public.current_gym_id());
 
 -- Inserts/updates come from service role (Edge Function / webhook), not the browser.
 
+create or replace function public.billing_period_end(
+  p_period_start timestamptz,
+  p_interval text
+)
+returns timestamptz
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if p_period_start is null then
+    raise exception 'PERIOD_START_REQUIRED';
+  end if;
+
+  if p_interval = 'monthly' then
+    return p_period_start + interval '1 month';
+  end if;
+
+  if p_interval = 'yearly' then
+    -- Keep the existing yearly semantics unchanged for P1-5.
+    return p_period_start + interval '365 days';
+  end if;
+
+  raise exception 'UNSUPPORTED_BILLING_INTERVAL:%', p_interval;
+end;
+$$;
+
+revoke all on function public.billing_period_end(timestamptz, text) from public;
+revoke all on function public.billing_period_end(timestamptz, text) from anon, authenticated;
+grant execute on function public.billing_period_end(timestamptz, text) to service_role;
+
+create or replace function public.billing_period_bounds(
+  p_interval text default 'monthly',
+  p_period_start timestamptz default null
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_period_start timestamptz := coalesce(p_period_start, now());
+begin
+  return jsonb_build_object(
+    'period_start', v_period_start,
+    'period_end', public.billing_period_end(v_period_start, p_interval)
+  );
+end;
+$$;
+
+revoke all on function public.billing_period_bounds(text, timestamptz) from public;
+revoke all on function public.billing_period_bounds(text, timestamptz) from anon, authenticated;
+grant execute on function public.billing_period_bounds(text, timestamptz) to service_role;
+
 -- -----------------------------------------------------------------------------
 -- 3) Effective plan helper
 --    - trialing + trial not ended => pro (unlimited)

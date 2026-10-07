@@ -66,12 +66,6 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-function nextMonthlyPeriodEnd() {
-  const date = new Date();
-  date.setDate(date.getDate() + 30);
-  return date.toISOString();
-}
-
 async function updatePaymentAttempt(
   admin: ReturnType<typeof getAdminClient>,
   attemptId: string | null,
@@ -90,46 +84,48 @@ async function updatePaymentAttempt(
   }
 }
 
-async function activateGymProWithFallback(
+async function monthlyBillingPeriod(
   admin: ReturnType<typeof getAdminClient>,
-  params: {
-    gymId: string;
-    customerKey: string;
-    billingKey: string;
-    paymentKey: string;
-    charged: Record<string, unknown>;
-  }
-) {
-  const rpcPayload = {
-    p_gym_id: params.gymId,
-    p_provider: 'toss',
-    p_interval: 'monthly',
-    p_amount_krw: AMOUNT_KRW,
-    p_customer_id: params.customerKey,
-    p_subscription_id: params.billingKey,
-    p_provider_ref: params.paymentKey,
-    p_raw: params.charged
-  };
-
-  const { error: activateError } = await admin.rpc('activate_gym_pro', {
-    ...rpcPayload,
-    p_auto_renew: true
+): Promise<{ periodStart: string; periodEnd: string }> {
+  const { data, error } = await admin.rpc('billing_period_bounds', {
+    p_interval: 'monthly'
   });
 
-  if (!activateError) return null;
+  if (error) throw new Error(error.message);
 
-  if (String(activateError.message || '').includes('p_auto_renew') ||
-      String(activateError.message || '').includes('Could not find')) {
-    const { error: fallbackError } = await admin.rpc('activate_gym_pro', rpcPayload);
-    if (fallbackError) return fallbackError;
-    await admin
-      .from('gyms')
-      .update({ auto_renew: true, updated_at: new Date().toISOString() })
-      .eq('id', params.gymId);
-    return null;
+  const period = data && typeof data === 'object'
+    ? data as Record<string, unknown>
+    : {};
+  const periodStart = typeof period.period_start === 'string' ? period.period_start : '';
+  const periodEnd = typeof period.period_end === 'string' ? period.period_end : '';
+
+  if (!periodStart || !periodEnd) {
+    throw new Error('BILLING_PERIOD_BOUNDS_INVALID');
   }
 
-  return activateError;
+  return { periodStart, periodEnd };
+}
+
+async function activatePaymentAttempt(
+  admin: ReturnType<typeof getAdminClient>,
+  attemptId: string | null
+) {
+  if (!attemptId) throw new Error('PAYMENT_ATTEMPT_ID_REQUIRED');
+
+  const { data, error } = await admin.rpc('activate_payment_attempt', {
+    p_attempt_id: attemptId
+  });
+
+  if (error) return error;
+
+  const result = data && typeof data === 'object'
+    ? data as Record<string, unknown>
+    : {};
+  if (result.ok === false) {
+    return new Error(String(result.error_message || result.error_code || 'Activation failed'));
+  }
+
+  return null;
 }
 
 async function tossPost(path: string, body: Record<string, unknown>) {
@@ -202,6 +198,8 @@ Deno.serve(async (req) => {
     const orderId = `toss_bill_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
     let paymentAttemptId: string | null = null;
 
+    const { periodStart, periodEnd } = await monthlyBillingPeriod(admin);
+
     const { data: paymentAttempt, error: attemptError } = await admin
       .from('payment_attempts')
       .insert({
@@ -214,8 +212,8 @@ Deno.serve(async (req) => {
         currency: 'KRW',
         order_id: orderId,
         customer_key: customerKey,
-        target_period_start: new Date().toISOString(),
-        target_period_end: nextMonthlyPeriodEnd(),
+        target_period_start: periodStart,
+        target_period_end: periodEnd,
         status: 'initiated',
         activation_status: 'not_started',
         recovery_status: 'none',
@@ -317,13 +315,7 @@ Deno.serve(async (req) => {
       provider_response: sanitizeTossPayload(charged)
     });
 
-    const activateError = await activateGymProWithFallback(admin, {
-      gymId,
-      customerKey,
-      billingKey,
-      paymentKey,
-      charged
-    });
+    const activateError = await activatePaymentAttempt(admin, paymentAttemptId);
 
     if (activateError) {
       await updatePaymentAttempt(admin, paymentAttemptId, {

@@ -97,46 +97,24 @@ async function updatePaymentAttempt(
   }
 }
 
-async function activateGymProWithFallback(
+async function activatePaymentAttempt(
   admin: ReturnType<typeof getAdminClient>,
-  params: {
-    gymId: string;
-    customerKey: string;
-    billingKey: string;
-    paymentKey: string;
-    charged: Record<string, unknown>;
-  }
+  attemptId: string
 ) {
-  const rpcPayload = {
-    p_gym_id: params.gymId,
-    p_provider: 'toss',
-    p_interval: 'monthly',
-    p_amount_krw: AMOUNT_KRW,
-    p_customer_id: params.customerKey,
-    p_subscription_id: params.billingKey,
-    p_provider_ref: params.paymentKey,
-    p_raw: params.charged
-  };
-
-  const { error: activateError } = await admin.rpc('activate_gym_pro', {
-    ...rpcPayload,
-    p_auto_renew: true
+  const { data, error } = await admin.rpc('activate_payment_attempt', {
+    p_attempt_id: attemptId
   });
 
-  if (!activateError) return null;
+  if (error) return error;
 
-  const message = String(activateError.message || '');
-  if (message.includes('p_auto_renew') || message.includes('Could not find')) {
-    const { error: fallbackError } = await admin.rpc('activate_gym_pro', rpcPayload);
-    if (fallbackError) return fallbackError;
-    await admin
-      .from('gyms')
-      .update({ auto_renew: true, updated_at: new Date().toISOString() })
-      .eq('id', params.gymId);
-    return null;
+  const result = data && typeof data === 'object'
+    ? data as Record<string, unknown>
+    : {};
+  if (result.ok === false) {
+    return new Error(String(result.error_message || result.error_code || 'Activation failed'));
   }
 
-  return activateError;
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -280,13 +258,7 @@ if (trialCleanupError) {
           raw: { mode: 'auto_renew', ...charged }
         });
 
-        const activateError = await activateGymProWithFallback(admin, {
-          gymId,
-          customerKey,
-          billingKey,
-          paymentKey,
-          charged
-        });
+        const activateError = await activatePaymentAttempt(admin, paymentAttemptId);
 
         if (activateError) {
           await updatePaymentAttempt(admin, paymentAttemptId, {

@@ -186,7 +186,7 @@ begin
       'p0_2_duplicate_customer',
       'p0_2_duplicate_billing_key',
       v_target_period_start,
-      v_target_period_start + interval '30 days',
+      public.billing_period_end(v_target_period_start, 'monthly'),
       'initiated',
       'not_started',
       'none',
