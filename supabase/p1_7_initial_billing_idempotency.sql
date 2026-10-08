@@ -91,7 +91,10 @@ begin
     and not (
       pa.payment_key is null
       and pa.recovery_status = 'completed'
-      and pa.provider_response #>> '{initial_reconciliation,result}' = 'confirmed_no_payment'
+      and coalesce(
+        pa.provider_response #>> '{initial_reconciliation,result}',
+        ''
+      ) = 'confirmed_no_payment'
     )
     and (
       pa.recovery_status = 'failed'
