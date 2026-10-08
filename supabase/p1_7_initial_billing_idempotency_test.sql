@@ -73,7 +73,7 @@ cross join lateral (
     (ctx.activation_failed_gym_id, 'P1-7 Activation Failed Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.completed_gym_id, 'P1-7 Completed Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.active_gym_id, 'P1-7 Active Gym', 'pro', -1, 'active', ctx.period_end, 'toss', ctx.customer_key, 'p1_7_billing_key_active', true),
-    (ctx.canceled_entitled_gym_id, 'P1-7 Canceled Entitled Gym', 'pro', -1, 'canceled', ctx.period_end, 'toss', ctx.customer_key, 'p1_7_billing_key_canceled', false),
+    (ctx.canceled_entitled_gym_id, 'P1-7 Canceled Entitled Gym', 'pro', -1, 'canceled', now() + interval '30 days', 'toss', ctx.customer_key, 'p1_7_billing_key_canceled', false),
     (ctx.charge_failed_gym_id, 'P1-7 Charge Failed Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.binding_gym_id, 'P1-7 Binding Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false)
 ) as g(gym_id, name, plan_code, member_limit, subscription_status, current_period_end, billing_provider, billing_customer_id, billing_subscription_id, auto_renew);
