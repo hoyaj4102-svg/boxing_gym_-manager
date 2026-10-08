@@ -304,41 +304,6 @@ cross join lateral public.claim_initial_billing_attempt(ctx.active_gym_id, pg_te
 
 insert into p1_7_test_results
 select
-  'DEBUG TEST 10: canceled entitlement guard inputs',
-  'DEBUG',
-  jsonb_build_object(
-    'plan_code', g.plan_code,
-    'subscription_status', g.subscription_status,
-    'current_period_end', g.current_period_end,
-    'now', now(),
-    'current_period_end_gt_now', g.current_period_end > now(),
-    'billing_provider', g.billing_provider,
-    'billing_customer_id', g.billing_customer_id,
-    'test_customer_key', ctx.customer_key,
-    'billing_customer_id_eq_test_customer_key', g.billing_customer_id = ctx.customer_key,
-    'billing_subscription_id', g.billing_subscription_id,
-    'billing_subscription_id_is_not_null', g.billing_subscription_id is not null,
-    'auto_renew', g.auto_renew,
-    'paid_entitlement_guard', (
-      g.plan_code = 'pro'
-      and g.billing_provider = 'toss'
-      and g.billing_customer_id = ctx.customer_key
-      and g.billing_subscription_id is not null
-      and (
-        (g.subscription_status = 'active' and g.auto_renew = true)
-        or (
-          g.subscription_status = 'canceled'
-          and g.current_period_end is not null
-          and g.current_period_end > now()
-        )
-      )
-    )
-  )::text
-from p1_7_context ctx
-join public.gyms g on g.id = ctx.canceled_entitled_gym_id;
-
-insert into p1_7_test_results
-select
   'TEST 10: canceled paid entitlement returns already_completed',
   case when r.result->>'action' = 'already_completed'
          and r.result->>'can_charge' = 'false'
