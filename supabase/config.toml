@@ -16,5 +16,8 @@ verify_jwt = false
 [functions.reconcile-auto-renewal-payments]
 verify_jwt = false
 
+[functions.reconcile-initial-billing-payments]
+verify_jwt = false
+
 [functions.toss-webhook]
 verify_jwt = false
