@@ -4481,6 +4481,7 @@
     let billingSummary = null;
     let paymentHistoryRows = [];
     let paymentHistoryState = 'idle';
+    let isSubscribing = false;
     let installGuidePlatform = 'iphone';
     let installGuideStep = 0;
     let installGuideOpenedManually = false;
@@ -5490,6 +5491,13 @@
 
     async function handleSubscribe() {
       if (!requireAuth()) return;
+      if (isSubscribing) return;
+      const subscribeButton = document.getElementById('subscribeButton');
+      isSubscribing = true;
+      if (subscribeButton) {
+        subscribeButton.disabled = true;
+        subscribeButton.textContent = t('billingTossOpening');
+      }
       try {
         if (billingSummary?.canResume) {
           if (!confirm(t('resumeSubscriptionConfirm'))) return;
@@ -5509,6 +5517,18 @@
         }
       } catch (error) {
         showToast(error.message || String(error), 'warning');
+      } finally {
+        isSubscribing = false;
+        if (subscribeButton) {
+          const isSubscribedAuto =
+            billingSummary?.hasPro &&
+            billingSummary?.subscriptionStatus === 'active' &&
+            billingSummary?.autoRenew;
+          subscribeButton.textContent = billingSummary?.canResume
+            ? t('resumeSubscriptionButton')
+            : t('subscribeButton');
+          subscribeButton.disabled = Boolean(isSubscribedAuto);
+        }
       }
     }
 

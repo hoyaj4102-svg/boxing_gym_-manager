@@ -66,6 +66,11 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function claimValue(claim: Record<string, unknown>, key: string) {
+  const value = claim[key];
+  return typeof value === 'string' ? value : '';
+}
+
 async function updatePaymentAttempt(
   admin: ReturnType<typeof getAdminClient>,
   attemptId: string | null,
@@ -84,26 +89,20 @@ async function updatePaymentAttempt(
   }
 }
 
-async function monthlyBillingPeriod(
+async function updatePaymentAttemptRequired(
   admin: ReturnType<typeof getAdminClient>,
-): Promise<{ periodStart: string; periodEnd: string }> {
-  const { data, error } = await admin.rpc('billing_period_bounds', {
-    p_interval: 'monthly'
-  });
-
-  if (error) throw new Error(error.message);
-
-  const period = data && typeof data === 'object'
-    ? data as Record<string, unknown>
-    : {};
-  const periodStart = typeof period.period_start === 'string' ? period.period_start : '';
-  const periodEnd = typeof period.period_end === 'string' ? period.period_end : '';
-
-  if (!periodStart || !periodEnd) {
-    throw new Error('BILLING_PERIOD_BOUNDS_INVALID');
+  attemptId: string | null,
+  values: Record<string, unknown>,
+  errorCode: string
+) {
+  if (!attemptId) throw new Error('PAYMENT_ATTEMPT_ID_REQUIRED');
+  const { error } = await admin
+    .from('payment_attempts')
+    .update(values)
+    .eq('id', attemptId);
+  if (error) {
+    throw new Error(`${errorCode}: ${error.message}`);
   }
-
-  return { periodStart, periodEnd };
 }
 
 async function activatePaymentAttempt(
@@ -123,6 +122,28 @@ async function activatePaymentAttempt(
     : {};
   if (result.ok === false) {
     return new Error(String(result.error_message || result.error_code || 'Activation failed'));
+  }
+
+  return null;
+}
+
+async function recoverPaymentAttemptActivation(
+  admin: ReturnType<typeof getAdminClient>,
+  attemptId: string | null
+) {
+  if (!attemptId) throw new Error('PAYMENT_ATTEMPT_ID_REQUIRED');
+
+  const { data, error } = await admin.rpc('recover_payment_attempt_activation', {
+    p_attempt_id: attemptId
+  });
+
+  if (error) return error;
+
+  const result = data && typeof data === 'object'
+    ? data as Record<string, unknown>
+    : {};
+  if (result.ok === false) {
+    return new Error(String(result.error_message || result.error_code || 'Recovery failed'));
   }
 
   return null;
@@ -174,63 +195,96 @@ Deno.serve(async (req) => {
       return textResponse('Invalid customerKey', 400);
     }
 
-    // Idempotency: if already active with this customer key and auto_renew, skip re-issue
-    const { data: gym } = await admin
-      .from('gyms')
-      .select('id, name, subscription_status, billing_customer_id, billing_subscription_id, auto_renew')
-      .eq('id', gymId)
-      .maybeSingle();
+    const { data: claimData, error: claimError } = await admin.rpc(
+      'claim_initial_billing_attempt',
+      {
+        p_gym_id: gymId,
+        p_user_id: user.id,
+        p_customer_key: customerKey,
+        p_amount_krw: AMOUNT_KRW
+      }
+    );
 
-    if (
-      gym?.subscription_status === 'active' &&
-      gym?.auto_renew === true &&
-      gym?.billing_customer_id === customerKey &&
-      gym?.billing_subscription_id
-    ) {
+    if (claimError) {
+      return textResponse(claimError.message, 500);
+    }
+
+    const claim = claimData && typeof claimData === 'object'
+      ? claimData as Record<string, unknown>
+      : {};
+    const action = claimValue(claim, 'action') || 'processing';
+    const canCharge = claim.can_charge === true;
+    const paymentAttemptId = claimValue(claim, 'payment_attempt_id') || null;
+    const orderId = claimValue(claim, 'order_id');
+    const gymName = claimValue(claim, 'gym_name');
+
+    if (action === 'already_completed') {
       return jsonResponse({
         ok: true,
         alreadyActive: true,
         gymId,
-        interval: 'monthly'
+        interval: 'monthly',
+        paymentAttemptId,
+        orderId: orderId || undefined
       });
     }
 
-    const orderId = `toss_bill_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
-    let paymentAttemptId: string | null = null;
+    if (action === 'needs_recovery') {
+      const recoveryError = await recoverPaymentAttemptActivation(admin, paymentAttemptId);
+      if (!recoveryError) {
+        return jsonResponse({
+          ok: true,
+          provider: 'toss',
+          gymId,
+          orderId,
+          interval: 'monthly',
+          paymentAttemptId,
+          recovered: true
+        });
+      }
 
-    const { periodStart, periodEnd } = await monthlyBillingPeriod(admin);
+      return jsonResponse({
+        ok: false,
+        action,
+        canCharge: false,
+        paymentAttemptId,
+        orderId,
+        message: recoveryError.message || 'INITIAL_BILLING_RECOVERY_PENDING'
+      }, 409);
+    }
 
-    const { data: paymentAttempt, error: attemptError } = await admin
-      .from('payment_attempts')
-      .insert({
-        gym_id: gymId,
-        user_id: user.id,
-        provider: 'toss',
-        payment_type: 'initial_billing',
-        billing_interval: 'monthly',
-        amount_krw: AMOUNT_KRW,
-        currency: 'KRW',
-        order_id: orderId,
-        customer_key: customerKey,
-        target_period_start: periodStart,
-        target_period_end: periodEnd,
-        status: 'initiated',
+    if (!canCharge) {
+      return jsonResponse({
+        ok: false,
+        action,
+        canCharge: false,
+        paymentAttemptId,
+        orderId,
+        message: action === 'do_not_charge'
+          ? 'INITIAL_BILLING_DO_NOT_CHARGE'
+          : 'INITIAL_BILLING_PROCESSING'
+      }, 409);
+    }
+
+    if (!paymentAttemptId || !orderId) {
+      return textResponse('INITIAL_BILLING_CLAIM_INVALID', 500);
+    }
+
+    let issued;
+    try {
+      issued = await tossPost('/v1/billing/authorizations/issue', {
+        authKey,
+        customerKey
+      });
+    } catch (issueError) {
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: 'charge_failed',
         activation_status: 'not_started',
         recovery_status: 'none',
-        provider_response: { mode: 'billing_auth_start' }
-      })
-      .select('id')
-      .single();
-
-    if (attemptError) {
-      return textResponse(attemptError.message, 500);
+        error_message: errorMessage(issueError)
+      });
+      throw issueError;
     }
-    paymentAttemptId = paymentAttempt.id;
-
-    const issued = await tossPost('/v1/billing/authorizations/issue', {
-      authKey,
-      customerKey
-    });
 
     const billingKey = String(issued.billingKey || '');
     if (!billingKey) {
@@ -286,7 +340,7 @@ Deno.serve(async (req) => {
         orderId,
         orderName: 're;member Pro 월간 구독',
         customerEmail: user.email || undefined,
-        customerName: gym?.name || undefined
+        customerName: gymName || user.email || undefined
       });
     } catch (chargeError) {
       await admin
@@ -307,13 +361,13 @@ Deno.serve(async (req) => {
 
     const paymentKey = String(charged.paymentKey || orderId);
 
-    await updatePaymentAttempt(admin, paymentAttemptId, {
-      status: 'activation_pending',
+    await updatePaymentAttemptRequired(admin, paymentAttemptId, {
+      status: 'charge_succeeded',
       activation_status: 'pending',
       recovery_status: 'none',
       payment_key: paymentKey,
       provider_response: sanitizeTossPayload(charged)
-    });
+    }, 'PAYMENT_ATTEMPT_DURABLE_CHARGE_UPDATE_FAILED');
 
     const activateError = await activatePaymentAttempt(admin, paymentAttemptId);
 
