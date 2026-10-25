@@ -3,6 +3,8 @@
 -- Run after p0_2_payment_claim.sql
 -- =============================================================================
 
+drop function if exists public.claim_stale_auto_renewal_reconciliation_attempts(timestamptz, integer);
+
 create or replace function public.claim_stale_auto_renewal_reconciliation_attempts(
   p_stale_before timestamptz,
   p_limit integer default 50
@@ -14,6 +16,11 @@ returns table (
   amount_krw integer,
   customer_key text,
   billing_key_ref text,
+  status text,
+  activation_status text,
+  recovery_status text,
+  payment_key text,
+  reconciliation_action text,
   target_period_start timestamptz,
   target_period_end timestamptz,
   created_at timestamptz,
@@ -28,14 +35,22 @@ as $$
     from public.payment_attempts pa
     where pa.provider = 'toss'
       and pa.payment_type = 'auto_renewal'
-      and pa.status = 'initiated'
-      and pa.payment_key is null
-      and pa.created_at <= p_stale_before
-      and pa.recovery_status in ('none', 'pending')
       and (
-        pa.recovery_status = 'none'
-        or pa.updated_at <= p_stale_before
+        (
+          pa.status in ('initiated', 'charge_failed')
+          and pa.payment_key is null
+        )
+        or (
+          pa.status in ('activation_pending', 'activation_failed', 'recovery_pending', 'charge_succeeded')
+          and pa.payment_key is not null
+        )
       )
+      and not (
+        pa.status = 'completed'
+        and pa.activation_status = 'succeeded'
+      )
+      and pa.updated_at <= p_stale_before
+      and pa.recovery_status in ('none', 'pending')
     order by pa.created_at asc, pa.id asc
     limit greatest(least(coalesce(p_limit, 50), 50), 1)
     for update skip locked
@@ -61,6 +76,14 @@ as $$
     pa.amount_krw,
     pa.customer_key,
     pa.billing_key_ref,
+    pa.status,
+    pa.activation_status,
+    pa.recovery_status,
+    pa.payment_key,
+    case
+      when pa.status in ('initiated', 'charge_failed') and pa.payment_key is null then 'lookup_required'
+      else 'recovery_only'
+    end as reconciliation_action,
     pa.target_period_start,
     pa.target_period_end,
     pa.created_at,
@@ -68,4 +91,5 @@ as $$
 $$;
 
 revoke all on function public.claim_stale_auto_renewal_reconciliation_attempts(timestamptz, integer) from public;
+revoke all on function public.claim_stale_auto_renewal_reconciliation_attempts(timestamptz, integer) from anon, authenticated;
 grant execute on function public.claim_stale_auto_renewal_reconciliation_attempts(timestamptz, integer) to service_role;
