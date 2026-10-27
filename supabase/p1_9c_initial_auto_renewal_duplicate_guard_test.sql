@@ -25,6 +25,7 @@ create temp table p1_9c_context (
   auto_activation_failed_gym_id uuid not null,
   auto_recovery_pending_gym_id uuid not null,
   auto_completed_gym_id uuid not null,
+  both_initial_auto_gym_id uuid not null,
   customer_key text not null,
   period_start timestamptz not null,
   expired_period_end timestamptz not null,
@@ -33,6 +34,7 @@ create temp table p1_9c_context (
 
 insert into p1_9c_context
 values (
+  gen_random_uuid(),
   gen_random_uuid(),
   gen_random_uuid(),
   gen_random_uuid(),
@@ -90,7 +92,8 @@ cross join lateral (
     (ctx.auto_activation_pending_gym_id, 'P1-9C Auto Activation Pending Gym', 'past_due', ctx.expired_period_end, 'p1_9c_billing_key_activation_pending', false),
     (ctx.auto_activation_failed_gym_id, 'P1-9C Auto Activation Failed Gym', 'past_due', ctx.expired_period_end, 'p1_9c_billing_key_activation_failed', false),
     (ctx.auto_recovery_pending_gym_id, 'P1-9C Auto Recovery Pending Gym', 'past_due', ctx.expired_period_end, 'p1_9c_billing_key_recovery_pending', false),
-    (ctx.auto_completed_gym_id, 'P1-9C Auto Completed Historical Gym', 'expired', ctx.expired_period_end, 'p1_9c_billing_key_completed', false)
+    (ctx.auto_completed_gym_id, 'P1-9C Auto Completed Historical Gym', 'expired', ctx.expired_period_end, 'p1_9c_billing_key_completed', false),
+    (ctx.both_initial_auto_gym_id, 'P1-9C Both Initial And Auto Gym', 'past_due', ctx.expired_period_end, 'p1_9c_billing_key_both', false)
 ) as g(gym_id, name, subscription_status, current_period_end, billing_key_ref, auto_renew);
 
 create temp table p1_9c_gym_users on commit drop as
@@ -108,7 +111,8 @@ cross join lateral (
     (ctx.auto_activation_pending_gym_id),
     (ctx.auto_activation_failed_gym_id),
     (ctx.auto_recovery_pending_gym_id),
-    (ctx.auto_completed_gym_id)
+    (ctx.auto_completed_gym_id),
+    (ctx.both_initial_auto_gym_id)
 ) as g(gym_id);
 
 insert into auth.users (
@@ -204,8 +208,50 @@ cross join lateral (
     (ctx.auto_activation_pending_gym_id, 'p1_9c_auto_activation_pending_order', 'p1_9c_billing_key_activation_pending', 'p1_9c_payment_activation_pending', 'activation_pending', 'pending', 'none'),
     (ctx.auto_activation_failed_gym_id, 'p1_9c_auto_activation_failed_order', 'p1_9c_billing_key_activation_failed', 'p1_9c_payment_activation_failed', 'activation_failed', 'failed', 'pending'),
     (ctx.auto_recovery_pending_gym_id, 'p1_9c_auto_recovery_pending_order', 'p1_9c_billing_key_recovery_pending', 'p1_9c_payment_recovery_pending', 'recovery_pending', 'pending', 'pending'),
-    (ctx.auto_completed_gym_id, 'p1_9c_auto_completed_order', 'p1_9c_billing_key_completed', 'p1_9c_payment_completed', 'completed', 'succeeded', 'none')
+    (ctx.auto_completed_gym_id, 'p1_9c_auto_completed_order', 'p1_9c_billing_key_completed', 'p1_9c_payment_completed', 'completed', 'succeeded', 'none'),
+    (ctx.both_initial_auto_gym_id, 'p1_9c_auto_both_order', 'p1_9c_billing_key_both', 'p1_9c_payment_auto_both', 'activation_pending', 'pending', 'pending')
 ) as pa(gym_id, order_id, billing_key_ref, payment_key, attempt_status, activation_status, recovery_status);
+
+insert into public.payment_attempts (
+  id,
+  gym_id,
+  user_id,
+  provider,
+  payment_type,
+  billing_interval,
+  amount_krw,
+  currency,
+  order_id,
+  customer_key,
+  billing_key_ref,
+  payment_key,
+  target_period_start,
+  target_period_end,
+  status,
+  activation_status,
+  recovery_status,
+  provider_response
+)
+select
+  gen_random_uuid(),
+  ctx.both_initial_auto_gym_id,
+  pg_temp.p1_9c_user_for(ctx.both_initial_auto_gym_id),
+  'toss',
+  'initial_billing',
+  'monthly',
+  10000,
+  'KRW',
+  'p1_9c_initial_both_order',
+  ctx.customer_key,
+  'p1_9c_initial_billing_key_both',
+  'p1_9c_payment_initial_both',
+  ctx.period_start,
+  ctx.expired_period_end,
+  'activation_pending',
+  'pending',
+  'pending',
+  '{}'::jsonb
+from p1_9c_context ctx;
 
 insert into p1_9c_test_results
 select
@@ -312,7 +358,18 @@ cross join lateral public.claim_initial_billing_attempt(ctx.auto_recovery_pendin
 
 insert into p1_9c_test_results
 select
-  'TEST 11: completed auto_renewal attempt does not block expired auto_renew false gym',
+  'TEST 11: auto_renewal is prioritized when initial_billing and auto_renewal are both unresolved',
+  case when r.result->>'action' = 'needs_recovery'
+         and r.result->>'payment_type' = 'auto_renewal'
+         and r.result->>'can_charge' = 'false'
+       then 'PASS' else 'FAIL' end,
+  r.result::text
+from p1_9c_context ctx
+cross join lateral public.claim_initial_billing_attempt(ctx.both_initial_auto_gym_id, pg_temp.p1_9c_user_for(ctx.both_initial_auto_gym_id), ctx.customer_key, 10000) r(result);
+
+insert into p1_9c_test_results
+select
+  'TEST 12: completed auto_renewal attempt does not block expired auto_renew false gym',
   case when r.result->>'action' = 'charge'
          and r.result->>'can_charge' = 'true'
        then 'PASS' else 'FAIL' end,
