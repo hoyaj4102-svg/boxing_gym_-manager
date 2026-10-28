@@ -18,6 +18,7 @@ as $$
 declare
   v_gym public.gyms%rowtype;
   v_attempt public.payment_attempts%rowtype;
+  v_auto_renewal_attempt public.payment_attempts%rowtype;
   v_attempt_id uuid;
   v_order_id text;
   v_period jsonb;
@@ -61,15 +62,14 @@ begin
   end if;
 
   if v_gym.plan_code = 'pro'
-     and v_gym.billing_provider = 'toss'
-     and v_gym.billing_customer_id = p_customer_key
-     and v_gym.billing_subscription_id is not null
      and (
-       (v_gym.subscription_status = 'active' and v_gym.auto_renew = true)
-       or (
-         v_gym.subscription_status = 'canceled'
-         and v_gym.current_period_end is not null
+       (
+         v_gym.current_period_end is not null
          and v_gym.current_period_end > now()
+       )
+       or (
+         v_gym.subscription_status = 'active'
+         and v_gym.auto_renew = true
        )
      ) then
     return jsonb_build_object(
@@ -79,6 +79,57 @@ begin
       'already_completed', true,
       'gym_id', v_gym.id,
       'gym_name', v_gym.name
+    );
+  end if;
+
+  select *
+  into v_auto_renewal_attempt
+  from public.payment_attempts pa
+  where pa.gym_id = p_gym_id
+    and pa.provider = 'toss'
+    and pa.payment_type = 'auto_renewal'
+    and pa.status in (
+      'initiated',
+      'charge_failed',
+      'charge_succeeded',
+      'activation_pending',
+      'activation_failed',
+      'recovery_pending'
+    )
+  order by pa.created_at desc, pa.id desc
+  limit 1
+  for update;
+
+  if found then
+    if v_auto_renewal_attempt.status in ('charge_succeeded', 'activation_pending', 'activation_failed', 'recovery_pending')
+       and v_auto_renewal_attempt.payment_key is not null then
+      return jsonb_build_object(
+        'ok', true,
+        'action', 'needs_recovery',
+        'can_charge', false,
+        'payment_attempt_id', v_auto_renewal_attempt.id,
+        'order_id', v_auto_renewal_attempt.order_id,
+        'payment_type', v_auto_renewal_attempt.payment_type,
+        'status', v_auto_renewal_attempt.status,
+        'activation_status', v_auto_renewal_attempt.activation_status,
+        'recovery_status', v_auto_renewal_attempt.recovery_status,
+        'target_period_start', v_auto_renewal_attempt.target_period_start,
+        'target_period_end', v_auto_renewal_attempt.target_period_end
+      );
+    end if;
+
+    return jsonb_build_object(
+      'ok', true,
+      'action', 'do_not_charge',
+      'can_charge', false,
+      'payment_attempt_id', v_auto_renewal_attempt.id,
+      'order_id', v_auto_renewal_attempt.order_id,
+      'payment_type', v_auto_renewal_attempt.payment_type,
+      'status', v_auto_renewal_attempt.status,
+      'activation_status', v_auto_renewal_attempt.activation_status,
+      'recovery_status', v_auto_renewal_attempt.recovery_status,
+      'target_period_start', v_auto_renewal_attempt.target_period_start,
+      'target_period_end', v_auto_renewal_attempt.target_period_end
     );
   end if;
 
