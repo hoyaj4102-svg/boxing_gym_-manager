@@ -23,6 +23,7 @@ create temp table p1_7b_context (
   stale_pending_gym_id uuid not null,
   block_unresolved_gym_id uuid not null,
   confirmed_no_payment_gym_id uuid not null,
+  not_found_unconfirmed_gym_id uuid not null,
   completed_without_marker_gym_id uuid not null,
   active_gym_id uuid not null,
   canceled_entitled_gym_id uuid not null,
@@ -36,6 +37,7 @@ create temp table p1_7b_context (
 
 insert into p1_7b_context
 values (
+  gen_random_uuid(),
   gen_random_uuid(),
   gen_random_uuid(),
   gen_random_uuid(),
@@ -87,6 +89,7 @@ cross join lateral (
     (ctx.stale_pending_gym_id, 'P1-7B Stale Pending Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.block_unresolved_gym_id, 'P1-7B Block Unresolved Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.confirmed_no_payment_gym_id, 'P1-7B Confirmed No Payment Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
+    (ctx.not_found_unconfirmed_gym_id, 'P1-7B Not Found Unconfirmed Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.completed_without_marker_gym_id, 'P1-7B Completed Without Marker Gym', 'free', 20, 'expired', null::timestamptz, null::text, null::text, null::text, false),
     (ctx.active_gym_id, 'P1-7B Active Gym', 'pro', -1, 'active', now() + interval '30 days', 'toss', ctx.customer_key, 'p1_7b_billing_key_active', true),
     (ctx.canceled_entitled_gym_id, 'P1-7B Canceled Entitled Gym', 'pro', -1, 'canceled', now() + interval '30 days', 'toss', ctx.customer_key, 'p1_7b_billing_key_canceled', false),
@@ -108,6 +111,7 @@ cross join lateral (
     (ctx.stale_pending_gym_id),
     (ctx.block_unresolved_gym_id),
     (ctx.confirmed_no_payment_gym_id),
+    (ctx.not_found_unconfirmed_gym_id),
     (ctx.completed_without_marker_gym_id),
     (ctx.active_gym_id),
     (ctx.canceled_entitled_gym_id),
@@ -215,6 +219,7 @@ cross join lateral (
     (ctx.stale_pending_gym_id, 'p1_7b_stale_pending_order', null::text, null::text, 'initiated', 'not_started', 'pending', '{}'::jsonb, ctx.stale_created_at, ctx.stale_created_at),
     (ctx.block_unresolved_gym_id, 'p1_7b_block_unresolved_order', null::text, null::text, 'initiated', 'not_started', 'none', '{}'::jsonb, ctx.stale_created_at, ctx.stale_created_at),
     (ctx.confirmed_no_payment_gym_id, 'p1_7b_confirmed_no_payment_order', null::text, null::text, 'charge_failed', 'not_started', 'completed', '{"initial_reconciliation":{"result":"confirmed_no_payment"}}'::jsonb, ctx.stale_created_at, ctx.stale_created_at),
+    (ctx.not_found_unconfirmed_gym_id, 'p1_7b_not_found_unconfirmed_order', null::text, null::text, 'charge_failed', 'not_started', 'pending', '{"initial_reconciliation":{"result":"not_found_unconfirmed"}}'::jsonb, ctx.stale_created_at, ctx.stale_created_at),
     (ctx.completed_without_marker_gym_id, 'p1_7b_completed_without_marker_order', null::text, null::text, 'charge_failed', 'not_started', 'completed', '{}'::jsonb, ctx.stale_created_at, ctx.stale_created_at),
     (ctx.historical_completed_gym_id, 'p1_7b_historical_completed_order', 'p1_7b_billing_key_history', 'p1_7b_payment_history', 'completed', 'succeeded', 'none', '{}'::jsonb, ctx.stale_created_at, ctx.stale_created_at)
 ) as pa(gym_id, order_id, billing_key_ref, payment_key, attempt_status, activation_status, recovery_status, provider_response, created_at, updated_at);
@@ -317,9 +322,8 @@ cross join lateral public.claim_initial_billing_attempt(ctx.block_unresolved_gym
 
 insert into p1_7b_test_results
 select
-  'TEST 10: confirmed_no_payment marker allows new initial claim',
-  case when r.result->>'can_charge' = 'true'
-         and r.result->>'action' = 'charge'
+  'TEST 10: confirmed_no_payment marker blocks new initial claim',
+  case when r.result->>'can_charge' = 'false'
        then 'PASS' else 'FAIL' end,
   r.result::text
 from p1_7b_context ctx
@@ -327,7 +331,26 @@ cross join lateral public.claim_initial_billing_attempt(ctx.confirmed_no_payment
 
 insert into p1_7b_test_results
 select
-  'TEST 11: recovery_status completed without marker still blocks',
+  'TEST 11: not_found_unconfirmed marker is reclaimed for lookup',
+  case when exists (
+    select 1
+    from p1_7b_claimed c
+    join p1_7b_context ctx on ctx.not_found_unconfirmed_gym_id = c.gym_id
+  ) then 'PASS' else 'FAIL' end,
+  coalesce((select json_agg(order_id)::text from p1_7b_claimed), '[]');
+
+insert into p1_7b_test_results
+select
+  'TEST 12: not_found_unconfirmed marker blocks new initial claim',
+  case when r.result->>'can_charge' = 'false'
+       then 'PASS' else 'FAIL' end,
+  r.result::text
+from p1_7b_context ctx
+cross join lateral public.claim_initial_billing_attempt(ctx.not_found_unconfirmed_gym_id, pg_temp.p1_7b_user_for(ctx.not_found_unconfirmed_gym_id), ctx.customer_key, 10000) r(result);
+
+insert into p1_7b_test_results
+select
+  'TEST 13: recovery_status completed without marker still blocks',
   case when r.result->>'can_charge' = 'false'
        then 'PASS' else 'FAIL' end,
   r.result::text
@@ -336,7 +359,7 @@ cross join lateral public.claim_initial_billing_attempt(ctx.completed_without_ma
 
 insert into p1_7b_test_results
 select
-  'TEST 12: active paid Pro still blocks',
+  'TEST 14: active paid Pro still blocks',
   case when r.result->>'action' = 'already_completed'
          and r.result->>'can_charge' = 'false'
        then 'PASS' else 'FAIL' end,
@@ -346,7 +369,7 @@ cross join lateral public.claim_initial_billing_attempt(ctx.active_gym_id, pg_te
 
 insert into p1_7b_test_results
 select
-  'TEST 13: canceled paid future entitlement still blocks',
+  'TEST 15: canceled paid future entitlement still blocks',
   case when r.result->>'action' = 'already_completed'
          and r.result->>'can_charge' = 'false'
        then 'PASS' else 'FAIL' end,
@@ -356,7 +379,7 @@ cross join lateral public.claim_initial_billing_attempt(ctx.canceled_entitled_gy
 
 insert into p1_7b_test_results
 select
-  'TEST 14: historical completed succeeded still allows new claim',
+  'TEST 16: historical completed succeeded still allows new claim',
   case when r.result->>'action' = 'charge'
          and r.result->>'can_charge' = 'true'
        then 'PASS' else 'FAIL' end,
@@ -366,7 +389,7 @@ cross join lateral public.claim_initial_billing_attempt(ctx.historical_completed
 
 insert into p1_7b_test_results
 select
-  'TEST 15: RPC permissions expectation',
+  'TEST 17: RPC permissions expectation',
   case when has_function_privilege('public', 'public.claim_stale_initial_billing_reconciliation_attempts(timestamptz, integer)', 'EXECUTE') = false
          and has_function_privilege('anon', 'public.claim_stale_initial_billing_reconciliation_attempts(timestamptz, integer)', 'EXECUTE') = false
          and has_function_privilege('authenticated', 'public.claim_stale_initial_billing_reconciliation_attempts(timestamptz, integer)', 'EXECUTE') = false
