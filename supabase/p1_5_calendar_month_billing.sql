@@ -267,7 +267,11 @@ begin
       plan_code = 'pro',
       member_limit = -1,
       subscription_status = v_next_subscription_status,
-      current_period_end = v_attempt.target_period_end,
+      current_period_end = case
+        when current_period_end is null
+          or current_period_end < v_attempt.target_period_end then v_attempt.target_period_end
+        else current_period_end
+      end,
       billing_provider = v_attempt.provider,
       billing_customer_id = coalesce(v_attempt.customer_key, billing_customer_id),
       billing_subscription_id = coalesce(v_attempt.billing_key_ref, billing_subscription_id),

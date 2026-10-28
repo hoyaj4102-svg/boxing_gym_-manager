@@ -44,7 +44,8 @@ create temp table p1_5_test_context (
   normal_attempt_id uuid not null,
   recovery_attempt_id uuid not null,
   cancel_activation_attempt_id uuid not null,
-  cancel_recovery_attempt_id uuid not null
+  cancel_recovery_attempt_id uuid not null,
+  preserve_recovery_attempt_id uuid not null
 ) on commit drop;
 
 insert into p1_5_test_context (
@@ -62,7 +63,8 @@ insert into p1_5_test_context (
   normal_attempt_id,
   recovery_attempt_id,
   cancel_activation_attempt_id,
-  cancel_recovery_attempt_id
+  cancel_recovery_attempt_id,
+  preserve_recovery_attempt_id
 )
 values (
   gen_random_uuid(),
@@ -76,6 +78,7 @@ values (
   '2026-02-28 00:00:00+00'::timestamptz,
   '2099-01-31 00:00:00+00'::timestamptz,
   10000,
+  gen_random_uuid(),
   gen_random_uuid(),
   gen_random_uuid(),
   gen_random_uuid(),
@@ -372,6 +375,42 @@ select
   'first_claim_rows=' || (select count(*) from p1_5_first_claim)
   || ', duplicate_insert_rows=' || (select count(*) from p1_5_duplicate_insert);
 
+update public.payment_attempts pa
+set
+  payment_key = 'p1_5_claim_payment_' || replace(pa.id::text, '-', ''),
+  status = 'activation_pending',
+  activation_status = 'pending',
+  recovery_status = 'none'
+from p1_5_first_claim fc
+where pa.id = fc.payment_attempt_id;
+
+create temp table p1_5_claim_activation_result on commit drop as
+select public.activate_payment_attempt(fc.payment_attempt_id) as result
+from p1_5_first_claim fc;
+
+insert into p1_5_test_results (test_name, status, detail)
+select
+  'TEST C3: normal auto-renewal activation extends period',
+  case
+    when (select count(*) from p1_5_claim_activation_result) = 1
+     and (select result->>'ok' from p1_5_claim_activation_result) = 'true'
+     and g.current_period_end = ctx.expected_end
+     and exists (
+       select 1
+       from public.subscriptions s
+       where s.gym_id = ctx.claim_gym_id
+         and s.started_at = ctx.claim_start
+         and s.ends_at = ctx.expected_end
+     )
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'result=' || coalesce((select result::text from p1_5_claim_activation_result), 'none')
+  || ', gym_period=' || coalesce(g.current_period_end::text, 'null')
+  || ', expected=' || ctx.expected_end::text
+from p1_5_test_context ctx
+left join public.gyms g on g.id = ctx.claim_gym_id;
+
 insert into public.payment_attempts (
   id,
   gym_id,
@@ -443,6 +482,15 @@ cross join lateral (
       ctx.cancel_recovery_attempt_id,
       ctx.cancel_recovery_gym_id,
       'cancel_recovery',
+      'auto_renewal',
+      'activation_failed',
+      'failed',
+      'pending'
+    ),
+    (
+      ctx.preserve_recovery_attempt_id,
+      ctx.preserve_gym_id,
+      'preserve_recovery',
       'auto_renewal',
       'activation_failed',
       'failed',
@@ -552,6 +600,10 @@ create temp table p1_5_cancel_recovery_result on commit drop as
 select public.recover_payment_attempt_activation(ctx.cancel_recovery_attempt_id) as result
 from p1_5_test_context ctx;
 
+create temp table p1_5_preserve_recovery_result on commit drop as
+select public.recover_payment_attempt_activation(ctx.preserve_recovery_attempt_id) as result
+from p1_5_test_context ctx;
+
 insert into p1_5_test_results (test_name, status, detail)
 select
   'TEST G: cancellation preservation',
@@ -581,16 +633,26 @@ left join public.gyms recovery_gym on recovery_gym.id = ctx.cancel_recovery_gym_
 
 insert into p1_5_test_results (test_name, status, detail)
 select
-  'TEST H: existing current_period_end preservation',
+  'TEST H: stale recovery does not shorten current_period_end',
   case
-    when g.current_period_end = ctx.preserve_period_end
+    when pr.result->>'ok' = 'true'
+     and g.current_period_end = ctx.preserve_period_end
+     and pa.status = 'completed'
+     and pa.activation_status = 'succeeded'
+     and pa.recovery_status = 'completed'
     then 'PASS'
     else 'FAIL'
   end,
-  'preserve_gym_current_period_end=' || coalesce(g.current_period_end::text, 'null')
+  'result=' || pr.result::text
+  || ', preserve_gym_current_period_end=' || coalesce(g.current_period_end::text, 'null')
   || ', expected=' || ctx.preserve_period_end::text
+  || ', attempt_status=' || coalesce(pa.status, 'null')
+  || ', activation_status=' || coalesce(pa.activation_status, 'null')
+  || ', recovery_status=' || coalesce(pa.recovery_status, 'null')
 from p1_5_test_context ctx
-join public.gyms g on g.id = ctx.preserve_gym_id;
+cross join p1_5_preserve_recovery_result pr
+join public.gyms g on g.id = ctx.preserve_gym_id
+join public.payment_attempts pa on pa.id = ctx.preserve_recovery_attempt_id;
 
 select test_name, status, detail
 from p1_5_test_results
