@@ -191,18 +191,19 @@ async function updateAttempt(
   }
 }
 
-async function markConfirmedNoPayment(
+async function markUnconfirmedNotFound(
   admin: ReturnType<typeof getAdminClient>,
   attempt: InitialReconciliationAttempt,
   payload: unknown
 ) {
   await updateAttempt(admin, attempt.id, {
-    recovery_status: 'completed',
-    error_code: 'TOSS_PAYMENT_NOT_FOUND',
-    error_message: 'Toss payment was not found for stable initial billing orderId',
+    recovery_status: 'pending',
+    error_code: 'TOSS_PAYMENT_NOT_FOUND_UNCONFIRMED',
+    error_message:
+      'Toss payment was not found for stable initial billing orderId; keeping attempt blocked for retry or manual review',
     provider_response: sanitizeProviderPayload(mergeProviderResponse(attempt, {
       initial_reconciliation: {
-        result: 'confirmed_no_payment',
+        result: 'not_found_unconfirmed',
         checked_at: new Date().toISOString(),
         order_id: attempt.order_id,
         response: payload
@@ -364,12 +365,19 @@ Deno.serve(async (req) => {
         }
 
         if (lookup.kind === 'not_found') {
-          await markConfirmedNoPayment(admin, attempt, lookup.payload);
+          console.warn('INITIAL_RECONCILIATION_NOT_FOUND_UNCONFIRMED', {
+            paymentAttemptId: attempt.id,
+            orderId: attempt.order_id
+          });
+          await markUnconfirmedNotFound(admin, attempt, lookup.payload);
           results.push({
             paymentAttemptId: attempt.id,
             orderId: attempt.order_id,
-            ok: true,
-            confirmedNoPayment: true
+            ok: false,
+            retryable: true,
+            requiresManualReview: true,
+            notFoundUnconfirmed: true,
+            error: 'Toss payment was not found; not confirmed safe for a new charge'
           });
           continue;
         }
