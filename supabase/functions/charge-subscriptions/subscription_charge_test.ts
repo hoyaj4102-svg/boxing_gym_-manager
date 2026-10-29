@@ -44,6 +44,12 @@ function createMockAdmin(options: {
       value: string;
     },
   ) => null | { message: string; code?: string };
+  insertErrorFor?: (
+    insert: {
+      table: string;
+      values: Record<string, unknown>;
+    },
+  ) => null | { message: string; code?: string };
   rpcError?: null | { message: string; code?: string };
   rpcData?: unknown;
 } = {}) {
@@ -69,8 +75,9 @@ function createMockAdmin(options: {
           };
         },
         async insert(values: Record<string, unknown>) {
-          inserts.push({ table, values });
-          return { error: null };
+          const insert = { table, values };
+          inserts.push(insert);
+          return { error: options.insertErrorFor?.(insert) ?? null };
         },
       };
     },
@@ -167,6 +174,59 @@ Deno.test("clear auto-renewal rejection marks past_due and does not recover", as
     "past_due",
     "clear rejection should keep existing past_due policy",
   );
+});
+
+Deno.test("rejected charge persistence failure does not mark gym past_due", async () => {
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin({
+    updateErrorFor: (update) =>
+      update.table === "payment_attempts" &&
+        update.values.status === "charge_failed" &&
+        update.values.error_code === "REJECT_CARD_COMPANY"
+        ? { message: "rejection write failed", code: "XX000" }
+        : null,
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(
+        JSON.stringify({ code: "REJECT_CARD_COMPANY", message: "declined" }),
+        { status: 400 },
+      );
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  assertEquals(fetchCalls, 1, "rejected charge must not retry POST");
+  assertEquals(result.ok, false, "failed rejection write should be reported");
+  assertEquals(
+    result.chargeResult,
+    "rejected_persist_failed",
+    "caller should see that rejected state was not saved",
+  );
+  assertEquals(
+    result.retryable,
+    true,
+    "failed rejection write should be retryable",
+  );
+  assertEquals(
+    updatesFor(updates, "payment_attempts").length,
+    1,
+    "failed rejection write should not be hidden by a second attempt update",
+  );
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "gym must not be marked past_due without durable rejection state",
+  );
+  assertEquals(
+    inserts.length,
+    0,
+    "failed rejection write should not insert checkout session",
+  );
+  assertEquals(rpcCalls.length, 0, "failed rejection write should not recover");
 });
 
 Deno.test("missing Toss secret is an internal retryable error and does not mark past_due", async () => {
@@ -437,6 +497,65 @@ Deno.test("paymentKey save failure after successful charge keeps gym out of past
     updatesFor(updates, "gyms").length,
     0,
     "post-charge DB failure must not mark gym past_due",
+  );
+});
+
+Deno.test("checkout session insert failure after successful charge stops before activation", async () => {
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin({
+    insertErrorFor: (insert) =>
+      insert.table === "checkout_sessions"
+        ? { message: "checkout history write failed", code: "XX000" }
+        : null,
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+        status: 200,
+      });
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  const attemptUpdates = updatesFor(updates, "payment_attempts");
+  assertEquals(fetchCalls, 1, "successful charge must not retry POST");
+  assertEquals(result.ok, false, "checkout insert failure should be reported");
+  assert(
+    String(result.error || "").includes("CHECKOUT_SESSION_INSERT_FAILED"),
+    "checkout insert failure should be visible to the caller",
+  );
+  assertEquals(
+    inserts.length,
+    1,
+    "checkout session insert should be attempted",
+  );
+  assertEquals(
+    attemptUpdates.length,
+    1,
+    "checkout insert failure should leave one activation_pending attempt update",
+  );
+  assertEquals(
+    attemptUpdates[0].values.status,
+    "activation_pending",
+    "paymentKey should remain available for recovery-only activation",
+  );
+  assertEquals(
+    attemptUpdates[0].values.payment_key,
+    "payment_1",
+    "paymentKey should be preserved for recovery",
+  );
+  assertEquals(
+    rpcCalls.length,
+    0,
+    "checkout insert failure should stop before activation",
+  );
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "post-charge checkout insert failure must not mark gym past_due",
   );
 });
 

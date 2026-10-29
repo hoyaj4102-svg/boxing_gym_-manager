@@ -240,17 +240,26 @@ export async function processClaimedSubscriptionCharge(
     }
 
     if (chargeOutcome.kind === "rejected") {
-      await updatePaymentAttempt(admin, paymentAttemptId, {
-        status: "charge_failed",
-        activation_status: "not_started",
-        recovery_status: "none",
-        error_code: chargeOutcome.code,
-        error_message: chargeOutcome.message,
-        provider_response: sanitizeProviderPayload({
-          mode: "auto_renew_charge_rejected",
-          charge: chargeOutcome.payload,
-        }),
-      });
+      try {
+        await updatePaymentAttempt(admin, paymentAttemptId, {
+          status: "charge_failed",
+          activation_status: "not_started",
+          recovery_status: "none",
+          error_code: chargeOutcome.code,
+          error_message: chargeOutcome.message,
+          provider_response: sanitizeProviderPayload({
+            mode: "auto_renew_charge_rejected",
+            charge: chargeOutcome.payload,
+          }),
+        }, { throwOnError: true });
+      } catch (error) {
+        throw new NonTerminalChargeError(
+          "AUTO_RENEW_REJECTED_STATE_UPDATE_FAILED",
+          errorMessage(error),
+          "rejected_persist_failed",
+          false,
+        );
+      }
       await markGymPastDue(admin, gymId, checkedAt);
       return {
         gymId,
@@ -274,7 +283,9 @@ export async function processClaimedSubscriptionCharge(
       provider_response: sanitizeProviderPayload(charged),
     }, { throwOnError: true });
 
-    await admin.from("checkout_sessions").insert({
+    const { error: checkoutSessionError } = await admin.from(
+      "checkout_sessions",
+    ).insert({
       gym_id: gymId,
       user_id: ownerId,
       provider: "toss",
@@ -288,6 +299,11 @@ export async function processClaimedSubscriptionCharge(
       completed_at: checkedAt,
       raw: { mode: "auto_renew", ...charged },
     });
+    if (checkoutSessionError) {
+      throw new Error(
+        `CHECKOUT_SESSION_INSERT_FAILED: ${checkoutSessionError.message}`,
+      );
+    }
 
     const activateError = await activatePaymentAttempt(
       admin,
