@@ -10,103 +10,89 @@ on:
 jobs:
   charge:
     runs-on: ubuntu-latest
+    environment: production
     timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
     steps:
-      - name: Call charge-subscriptions Edge Function
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          set -euo pipefail
-          if [ -z "${CRON_SECRET:-}" ]; then
-            echo "Missing GitHub secret: CRON_SECRET"
-            echo "Add it in Repo Settings → Secrets and variables → Actions"
-            exit 1
-          fi
-
-          response="$(curl -sS -w '\n%{http_code}' -X POST \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json" \
-            https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/charge-subscriptions)"
-
-          body="$(printf '%s' "$response" | sed '$d')"
-          code="$(printf '%s' "$response" | tail -n 1)"
-
-          echo "HTTP ${code}"
-          echo "$body"
-
-          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
-            exit 1
-          fi
-
-      - name: Call reconcile-auto-renewal-payments Edge Function
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      - name: Validate production billing scheduler configuration
         run: |
           set -euo pipefail
           if [ -z "${SUPABASE_URL:-}" ]; then
             echo "Missing GitHub secret: SUPABASE_URL"
-            echo "Add it in Repo Settings → Secrets and variables → Actions"
+            echo "Add it in the protected production environment secrets"
             exit 1
           fi
           if [ -z "${CRON_SECRET:-}" ]; then
             echo "Missing GitHub secret: CRON_SECRET"
-            echo "Add it in Repo Settings → Secrets and variables → Actions"
+            echo "Add it in the protected production environment secrets"
+            exit 1
+          fi
+          if [ -z "${SUPABASE_PROJECT_ID:-}" ]; then
+            echo "Missing GitHub variable: SUPABASE_PROJECT_ID"
+            echo "Add it in the protected production environment variables"
             exit 1
           fi
 
-          if ! response="$(curl -sS --fail-with-body -w '\n%{http_code}' -X POST \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json" \
-            "${SUPABASE_URL%/}/functions/v1/reconcile-auto-renewal-payments")"; then
-            body="$(printf '%s' "$response" | sed '$d')"
-            code="$(printf '%s' "$response" | tail -n 1)"
-            echo "HTTP ${code:-curl_failed}"
-            echo "$body"
-            exit 1
-          fi
+          node <<'NODE'
+          const configuredUrl = process.env.SUPABASE_URL || "";
+          const expectedProjectId = process.env.SUPABASE_PROJECT_ID || "";
+          let parsed;
+          try {
+            parsed = new URL(configuredUrl);
+          } catch {
+            console.error("SUPABASE_URL is not a valid URL");
+            process.exit(1);
+          }
 
-          body="$(printf '%s' "$response" | sed '$d')"
-          code="$(printf '%s' "$response" | tail -n 1)"
+          if (parsed.protocol !== "https:") {
+            console.error("SUPABASE_URL must use https");
+            process.exit(1);
+          }
 
-          echo "HTTP ${code}"
-          echo "$body"
+          if (!parsed.hostname.endsWith(".supabase.co")) {
+            console.error("SUPABASE_URL must point to a Supabase project host");
+            process.exit(1);
+          }
 
-          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
-            exit 1
-          fi
+          const actualProjectId = parsed.hostname.split(".")[0];
+          if (!actualProjectId || actualProjectId !== expectedProjectId) {
+            console.error("SUPABASE_URL project ref does not match SUPABASE_PROJECT_ID");
+            process.exit(1);
+          }
+          NODE
 
-      - name: Call reconcile-initial-billing-payments Edge Function
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      - name: Call billing scheduler Edge Functions in order
         run: |
           set -euo pipefail
-          if [ -z "${CRON_SECRET:-}" ]; then
-            echo "Missing GitHub secret: CRON_SECRET"
-            echo "Add it in Repo Settings → Secrets and variables → Actions"
-            exit 1
-          fi
 
-          if ! response="$(curl -sS --fail-with-body -w '\n%{http_code}' -X POST \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json" \
-            https://vziegzjeysteemjxgbnc.supabase.co/functions/v1/reconcile-initial-billing-payments)"; then
-            body="$(printf '%s' "$response" | sed '$d')"
+          call_edge_function() {
+            local function_name="$1"
+            local response
+            local code
+            local endpoint="${SUPABASE_URL%/}/functions/v1/${function_name}"
+
+            if ! response="$(curl -sS -w '\n%{http_code}' -X POST \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              -H "x-cron-secret: ${CRON_SECRET}" \
+              -H "Content-Type: application/json" \
+              "${endpoint}")"; then
+              echo "${function_name} request failed before an HTTP response"
+              exit 1
+            fi
+
             code="$(printf '%s' "$response" | tail -n 1)"
-            echo "HTTP ${code:-curl_failed}"
-            echo "$body"
-            exit 1
-          fi
 
-          body="$(printf '%s' "$response" | sed '$d')"
-          code="$(printf '%s' "$response" | tail -n 1)"
+            echo "${function_name} HTTP ${code}"
 
-          echo "HTTP ${code}"
-          echo "$body"
+            if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+              echo "${function_name} response body omitted to avoid logging billing data"
+              exit 1
+            fi
+          }
 
-          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
-            exit 1
-          fi
+          call_edge_function "charge-subscriptions"
+          call_edge_function "reconcile-auto-renewal-payments"
+          call_edge_function "reconcile-initial-billing-payments"
