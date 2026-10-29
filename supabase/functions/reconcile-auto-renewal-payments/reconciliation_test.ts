@@ -159,6 +159,51 @@ Deno.test("lookup_required uses Toss GET, stores payment_key, then recovers", as
   assertEquals(result.ok, true, "lookup_required DONE payment should recover");
 });
 
+Deno.test("lookup_required charge_failed pending recovers after DONE lookup", async () => {
+  const { admin, rpcCalls, updates } = createMockAdmin();
+  const methods: string[] = [];
+
+  const result = await processReconciliationAttempt(
+    admin,
+    baseAttempt({
+      status: "charge_failed",
+      activation_status: "not_started",
+      recovery_status: "pending",
+      reconciliation_action: "lookup_required",
+    }),
+    {
+      tossSecret: "test_secret",
+      fetchImpl: async (_input, init) => {
+        methods.push(String(init?.method || "GET"));
+        return new Response(
+          JSON.stringify({
+            paymentKey: "payment_found_after_uncertain_charge",
+            orderId: "toss_renew_attempt_1",
+            status: "DONE",
+            totalAmount: 10000,
+          }),
+          { status: 200 },
+        );
+      },
+      now: () => new Date("2026-01-01T00:10:00.000Z"),
+    },
+  );
+
+  assertEquals(methods, ["GET"], "recovery should use Toss GET only");
+  assertEquals(rpcCalls.length, 1, "DONE lookup should recover once");
+  assertEquals(
+    updates[0].values.payment_key,
+    "payment_found_after_uncertain_charge",
+    "payment_key should be stored from lookup",
+  );
+  assertEquals(
+    updates[0].values.status,
+    "activation_pending",
+    "attempt should move to activation_pending before recovery",
+  );
+  assertEquals(result.ok, true, "charge_failed DONE lookup should recover");
+});
+
 Deno.test("lookup_required retryable Toss error is not terminal failed", async () => {
   const { admin, rpcCalls, updates } = createMockAdmin();
 
