@@ -94,6 +94,23 @@
     return t('planStatusFree');
   }
 
+  function actionState(summary) {
+    const hasPro = Boolean(summary?.hasPro);
+    const canResume = Boolean(summary?.canResume);
+    const isSubscribedAuto = Boolean(
+      hasPro &&
+      summary?.subscriptionStatus === 'active' &&
+      summary?.autoRenew
+    );
+
+    return {
+      canCancel: Boolean(summary?.canCancel && hasPro),
+      canResume,
+      canSubscribe: !isSubscribedAuto && !canResume,
+      isSubscribedAuto
+    };
+  }
+
   async function cancelSubscription(db) {
     if (!db || !db.isReady()) throw new Error('Not authenticated');
     const client = db.client();
@@ -428,6 +445,7 @@
     normalizeSummary,
     limitLabel,
     statusLabel,
+    actionState,
     fetchBillingSummary,
     fetchPaymentHistory,
     startSubscribe,

@@ -5293,6 +5293,7 @@
 
       try {
         billingSummary = await SweatManagerBilling.fetchBillingSummary(SweatManagerDB);
+        const billingActions = SweatManagerBilling.actionState(billingSummary);
         planEl.textContent = billingSummary.hasPro ? t('planProName') : t('planFreeName');
         statusEl.textContent = SweatManagerBilling.statusLabel(billingSummary, t);
         usageEl.textContent = SweatManagerBilling.limitLabel(billingSummary, t);
@@ -5302,24 +5303,20 @@
           periodEl.textContent = periodDate ? formatDateTime(periodDate) : t('billingNoTrial');
         }
 
-        const isSubscribedAuto =
-          billingSummary.hasPro &&
-          billingSummary.subscriptionStatus === 'active' &&
-          billingSummary.autoRenew;
         const isCancelPending =
           billingSummary.hasPro &&
           billingSummary.subscriptionStatus === 'canceled' &&
           billingSummary.currentPeriodEnd;
 
         if (subscribeButton) {
-          subscribeButton.textContent = billingSummary.canResume
+          subscribeButton.textContent = billingActions.canResume
             ? t('resumeSubscriptionButton')
             : t('subscribeButton');
-          subscribeButton.disabled = Boolean(isSubscribedAuto);
+          subscribeButton.disabled = Boolean(billingActions.isSubscribedAuto);
           subscribeButton.hidden = false;
         }
         if (openCancelButton) {
-          openCancelButton.hidden = !billingSummary.canCancel;
+          openCancelButton.hidden = !billingActions.canCancel;
         }
 
         if (cancelPanelStatus) {
@@ -5329,7 +5326,7 @@
           cancelPanelPeriod.textContent = periodDate ? formatDateTime(periodDate) : t('billingNoTrial');
         }
         if (confirmCancelButton) {
-          confirmCancelButton.disabled = !billingSummary.canCancel;
+          confirmCancelButton.disabled = !billingActions.canCancel;
         }
 
         if (isCancelPending) {
@@ -5465,7 +5462,7 @@
 
     async function handleCancelSubscription() {
       if (!requireAuth()) return;
-      if (!billingSummary?.canCancel) {
+      if (!SweatManagerBilling.actionState(billingSummary).canCancel) {
         showToast(t('cancelSubscriptionNothing'), 'warning');
         return;
       }
@@ -5520,14 +5517,11 @@
       } finally {
         isSubscribing = false;
         if (subscribeButton) {
-          const isSubscribedAuto =
-            billingSummary?.hasPro &&
-            billingSummary?.subscriptionStatus === 'active' &&
-            billingSummary?.autoRenew;
-          subscribeButton.textContent = billingSummary?.canResume
+          const billingActions = SweatManagerBilling.actionState(billingSummary);
+          subscribeButton.textContent = billingActions.canResume
             ? t('resumeSubscriptionButton')
             : t('subscribeButton');
-          subscribeButton.disabled = Boolean(isSubscribedAuto);
+          subscribeButton.disabled = Boolean(billingActions.isSubscribedAuto);
         }
       }
     }
