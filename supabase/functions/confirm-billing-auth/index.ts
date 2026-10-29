@@ -4,6 +4,7 @@ import {
   getGymIdForUser,
   requireUser,
 } from "../_shared/supabase.ts";
+import { chargeTossBilling } from "./charge_outcome.ts";
 
 const AMOUNT_KRW = 10000;
 
@@ -363,34 +364,90 @@ Deno.serve(async (req) => {
       return textResponse(insertError.message, 500);
     }
 
-    let charged;
-    try {
-      charged = await tossPost(`/v1/billing/${billingKey}`, {
+    const chargeOutcome = await chargeTossBilling({
+      billingKey,
+      authorization: tossAuthHeader(),
+      body: {
         customerKey,
         amount: AMOUNT_KRW,
         orderId,
         orderName: "re;member Pro 월간 구독",
         customerEmail: user.email || undefined,
         customerName: gymName || user.email || undefined,
+      },
+    });
+
+    if (chargeOutcome.kind === "uncertain") {
+      console.error("INITIAL_BILLING_CHARGE_RESULT_UNCERTAIN", {
+        paymentAttemptId,
+        orderId,
+        status: chargeOutcome.status,
+        code: chargeOutcome.code,
+        message: chargeOutcome.message,
       });
-    } catch (chargeError) {
+      await admin
+        .from("checkout_sessions")
+        .update({
+          status: "pending",
+          raw: {
+            error: chargeOutcome.message,
+            errorCode: chargeOutcome.code,
+            chargeResult: "uncertain",
+          },
+        })
+        .eq("id", sessionRow.id);
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: "charge_failed",
+        activation_status: "not_started",
+        recovery_status: "pending",
+        error_code: chargeOutcome.code,
+        error_message: chargeOutcome.message,
+        provider_response: {
+          mode: "initial_billing_charge_uncertain",
+          billingKeyIssued: true,
+          charge: sanitizeTossPayload(chargeOutcome.payload),
+        },
+      });
+      return jsonResponse({
+        ok: false,
+        action: "initial_billing_charge_uncertain",
+        canCharge: false,
+        retryable: true,
+        paymentAttemptId,
+        orderId,
+        message: "INITIAL_BILLING_CHARGE_RESULT_UNCERTAIN",
+      }, 409);
+    }
+
+    if (chargeOutcome.kind === "rejected") {
       await admin
         .from("checkout_sessions")
         .update({
           status: "failed",
-          raw: { error: String(chargeError) },
+          raw: {
+            error: chargeOutcome.message,
+            errorCode: chargeOutcome.code,
+            chargeResult: "rejected",
+          },
         })
         .eq("id", sessionRow.id);
       await updatePaymentAttempt(admin, paymentAttemptId, {
         status: "charge_failed",
         activation_status: "not_started",
         recovery_status: "none",
-        error_message: errorMessage(chargeError),
+        error_code: chargeOutcome.code,
+        error_message: chargeOutcome.message,
+        provider_response: {
+          mode: "initial_billing_charge_rejected",
+          billingKeyIssued: true,
+          charge: sanitizeTossPayload(chargeOutcome.payload),
+        },
       });
-      throw chargeError;
+      return textResponse(chargeOutcome.message, 400);
     }
 
-    const paymentKey = String(charged.paymentKey || orderId);
+    const charged = chargeOutcome.payload;
+    const paymentKey = chargeOutcome.paymentKey;
 
     await updatePaymentAttemptRequired(admin, paymentAttemptId, {
       status: "charge_succeeded",
