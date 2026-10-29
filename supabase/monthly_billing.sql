@@ -16,7 +16,9 @@ as $$
       when p_gym.subscription_status = 'trialing'
            and p_gym.trial_ends_at > now() then true
       when p_gym.plan_code = 'pro'
-           and p_gym.subscription_status = 'active' then true
+           and p_gym.subscription_status = 'active'
+           and p_gym.current_period_end is not null
+           and p_gym.current_period_end > now() then true
       when p_gym.plan_code = 'pro'
            and p_gym.subscription_status = 'canceled'
            and p_gym.current_period_end is not null
