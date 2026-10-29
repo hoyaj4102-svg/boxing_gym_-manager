@@ -287,6 +287,7 @@ async function findAutoRenewalAttempt(
 
 function isRecoverableAttempt(attempt: PaymentAttempt) {
   return [
+    'charge_failed',
     'charge_succeeded',
     'activation_pending',
     'activation_failed',
@@ -430,7 +431,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      if (attempt.status === 'initiated') {
+      if (attempt.status === 'initiated' || attempt.status === 'charge_failed') {
         await updatePaymentAttempt(admin, attempt.id, {
           status: 'activation_pending',
           activation_status: 'pending',
