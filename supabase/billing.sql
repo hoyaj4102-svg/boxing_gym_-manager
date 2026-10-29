@@ -122,7 +122,7 @@ grant execute on function public.billing_period_bounds(text, timestamptz) to ser
 -- -----------------------------------------------------------------------------
 -- 3) Effective plan helper
 --    - trialing + trial not ended => pro (unlimited)
---    - active pro => unlimited
+--    - active paid Pro with remaining period => unlimited
 --    - otherwise free (member_limit)
 -- -----------------------------------------------------------------------------
 
@@ -136,7 +136,13 @@ as $$
       when p_gym.subscription_status = 'trialing'
            and p_gym.trial_ends_at > now() then true
       when p_gym.plan_code = 'pro'
-           and p_gym.subscription_status = 'active' then true
+           and p_gym.subscription_status = 'active'
+           and p_gym.current_period_end is not null
+           and p_gym.current_period_end > now() then true
+      when p_gym.plan_code = 'pro'
+           and p_gym.subscription_status = 'canceled'
+           and p_gym.current_period_end is not null
+           and p_gym.current_period_end > now() then true
       else false
     end
 $$;
@@ -156,16 +162,8 @@ begin
     return 0;
   end if;
 
-  if v_gym.plan_code = 'pro'
-     and v_gym.subscription_status = 'active' then
-    return -1; -- paid Pro unlimited
-  end if;
-
-  if v_gym.plan_code = 'pro'
-     and v_gym.subscription_status = 'canceled'
-     and v_gym.current_period_end is not null
-     and v_gym.current_period_end > now() then
-    return -1; -- paid Pro remains available until period end
+  if public.gym_has_pro_access(v_gym) then
+    return -1;
   end if;
 
   return 20;
