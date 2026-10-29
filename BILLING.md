@@ -4,11 +4,11 @@
 
 ## 플랜
 
-| 플랜 | 가격 | 한도 |
-|---|---|---|
-| Free | 0 | 회원 20명 |
-| Pro trial | 가입 후 14일 | 무제한 |
-| Pro 월간 | ₩10,000 / 월 자동결제 | 무제한 |
+| 플랜      | 가격                  | 한도      |
+| --------- | --------------------- | --------- |
+| Free      | 0                     | 회원 20명 |
+| Pro trial | 가입 후 14일          | 무제한    |
+| Pro 월간  | ₩10,000 / 월 자동결제 | 무제한    |
 
 ## UX
 
@@ -17,7 +17,8 @@
 1. **구독** → 토스 빌링키 발급(카드 등록) → 첫 달 결제 → 이후 매월 자동결제
 2. **해지** → 구독 상태 / 이용 종료일 표시 → **해지하기**로 자동결제 중단
 
-해지 후에도 `current_period_end`까지 Pro 이용이 유지되고, 다음 달부터 청구되지 않습니다.
+해지 후에도 `current_period_end`까지 Pro 이용이 유지되고, 다음 달부터 청구되지
+않습니다.
 
 ## 결제 흐름 (토스 Billing)
 
@@ -25,7 +26,8 @@
 2. `start-billing-auth`가 `clientKey` + `customerKey` 반환
 3. 브라우저 `requestBillingAuth` (카드 등록)
 4. 성공 리다이렉트(`authKey`) → `confirm-billing-auth`
-5. 서버가 빌링키 발급 + ₩10,000 첫 결제 + `activate_gym_pro(..., auto_renew=true)`
+5. 서버가 빌링키 발급 + ₩10,000 첫 결제 +
+   `activate_gym_pro(..., auto_renew=true)`
 6. 매일/매시간 `charge-subscriptions`(CRON)이 기간 종료분 재청구
 
 시크릿 키는 절대 프론트에 넣지 마세요.
@@ -51,8 +53,14 @@
 supabase secrets set APP_URL=https://boxing-gym-manager.vercel.app
 supabase secrets set TOSS_CLIENT_KEY=test_ck_...
 supabase secrets set TOSS_SECRET_KEY=test_sk_...
+supabase secrets set TOSS_MID=tosspayments_가맹점MID
 supabase secrets set CRON_SECRET=긴랜덤문자열
 ```
+
+`TOSS_MID`는 Toss 결제 조회 응답의 `mId`와 정확히 일치해야 합니다. 이미 같은
+값을 `TOSS_MERCHANT_ID`로 관리 중이면 그 이름을 대신 사용할 수 있습니다. 운영
+확인 시에는 시크릿 값을 출력하지 말고 Supabase/Toss 대시보드에서 존재 여부와
+환경(테스트/라이브) 일치 여부만 확인하세요.
 
 ---
 
@@ -75,12 +83,14 @@ GitHub Actions 워크플로: `.github/workflows/charge-subscriptions.yml`
 
 - 매일 00:10 KST 자동 실행
 - Actions 탭에서 **Run workflow**로 수동 실행 가능
-- GitHub Secret `CRON_SECRET` 값이 Supabase Edge Secret `CRON_SECRET`과 **같아야** 함
+- GitHub Secret `CRON_SECRET` 값이 Supabase Edge Secret `CRON_SECRET`과
+  **같아야** 함
 
-설정 위치: GitHub 저장소 → **Settings → Secrets and variables → Actions → New repository secret**
+설정 위치: GitHub 저장소 → **Settings → Secrets and variables → Actions → New
+repository secret**
+
 - Name: `CRON_SECRET`
 - Value: Supabase에 넣은 것과 동일한 값
-
 
 ---
 

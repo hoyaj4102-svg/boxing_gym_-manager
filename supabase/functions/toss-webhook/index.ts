@@ -1,5 +1,11 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
+import {
+  expectedTossMerchantId,
+  isDuplicateWebhookTerminal,
+  TOSS_MID_CONFIG_ERROR,
+  validateTossPaymentForAttempt
+} from './merchant_validation.ts';
 
 const SUPPORTED_EVENT_TYPE = 'PAYMENT_STATUS_CHANGED';
 const TOSS_LOOKUP_TIMEOUT_MS = 10000;
@@ -159,36 +165,6 @@ async function lookupTossPaymentByOrderId(orderId: string): Promise<TossLookupRe
   }
 }
 
-function validatePayment(
-  attempt: PaymentAttempt,
-  webhookOrderId: string,
-  payment: Record<string, unknown>
-) {
-  const paymentKey = typeof payment.paymentKey === 'string' ? payment.paymentKey : '';
-  const orderId = typeof payment.orderId === 'string' ? payment.orderId : '';
-  const status = typeof payment.status === 'string' ? payment.status : '';
-  const totalAmount = Number(payment.totalAmount);
-  const expectedMid = Deno.env.get('TOSS_MID') || Deno.env.get('TOSS_MERCHANT_ID') || '';
-  const paymentMid = typeof payment.mId === 'string' ? payment.mId : '';
-
-  const failures: string[] = [];
-  if (orderId !== webhookOrderId) failures.push('queried orderId mismatch');
-  if (attempt.order_id !== orderId) failures.push('payment_attempt orderId mismatch');
-  if (!Number.isFinite(totalAmount) || totalAmount !== Number(attempt.amount_krw)) {
-    failures.push('amount mismatch');
-  }
-  if (!paymentKey) failures.push('paymentKey missing');
-  if (expectedMid && paymentMid !== expectedMid) failures.push('mId mismatch');
-
-  return {
-    ok: failures.length === 0,
-    paymentKey,
-    status,
-    failures,
-    midCheck: expectedMid ? 'checked' : 'skipped_no_expected_mid'
-  };
-}
-
 async function updateWebhookEvent(
   admin: ReturnType<typeof getAdminClient>,
   eventId: string,
@@ -304,6 +280,16 @@ Deno.serve(async (req) => {
     return textResponse('Method not allowed', 405);
   }
 
+  const expectedMid = expectedTossMerchantId(Deno.env);
+  if (!expectedMid) {
+    return jsonResponse({
+      ok: false,
+      error: TOSS_MID_CONFIG_ERROR,
+      message:
+        'Configure the TOSS_MID or TOSS_MERCHANT_ID Supabase secret before enabling Toss webhook processing.'
+    }, 500);
+  }
+
   const admin = getAdminClient();
 
   try {
@@ -322,7 +308,7 @@ Deno.serve(async (req) => {
       payload: parsedPayload
     });
 
-    if (duplicate && !['received', 'processing', 'retryable_error'].includes(event.processing_status)) {
+    if (duplicate && isDuplicateWebhookTerminal(event.processing_status)) {
       return jsonResponse({
         ok: true,
         duplicate: true,
@@ -396,7 +382,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, ignored: true, reason: 'payment_attempt_not_found' });
     }
 
-    const validation = validatePayment(attempt, orderId, lookup.payment);
+    const validation = validateTossPaymentForAttempt(
+      attempt,
+      orderId,
+      lookup.payment,
+      expectedMid
+    );
     if (!validation.ok) {
       await updateWebhookEvent(admin, event.id, {
         verification_status: 'not_verified',
