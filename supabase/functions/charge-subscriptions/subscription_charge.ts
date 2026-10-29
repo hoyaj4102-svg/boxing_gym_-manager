@@ -38,6 +38,25 @@ type ProcessOptions = {
   now?: () => Date;
 };
 
+class NonTerminalChargeError extends Error {
+  code: string;
+  chargeResult: string;
+  persistAttempt: boolean;
+
+  constructor(
+    code: string,
+    message: string,
+    chargeResult = "internal_error",
+    persistAttempt = true,
+  ) {
+    super(message);
+    this.name = "NonTerminalChargeError";
+    this.code = code;
+    this.chargeResult = chargeResult;
+    this.persistAttempt = persistAttempt;
+  }
+}
+
 const SENSITIVE_KEYS = new Set([
   "authorization",
   "billingkey",
@@ -49,7 +68,12 @@ const SENSITIVE_KEYS = new Set([
 ]);
 
 function tossAuthHeader(secret: string) {
-  if (!secret) throw new Error("TOSS_SECRET_KEY is missing");
+  if (!secret) {
+    throw new NonTerminalChargeError(
+      "AUTO_RENEW_TOSS_SECRET_MISSING",
+      "TOSS_SECRET_KEY is missing",
+    );
+  }
   return `Basic ${btoa(`${secret}:`)}`;
 }
 
@@ -158,10 +182,18 @@ export async function processClaimedSubscriptionCharge(
 
   try {
     if (!paymentAttemptId || !billingKey || !customerKey || !orderId) {
-      throw new Error("Missing billing key");
+      throw new NonTerminalChargeError(
+        "AUTO_RENEW_CLAIM_INVALID",
+        "Missing billing key",
+      );
     }
 
-    if (!ownerId) throw new Error("Gym owner not found");
+    if (!ownerId) {
+      throw new NonTerminalChargeError(
+        "AUTO_RENEW_OWNER_NOT_FOUND",
+        "Gym owner not found",
+      );
+    }
 
     const chargeOutcome = await chargeTossBilling({
       billingKey,
@@ -176,17 +208,26 @@ export async function processClaimedSubscriptionCharge(
     });
 
     if (chargeOutcome.kind === "uncertain") {
-      await updatePaymentAttempt(admin, paymentAttemptId, {
-        status: "charge_failed",
-        activation_status: "not_started",
-        recovery_status: "pending",
-        error_code: chargeOutcome.code,
-        error_message: chargeOutcome.message,
-        provider_response: sanitizeProviderPayload({
-          mode: "auto_renew_charge_uncertain",
-          charge: chargeOutcome.payload,
-        }),
-      });
+      try {
+        await updatePaymentAttempt(admin, paymentAttemptId, {
+          status: "charge_failed",
+          activation_status: "not_started",
+          recovery_status: "pending",
+          error_code: chargeOutcome.code,
+          error_message: chargeOutcome.message,
+          provider_response: sanitizeProviderPayload({
+            mode: "auto_renew_charge_uncertain",
+            charge: chargeOutcome.payload,
+          }),
+        }, { throwOnError: true });
+      } catch (error) {
+        throw new NonTerminalChargeError(
+          "AUTO_RENEW_UNCERTAIN_STATE_UPDATE_FAILED",
+          errorMessage(error),
+          "uncertain_persist_failed",
+          false,
+        );
+      }
       return {
         gymId,
         ok: false,
@@ -275,6 +316,27 @@ export async function processClaimedSubscriptionCharge(
     return { gymId, ok: true, orderId, paymentAttemptId };
   } catch (chargeError) {
     const message = errorMessage(chargeError);
+    if (chargeError instanceof NonTerminalChargeError) {
+      if (chargeError.persistAttempt) {
+        await updatePaymentAttempt(admin, paymentAttemptId, {
+          status: "charge_failed",
+          activation_status: "not_started",
+          recovery_status: "none",
+          error_code: chargeError.code,
+          error_message: message,
+        });
+      }
+      return {
+        gymId,
+        ok: false,
+        orderId,
+        paymentAttemptId,
+        retryable: true,
+        chargeResult: chargeError.chargeResult,
+        error: message,
+      };
+    }
+
     if (!chargeSucceeded) {
       await updatePaymentAttempt(admin, paymentAttemptId, {
         status: "charge_failed",

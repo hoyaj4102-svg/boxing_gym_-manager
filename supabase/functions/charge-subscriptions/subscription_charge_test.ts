@@ -169,6 +169,89 @@ Deno.test("clear auto-renewal rejection marks past_due and does not recover", as
   );
 });
 
+Deno.test("missing Toss secret is an internal retryable error and does not mark past_due", async () => {
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin();
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("fetch should not be called");
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  const attemptUpdate = updatesFor(updates, "payment_attempts")[0];
+  assertEquals(fetchCalls, 0, "missing secret must fail before Toss POST");
+  assertEquals(result.ok, false, "missing secret should fail safely");
+  assertEquals(
+    result.chargeResult,
+    "internal_error",
+    "missing secret should not be a card rejection",
+  );
+  assertEquals(result.retryable, true, "internal errors should be retryable");
+  assertEquals(
+    attemptUpdate.values.error_code,
+    "AUTO_RENEW_TOSS_SECRET_MISSING",
+    "attempt should keep an operator-visible error code",
+  );
+  assertEquals(
+    attemptUpdate.values.recovery_status,
+    "none",
+    "pre-Toss errors should remain stale-claim eligible after the delay",
+  );
+  assertEquals(rpcCalls.length, 0, "pre-Toss errors should not recover");
+  assertEquals(
+    inserts.length,
+    0,
+    "pre-Toss errors should not insert checkout session",
+  );
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "internal errors must not mark gym past_due or disable auto_renew",
+  );
+});
+
+Deno.test("invalid claim data is an internal retryable error and does not mark past_due", async () => {
+  const { admin, updates, rpcCalls } = createMockAdmin();
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(
+    admin,
+    baseClaim({ billing_key_ref: "" }),
+    {
+      tossSecret: "test_secret",
+      fetchImpl: async () => {
+        fetchCalls += 1;
+        throw new Error("fetch should not be called");
+      },
+      now: () => new Date("2026-01-01T00:10:00.000Z"),
+    },
+  );
+
+  const attemptUpdate = updatesFor(updates, "payment_attempts")[0];
+  assertEquals(fetchCalls, 0, "invalid claim must fail before Toss POST");
+  assertEquals(
+    result.chargeResult,
+    "internal_error",
+    "invalid claim should not be a card rejection",
+  );
+  assertEquals(result.retryable, true, "invalid claim should be retryable");
+  assertEquals(
+    attemptUpdate.values.error_code,
+    "AUTO_RENEW_CLAIM_INVALID",
+    "attempt should keep an operator-visible error code",
+  );
+  assertEquals(rpcCalls.length, 0, "invalid claim should not recover");
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "invalid claim must not mark gym past_due or disable auto_renew",
+  );
+});
+
 async function assertUncertainOutcome(
   name: string,
   fetchImpl: typeof fetch,
@@ -267,6 +350,60 @@ await assertUncertainOutcome(
   "TOSS_CHARGE_PAYMENT_KEY_MISSING_UNCERTAIN",
 );
 
+Deno.test("uncertain recovery-state write failure is reported without marking past_due", async () => {
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin({
+    updateErrorFor: (update) =>
+      update.table === "payment_attempts" &&
+        update.values.status === "charge_failed" &&
+        update.values.recovery_status === "pending"
+        ? { message: "pending write failed", code: "XX000" }
+        : null,
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new TypeError("network dropped after approval");
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  assertEquals(fetchCalls, 1, "uncertain charge must not retry POST");
+  assertEquals(result.ok, false, "failed pending write should be reported");
+  assertEquals(
+    result.chargeResult,
+    "uncertain_persist_failed",
+    "caller should see that recovery pending state was not saved",
+  );
+  assertEquals(
+    result.retryable,
+    true,
+    "failed pending write remains retryable",
+  );
+  assertEquals(
+    updatesFor(updates, "payment_attempts").length,
+    1,
+    "failed pending write should not be hidden by a second attempt update",
+  );
+  assertEquals(
+    rpcCalls.length,
+    0,
+    "failed pending write should not activate",
+  );
+  assertEquals(
+    inserts.length,
+    0,
+    "failed pending write should not insert checkout session",
+  );
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "failed pending write must not mark gym past_due or disable auto_renew",
+  );
+});
+
 Deno.test("paymentKey save failure after successful charge keeps gym out of past_due", async () => {
   const { admin, updates, rpcCalls } = createMockAdmin({
     updateErrorFor: (update) =>
@@ -275,18 +412,27 @@ Deno.test("paymentKey save failure after successful charge keeps gym out of past
         ? { message: "durable write failed", code: "XX000" }
         : null,
   });
+  let fetchCalls = 0;
 
   const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
     tossSecret: "test_secret",
-    fetchImpl: async () =>
-      new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
         status: 200,
-      }),
+      });
+    },
     now: () => new Date("2026-01-01T00:10:00.000Z"),
   });
 
+  assertEquals(fetchCalls, 1, "successful charge must not retry POST");
   assertEquals(result.ok, false, "durable write failure should be reported");
   assertEquals(rpcCalls.length, 0, "failed durable save should not activate");
+  assertEquals(
+    updatesFor(updates, "payment_attempts").length,
+    1,
+    "failed paymentKey save should leave original attempt state for stale lookup",
+  );
   assertEquals(
     updatesFor(updates, "gyms").length,
     0,
