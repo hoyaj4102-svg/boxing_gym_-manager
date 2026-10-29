@@ -1,13 +1,13 @@
-import { corsHeaders, jsonResponse, textResponse } from "../_shared/cors.ts";
-import { getAdminClient } from "../_shared/supabase.ts";
+import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
+import { getAdminClient } from '../_shared/supabase.ts';
 import {
   expectedTossMerchantId,
   isDuplicateWebhookTerminal,
   TOSS_MID_CONFIG_ERROR,
-  validateTossPaymentForAttempt,
-} from "./merchant_validation.ts";
+  validateTossPaymentForAttempt
+} from './merchant_validation.ts';
 
-const SUPPORTED_EVENT_TYPE = "PAYMENT_STATUS_CHANGED";
+const SUPPORTED_EVENT_TYPE = 'PAYMENT_STATUS_CHANGED';
 const TOSS_LOOKUP_TIMEOUT_MS = 10000;
 
 type WebhookEventRow = {
@@ -28,23 +28,18 @@ type PaymentAttempt = {
 };
 
 type TossLookupResult =
-  | { kind: "found"; payment: Record<string, unknown> }
-  | { kind: "not_found"; status: number; payload: unknown }
-  | {
-    kind: "retryable_error";
-    status?: number;
-    message: string;
-    payload?: unknown;
-  };
+  | { kind: 'found'; payment: Record<string, unknown> }
+  | { kind: 'not_found'; status: number; payload: unknown }
+  | { kind: 'retryable_error'; status?: number; message: string; payload?: unknown };
 
 const SENSITIVE_KEYS = new Set([
-  "authorization",
-  "billingkey",
-  "card",
-  "cardnumber",
-  "customerkey",
-  "secret",
-  "secretkey",
+  'authorization',
+  'billingkey',
+  'card',
+  'cardnumber',
+  'customerkey',
+  'secret',
+  'secretkey'
 ]);
 
 class DbWriteError extends Error {
@@ -52,14 +47,14 @@ class DbWriteError extends Error {
 
   constructor(message: string, code: string | null = null) {
     super(message);
-    this.name = "DbWriteError";
+    this.name = 'DbWriteError';
     this.code = code;
   }
 }
 
 function tossAuthHeader() {
-  const secret = Deno.env.get("TOSS_SECRET_KEY") || "";
-  if (!secret) throw new Error("TOSS_SECRET_KEY is missing");
+  const secret = Deno.env.get('TOSS_SECRET_KEY') || '';
+  if (!secret) throw new Error('TOSS_SECRET_KEY is missing');
   return `Basic ${btoa(`${secret}:`)}`;
 }
 
@@ -72,15 +67,15 @@ function sanitizePayload(value: unknown): unknown {
     return value.map(sanitizePayload);
   }
 
-  if (value && typeof value === "object") {
+  if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, "").toLowerCase();
+        const normalizedKey = key.replace(/[_\-\s]/g, '').toLowerCase();
         if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, "[REDACTED]"];
+          return [key, '[REDACTED]'];
         }
         return [key, sanitizePayload(entry)];
-      }),
+      })
     );
   }
 
@@ -88,18 +83,18 @@ function sanitizePayload(value: unknown): unknown {
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
+  return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
 }
 
 function firstString(...values: unknown[]) {
   for (const value of values) {
-    if (typeof value === "string" && value.trim()) {
+    if (typeof value === 'string' && value.trim()) {
       return value.trim();
     }
   }
-  return "";
+  return '';
 }
 
 function extractEventFields(payload: Record<string, unknown>) {
@@ -109,11 +104,7 @@ function extractEventFields(payload: Record<string, unknown>) {
   return {
     eventType: firstString(payload.eventType, payload.event_type, payload.type),
     orderId: firstString(data.orderId, payment.orderId, payload.orderId),
-    paymentKey: firstString(
-      data.paymentKey,
-      payment.paymentKey,
-      payload.paymentKey,
-    ),
+    paymentKey: firstString(data.paymentKey, payment.paymentKey, payload.paymentKey)
   };
 }
 
@@ -133,51 +124,41 @@ async function readJsonResponse(response: Response) {
   }
 }
 
-async function lookupTossPaymentByOrderId(
-  orderId: string,
-): Promise<TossLookupResult> {
+async function lookupTossPaymentByOrderId(orderId: string): Promise<TossLookupResult> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(
-    () => controller.abort(),
-    TOSS_LOOKUP_TIMEOUT_MS,
-  );
+  const timeoutId = setTimeout(() => controller.abort(), TOSS_LOOKUP_TIMEOUT_MS);
 
   try {
     const response = await fetch(
-      `https://api.tosspayments.com/v1/payments/orders/${
-        encodeURIComponent(orderId)
-      }`,
+      `https://api.tosspayments.com/v1/payments/orders/${encodeURIComponent(orderId)}`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Authorization: tossAuthHeader(),
+          Authorization: tossAuthHeader()
         },
-        signal: controller.signal,
-      },
+        signal: controller.signal
+      }
     );
     const payload = await readJsonResponse(response);
 
-    if (
-      response.ok && payload && typeof payload === "object" &&
-      !Array.isArray(payload)
-    ) {
-      return { kind: "found", payment: payload as Record<string, unknown> };
+    if (response.ok && payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      return { kind: 'found', payment: payload as Record<string, unknown> };
     }
 
     if (response.status === 404) {
-      return { kind: "not_found", status: response.status, payload };
+      return { kind: 'not_found', status: response.status, payload };
     }
 
     return {
-      kind: "retryable_error",
+      kind: 'retryable_error',
       status: response.status,
       message: `Unexpected Toss lookup response: ${response.status}`,
-      payload,
+      payload
     };
   } catch (error) {
     return {
-      kind: "retryable_error",
-      message: errorMessage(error),
+      kind: 'retryable_error',
+      message: errorMessage(error)
     };
   } finally {
     clearTimeout(timeoutId);
@@ -187,12 +168,12 @@ async function lookupTossPaymentByOrderId(
 async function updateWebhookEvent(
   admin: ReturnType<typeof getAdminClient>,
   eventId: string,
-  values: Record<string, unknown>,
+  values: Record<string, unknown>
 ) {
   const { error } = await admin
-    .from("toss_webhook_events")
+    .from('toss_webhook_events')
     .update(values)
-    .eq("id", eventId);
+    .eq('id', eventId);
   if (error) {
     throw new Error(`WEBHOOK_EVENT_UPDATE_FAILED: ${error.message}`);
   }
@@ -206,44 +187,42 @@ async function insertOrLoadWebhookEvent(
     orderId: string | null;
     paymentKey: string | null;
     payload: unknown;
-  },
+  }
 ) {
   const insertPayload = {
-    provider: "toss",
+    provider: 'toss',
     transmission_id: params.transmissionId,
     event_type: params.eventType,
     order_id: params.orderId,
     payment_key: params.paymentKey,
     received_payload: sanitizePayload(params.payload),
-    verification_status: "unverified_payload",
-    processing_status: "received",
+    verification_status: 'unverified_payload',
+    processing_status: 'received'
   };
 
   const { data, error } = await admin
-    .from("toss_webhook_events")
+    .from('toss_webhook_events')
     .insert(insertPayload)
-    .select("id, processing_status")
+    .select('id, processing_status')
     .single();
 
   if (!error) {
     return { event: data as WebhookEventRow, duplicate: false };
   }
 
-  if (error.code !== "23505") {
+  if (error.code !== '23505') {
     throw new Error(error.message);
   }
 
   const { data: existing, error: selectError } = await admin
-    .from("toss_webhook_events")
-    .select("id, processing_status")
-    .eq("provider", "toss")
-    .eq("transmission_id", params.transmissionId)
+    .from('toss_webhook_events')
+    .select('id, processing_status')
+    .eq('provider', 'toss')
+    .eq('transmission_id', params.transmissionId)
     .maybeSingle();
 
   if (selectError || !existing) {
-    throw new Error(
-      selectError?.message || "WEBHOOK_EVENT_DUPLICATE_LOOKUP_FAILED",
-    );
+    throw new Error(selectError?.message || 'WEBHOOK_EVENT_DUPLICATE_LOOKUP_FAILED');
   }
 
   return { event: existing as WebhookEventRow, duplicate: true };
@@ -252,32 +231,27 @@ async function insertOrLoadWebhookEvent(
 async function updatePaymentAttempt(
   admin: ReturnType<typeof getAdminClient>,
   attemptId: string,
-  values: Record<string, unknown>,
+  values: Record<string, unknown>
 ) {
   const { error } = await admin
-    .from("payment_attempts")
+    .from('payment_attempts')
     .update(values)
-    .eq("id", attemptId);
+    .eq('id', attemptId);
   if (error) {
-    throw new DbWriteError(
-      `PAYMENT_ATTEMPT_UPDATE_FAILED: ${error.message}`,
-      error.code || null,
-    );
+    throw new DbWriteError(`PAYMENT_ATTEMPT_UPDATE_FAILED: ${error.message}`, error.code || null);
   }
 }
 
 async function findAutoRenewalAttempt(
   admin: ReturnType<typeof getAdminClient>,
-  orderId: string,
+  orderId: string
 ) {
   const { data, error } = await admin
-    .from("payment_attempts")
-    .select(
-      "id, gym_id, payment_type, amount_krw, order_id, payment_key, status, activation_status, recovery_status",
-    )
-    .eq("provider", "toss")
-    .eq("payment_type", "auto_renewal")
-    .eq("order_id", orderId)
+    .from('payment_attempts')
+    .select('id, gym_id, payment_type, amount_krw, order_id, payment_key, status, activation_status, recovery_status')
+    .eq('provider', 'toss')
+    .eq('payment_type', 'auto_renewal')
+    .eq('order_id', orderId)
     .maybeSingle();
 
   if (error) {
@@ -289,21 +263,21 @@ async function findAutoRenewalAttempt(
 
 function isRecoverableAttempt(attempt: PaymentAttempt) {
   return [
-    "charge_failed",
-    "charge_succeeded",
-    "activation_pending",
-    "activation_failed",
-    "recovery_pending",
+    'charge_failed',
+    'charge_succeeded',
+    'activation_pending',
+    'activation_failed',
+    'recovery_pending'
   ].includes(attempt.status);
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return textResponse("Method not allowed", 405);
+  if (req.method !== 'POST') {
+    return textResponse('Method not allowed', 405);
   }
 
   const expectedMid = expectedTossMerchantId(Deno.env);
@@ -312,7 +286,7 @@ Deno.serve(async (req) => {
       ok: false,
       error: TOSS_MID_CONFIG_ERROR,
       message:
-        "Configure the TOSS_MID or TOSS_MERCHANT_ID Supabase secret before enabling Toss webhook processing.",
+        'Configure the TOSS_MID or TOSS_MERCHANT_ID Supabase secret before enabling Toss webhook processing.'
     }, 500);
   }
 
@@ -320,185 +294,139 @@ Deno.serve(async (req) => {
 
   try {
     const parsedPayload = asRecord(await readJson(req));
-    const { eventType, orderId, paymentKey } = extractEventFields(
-      parsedPayload,
-    );
+    const { eventType, orderId, paymentKey } = extractEventFields(parsedPayload);
     const rawTransmissionId = firstString(
-      req.headers.get("tosspayments-webhook-transmission-id"),
+      req.headers.get('tosspayments-webhook-transmission-id')
     );
-    const transmissionId = rawTransmissionId ||
-      `missing_${crypto.randomUUID()}`;
+    const transmissionId = rawTransmissionId || `missing_${crypto.randomUUID()}`;
 
     const { event, duplicate } = await insertOrLoadWebhookEvent(admin, {
       transmissionId,
       eventType,
       orderId: orderId || null,
       paymentKey: paymentKey || null,
-      payload: parsedPayload,
+      payload: parsedPayload
     });
 
     if (duplicate && isDuplicateWebhookTerminal(event.processing_status)) {
       return jsonResponse({
         ok: true,
         duplicate: true,
-        processingStatus: event.processing_status,
+        processingStatus: event.processing_status
       });
     }
 
     if (!rawTransmissionId) {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "invalid",
-        processing_status: "invalid",
-        error_code: "TRANSMISSION_ID_MISSING",
-        error_message: "tosspayments-webhook-transmission-id header missing",
+        verification_status: 'invalid',
+        processing_status: 'invalid',
+        error_code: 'TRANSMISSION_ID_MISSING',
+        error_message: 'tosspayments-webhook-transmission-id header missing'
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "transmission_id_missing",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'transmission_id_missing' });
     }
 
     await updateWebhookEvent(admin, event.id, {
-      processing_status: "processing",
+      processing_status: 'processing'
     });
 
     if (eventType !== SUPPORTED_EVENT_TYPE) {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "not_applicable",
-        processing_status: "ignored",
-        error_code: "UNSUPPORTED_EVENT_TYPE",
-        error_message: eventType || "eventType missing",
+        verification_status: 'not_applicable',
+        processing_status: 'ignored',
+        error_code: 'UNSUPPORTED_EVENT_TYPE',
+        error_message: eventType || 'eventType missing'
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "unsupported_event_type",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'unsupported_event_type' });
     }
 
     if (!orderId) {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "invalid",
-        processing_status: "invalid",
-        error_code: "ORDER_ID_MISSING",
-        error_message: "PAYMENT_STATUS_CHANGED payload did not include orderId",
+        verification_status: 'invalid',
+        processing_status: 'invalid',
+        error_code: 'ORDER_ID_MISSING',
+        error_message: 'PAYMENT_STATUS_CHANGED payload did not include orderId'
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "order_id_missing",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'order_id_missing' });
     }
 
     const lookup = await lookupTossPaymentByOrderId(orderId);
-    if (lookup.kind === "retryable_error") {
+    if (lookup.kind === 'retryable_error') {
       await updateWebhookEvent(admin, event.id, {
-        processing_status: "retryable_error",
-        error_code: lookup.status
-          ? `TOSS_LOOKUP_${lookup.status}`
-          : "TOSS_LOOKUP_RETRYABLE",
-        error_message: lookup.message,
+        processing_status: 'retryable_error',
+        error_code: lookup.status ? `TOSS_LOOKUP_${lookup.status}` : 'TOSS_LOOKUP_RETRYABLE',
+        error_message: lookup.message
       });
-      return jsonResponse(
-        { ok: false, retryable: true, error: lookup.message },
-        500,
-      );
+      return jsonResponse({ ok: false, retryable: true, error: lookup.message }, 500);
     }
 
-    if (lookup.kind === "not_found") {
+    if (lookup.kind === 'not_found') {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "not_verified",
-        processing_status: "not_found",
-        error_code: "TOSS_PAYMENT_NOT_FOUND",
-        error_message: "Toss payment was not found for orderId",
+        verification_status: 'not_verified',
+        processing_status: 'not_found',
+        error_code: 'TOSS_PAYMENT_NOT_FOUND',
+        error_message: 'Toss payment was not found for orderId'
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "payment_not_found",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'payment_not_found' });
     }
 
     const attempt = await findAutoRenewalAttempt(admin, orderId);
     if (!attempt) {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "verified_by_toss_lookup",
-        processing_status: "attempt_not_found",
-        payment_key: typeof lookup.payment.paymentKey === "string"
-          ? lookup.payment.paymentKey
-          : null,
-        error_code: "PAYMENT_ATTEMPT_NOT_FOUND",
-        error_message: "No auto_renewal payment_attempt found for orderId",
+        verification_status: 'verified_by_toss_lookup',
+        processing_status: 'attempt_not_found',
+        payment_key: typeof lookup.payment.paymentKey === 'string' ? lookup.payment.paymentKey : null,
+        error_code: 'PAYMENT_ATTEMPT_NOT_FOUND',
+        error_message: 'No auto_renewal payment_attempt found for orderId'
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "payment_attempt_not_found",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'payment_attempt_not_found' });
     }
 
     const validation = validateTossPaymentForAttempt(
       attempt,
       orderId,
       lookup.payment,
-      expectedMid,
+      expectedMid
     );
     if (!validation.ok) {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "not_verified",
-        processing_status: "validation_failed",
+        verification_status: 'not_verified',
+        processing_status: 'validation_failed',
         payment_key: validation.paymentKey || null,
-        error_code: "TOSS_PAYMENT_VALIDATION_FAILED",
-        error_message: `${
-          validation.failures.join("; ")
-        }; mid_check=${validation.midCheck}`,
+        error_code: 'TOSS_PAYMENT_VALIDATION_FAILED',
+        error_message: `${validation.failures.join('; ')}; mid_check=${validation.midCheck}`
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "validation_failed",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'validation_failed' });
     }
 
-    if (validation.status !== "DONE") {
+    if (validation.status !== 'DONE') {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "verified_by_toss_lookup",
-        processing_status: "non_done",
+        verification_status: 'verified_by_toss_lookup',
+        processing_status: 'non_done',
         payment_key: validation.paymentKey,
-        error_code: `TOSS_PAYMENT_${validation.status || "STATUS_MISSING"}`,
-        error_message:
-          "Payment status is not DONE; no subscription state changed",
+        error_code: `TOSS_PAYMENT_${validation.status || 'STATUS_MISSING'}`,
+        error_message: 'Payment status is not DONE; no subscription state changed'
       });
-      return jsonResponse({
-        ok: true,
-        ignored: true,
-        reason: "payment_not_done",
-      });
+      return jsonResponse({ ok: true, ignored: true, reason: 'payment_not_done' });
     }
 
-    if (
-      attempt.status === "completed" &&
-      attempt.activation_status === "succeeded"
-    ) {
+    if (attempt.status === 'completed' && attempt.activation_status === 'succeeded') {
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "verified_by_toss_lookup",
-        processing_status: "already_completed",
+        verification_status: 'verified_by_toss_lookup',
+        processing_status: 'already_completed',
         payment_key: validation.paymentKey,
         error_code: null,
-        error_message: `already completed; mid_check=${validation.midCheck}`,
+        error_message: `already completed; mid_check=${validation.midCheck}`
       });
       return jsonResponse({ ok: true, alreadyCompleted: true });
     }
 
     try {
-      if (
-        attempt.status === "initiated" || attempt.status === "charge_failed"
-      ) {
+      if (attempt.status === 'initiated' || attempt.status === 'charge_failed') {
         await updatePaymentAttempt(admin, attempt.id, {
-          status: "activation_pending",
-          activation_status: "pending",
-          recovery_status: "none",
+          status: 'activation_pending',
+          activation_status: 'pending',
+          recovery_status: 'none',
           payment_key: validation.paymentKey,
           error_code: null,
           error_message: null,
@@ -506,10 +434,10 @@ Deno.serve(async (req) => {
             webhook: {
               transmission_id: transmissionId,
               event_type: eventType,
-              mid_check: validation.midCheck,
+              mid_check: validation.midCheck
             },
-            payment: lookup.payment,
-          }),
+            payment: lookup.payment
+          })
         });
       } else if (isRecoverableAttempt(attempt)) {
         await updatePaymentAttempt(admin, attempt.id, {
@@ -520,89 +448,79 @@ Deno.serve(async (req) => {
             webhook: {
               transmission_id: transmissionId,
               event_type: eventType,
-              mid_check: validation.midCheck,
+              mid_check: validation.midCheck
             },
-            payment: lookup.payment,
-          }),
+            payment: lookup.payment
+          })
         });
       } else {
         await updateWebhookEvent(admin, event.id, {
-          verification_status: "verified_by_toss_lookup",
-          processing_status: "not_recoverable",
+          verification_status: 'verified_by_toss_lookup',
+          processing_status: 'not_recoverable',
           payment_key: validation.paymentKey,
-          error_code: "PAYMENT_ATTEMPT_NOT_RECOVERABLE",
-          error_message: `payment_attempt status is ${attempt.status}`,
+          error_code: 'PAYMENT_ATTEMPT_NOT_RECOVERABLE',
+          error_message: `payment_attempt status is ${attempt.status}`
         });
-        return jsonResponse({
-          ok: true,
-          ignored: true,
-          reason: "payment_attempt_not_recoverable",
-        });
+        return jsonResponse({ ok: true, ignored: true, reason: 'payment_attempt_not_recoverable' });
       }
     } catch (error) {
       const dbError = error as Partial<DbWriteError>;
-      const isUniqueViolation = dbError.code === "23505";
+      const isUniqueViolation = dbError.code === '23505';
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "verified_by_toss_lookup",
-        processing_status: isUniqueViolation
-          ? "data_conflict"
-          : "retryable_error",
+        verification_status: 'verified_by_toss_lookup',
+        processing_status: isUniqueViolation ? 'data_conflict' : 'retryable_error',
         payment_key: validation.paymentKey,
         error_code: isUniqueViolation
-          ? "PAYMENT_KEY_CONFLICT"
-          : (dbError.code || "PAYMENT_ATTEMPT_UPDATE_FAILED"),
-        error_message: errorMessage(error),
+          ? 'PAYMENT_KEY_CONFLICT'
+          : (dbError.code || 'PAYMENT_ATTEMPT_UPDATE_FAILED'),
+        error_message: errorMessage(error)
       });
       return jsonResponse({
         ok: false,
         retryable: !isUniqueViolation,
-        error: errorMessage(error),
+        error: errorMessage(error)
       }, isUniqueViolation ? 200 : 500);
     }
 
     const { data: recoveryResult, error: recoveryError } = await admin.rpc(
-      "recover_payment_attempt_activation",
-      { p_attempt_id: attempt.id },
+      'recover_payment_attempt_activation',
+      { p_attempt_id: attempt.id }
     );
 
     if (recoveryError) {
       await updatePaymentAttempt(admin, attempt.id, {
-        status: "activation_failed",
-        activation_status: "failed",
-        recovery_status: "pending",
-        error_code: recoveryError.code || "WEBHOOK_RECOVERY_FAILED",
-        error_message: recoveryError.message,
+        status: 'activation_failed',
+        activation_status: 'failed',
+        recovery_status: 'pending',
+        error_code: recoveryError.code || 'WEBHOOK_RECOVERY_FAILED',
+        error_message: recoveryError.message
       });
       await updateWebhookEvent(admin, event.id, {
-        verification_status: "verified_by_toss_lookup",
-        processing_status: "recovery_failed",
+        verification_status: 'verified_by_toss_lookup',
+        processing_status: 'recovery_failed',
         payment_key: validation.paymentKey,
-        error_code: recoveryError.code || "WEBHOOK_RECOVERY_FAILED",
-        error_message: recoveryError.message,
+        error_code: recoveryError.code || 'WEBHOOK_RECOVERY_FAILED',
+        error_message: recoveryError.message
       });
-      return jsonResponse({
-        ok: false,
-        recoveredPayment: true,
-        error: recoveryError.message,
-      }, 500);
+      return jsonResponse({ ok: false, recoveredPayment: true, error: recoveryError.message }, 500);
     }
 
     await updateWebhookEvent(admin, event.id, {
-      verification_status: "verified_by_toss_lookup",
-      processing_status: "processed",
+      verification_status: 'verified_by_toss_lookup',
+      processing_status: 'processed',
       payment_key: validation.paymentKey,
       error_code: null,
-      error_message: `mid_check=${validation.midCheck}`,
+      error_message: `mid_check=${validation.midCheck}`
     });
 
     return jsonResponse({
       ok: true,
       processed: true,
       paymentAttemptId: attempt.id,
-      recovery: recoveryResult,
+      recovery: recoveryResult
     });
   } catch (error) {
     const message = errorMessage(error);
-    return jsonResponse({ ok: false, error: message || "Unknown error" }, 500);
+    return jsonResponse({ ok: false, error: message || 'Unknown error' }, 500);
   }
 });
