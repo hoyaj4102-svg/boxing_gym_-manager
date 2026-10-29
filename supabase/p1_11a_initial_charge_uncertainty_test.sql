@@ -106,7 +106,11 @@ cross join lateral (
   values
     (ctx.uncertain_user_id, ctx.uncertain_gym_id),
     (ctx.fallback_user_id, ctx.fallback_gym_id)
-) as profiles_to_insert(user_id, gym_id);
+) as profiles_to_insert(user_id, gym_id)
+on conflict (id) do update
+set
+  gym_id = excluded.gym_id,
+  name = excluded.name;
 
 insert into public.payment_attempts (
   id,
