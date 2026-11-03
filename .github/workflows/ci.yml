@@ -1,0 +1,85 @@
+name: CI
+
+# Runs the repo's existing unit tests offline.
+# No deploys, no billing scheduler, no production credentials, and no calls
+# to Toss, Supabase, or Vercel.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  DENO_NO_UPDATE_CHECK: "1"
+  DENO_NO_PROMPT: "1"
+  SUPABASE_URL: https://example.test
+  SUPABASE_ANON_KEY: dummy-anon-key
+  SUPABASE_SERVICE_ROLE_KEY: dummy-service-role-key
+  TOSS_CLIENT_KEY: dummy-toss-client-key
+  TOSS_WIDGET_CLIENT_KEY: dummy-toss-widget-client-key
+  TOSS_SECRET_KEY: dummy-toss-secret-key
+  TOSS_MID: dummy-toss-mid
+  TOSS_MERCHANT_ID: dummy-toss-merchant-id
+  CRON_SECRET: dummy-cron-secret
+  APP_URL: https://example.test
+  STRIPE_SECRET_KEY: dummy-stripe-secret
+  STRIPE_WEBHOOK_SECRET: dummy-stripe-webhook-secret
+
+jobs:
+  deno-tests:
+    name: Deno tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2.0.5
+        with:
+          deno-version: 2.9.8
+          cache: false
+
+      - name: Run Deno tests
+        run: |
+          set -euo pipefail
+          deno test \
+            --no-prompt \
+            --no-remote \
+            --no-npm \
+            --no-lock \
+            --cached-only \
+            supabase/functions/charge-subscriptions/subscription_charge_test.ts \
+            supabase/functions/confirm-billing-auth/charge_outcome_test.ts \
+            supabase/functions/confirm-toss-payment/handler_test.ts \
+            supabase/functions/create-checkout/handler_test.ts \
+            supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
+            supabase/functions/toss-webhook/merchant_validation_test.ts
+
+  node-checks:
+    name: Node checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.23.4
+          package-manager-cache: false
+
+      - name: Billing UI action checks
+        run: node scripts/check-billing-ui-actions.mjs
+
+      - name: Billing scheduler workflow checks
+        run: node scripts/check-billing-scheduler-workflow.mjs
