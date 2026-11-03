@@ -2,6 +2,10 @@
 -- P1-7A Initial billing idempotency claim
 -- Prevent duplicate first charges by allowing only one request per gym to claim
 -- the right to call Toss for an initial_billing attempt.
+--
+-- Paid Pro is already_completed only while current_period_end is in the future.
+-- Databases that already applied an older copy of this function must also run
+-- p1_15a_expired_pro_billing_claim.sql. Re-running this file is equivalent.
 -- =============================================================================
 
 create or replace function public.claim_initial_billing_attempt(
@@ -61,24 +65,22 @@ begin
     raise exception 'GYM_NOT_FOUND';
   end if;
 
+  -- A paid Pro period is complete only while current_period_end is still
+  -- in the future. active + auto_renew is not an entitlement by itself:
+  -- an expired period must reach the auto-renewal and recovery guards below.
   if v_gym.plan_code = 'pro'
-     and (
-       (
-         v_gym.current_period_end is not null
-         and v_gym.current_period_end > now()
-       )
-       or (
-         v_gym.subscription_status = 'active'
-         and v_gym.auto_renew = true
-       )
-     ) then
+     and v_gym.current_period_end is not null
+     and v_gym.current_period_end > now() then
     return jsonb_build_object(
       'ok', true,
       'action', 'already_completed',
       'can_charge', false,
       'already_completed', true,
       'gym_id', v_gym.id,
-      'gym_name', v_gym.name
+      'gym_name', v_gym.name,
+      'plan_code', v_gym.plan_code,
+      'subscription_status', v_gym.subscription_status,
+      'current_period_end', v_gym.current_period_end
     );
   end if;
 
