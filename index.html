@@ -2592,6 +2592,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: '토스 결제창을 엽니다...',
         billingPaymentSuccess: '결제가 완료되었습니다. Pro가 활성화됩니다.',
+        billingAlreadyActive: '이미 이용 기간이 남은 Pro 구독입니다. 새 결제는 진행하지 않았어요.',
+        billingEntitlementNotActive: 'Pro가 활성화되지 않았어요. 이용 기간을 확인해 주세요.',
         billingPaymentFailed: '결제가 취소되었거나 실패했습니다.',
         billingNeedLoginAfterPay: '결제 후 로그인이 필요합니다. 다시 로그인해 주세요.',
         billingTossReturnIncomplete: '결제 승인 정보가 부족합니다. 토스에서 돌아온 주소를 확인해 주세요.',
@@ -2877,6 +2879,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: 'Opening Toss checkout...',
         billingPaymentSuccess: 'Payment completed. Pro will be activated.',
+        billingAlreadyActive: 'This Pro subscription still has time left. No new payment was started.',
+        billingEntitlementNotActive: 'Pro was not activated. Check the subscription period.',
         billingPaymentFailed: 'Payment was canceled or failed.',
         billingNeedLoginAfterPay: 'Please sign in again after payment.',
         billingTossReturnIncomplete: 'Missing Toss paymentKey/amount in the return URL. Try the test payment again.',
@@ -3126,6 +3130,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: 'Abriendo Toss...',
         billingPaymentSuccess: 'Pago completado. Se activará Pro.',
+        billingAlreadyActive: 'Esta suscripción Pro todavía está vigente. No se inició un pago nuevo.',
+        billingEntitlementNotActive: 'Pro no se activó. Revisa el periodo de la suscripción.',
         billingPaymentFailed: 'El pago se canceló o falló.',
         billingNeedLoginAfterPay: 'Inicia sesión otra vez después del pago.',
         billingTossReturnIncomplete: 'Falta paymentKey/amount en la URL de retorno. Intenta el pago de prueba otra vez.',
@@ -3375,6 +3381,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: 'Открываем Toss...',
         billingPaymentSuccess: 'Оплата завершена. Pro будет активирован.',
+        billingAlreadyActive: 'Подписка Pro ещё действует. Новый платёж не начат.',
+        billingEntitlementNotActive: 'Pro не активирован. Проверьте срок подписки.',
         billingPaymentFailed: 'Оплата отменена или не удалась.',
         billingNeedLoginAfterPay: 'После оплаты войдите снова.',
         billingTossReturnIncomplete: 'В URL возврата нет paymentKey/amount. Повторите тестовую оплату.',
@@ -3624,6 +3632,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: 'Toss нээж байна...',
         billingPaymentSuccess: 'Төлбөр амжилттай. Pro идэвхжинэ.',
+        billingAlreadyActive: 'Pro эрх хүчинтэй хэвээр байна. Шинэ төлбөр эхлээгүй.',
+        billingEntitlementNotActive: 'Pro идэвхжээгүй. Ашиглах хугацааг шалгана уу.',
         billingPaymentFailed: 'Төлбөр цуцлагдсан эсвэл амжилтгүй.',
         billingNeedLoginAfterPay: 'Төлбөрийн дараа дахин нэвтэрнэ үү.',
         billingTossReturnIncomplete: 'Буцах URL-д paymentKey/amount алга. Туршилтын төлбөрийг дахин хийнэ үү.',
@@ -3873,6 +3883,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: '正在打开 Toss...',
         billingPaymentSuccess: '支付完成，即将开通 Pro。',
+        billingAlreadyActive: 'Pro 仍在有效期内。没有开始新的付款。',
+        billingEntitlementNotActive: 'Pro 未开通。请确认使用期限。',
         billingPaymentFailed: '支付已取消或失败。',
         billingNeedLoginAfterPay: '支付后请重新登录。',
         billingTossReturnIncomplete: '返回地址缺少 paymentKey/amount，请重新测试支付。',
@@ -4122,6 +4134,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: 'Toss खुल रहा है...',
         billingPaymentSuccess: 'पेमेंट पूरा। Pro सक्रिय होगा।',
+        billingAlreadyActive: 'यह Pro सदस्यता अभी वैध है। नया भुगतान शुरू नहीं हुआ।',
+        billingEntitlementNotActive: 'Pro सक्रिय नहीं हुआ। सदस्यता अवधि जाँचें।',
         billingPaymentFailed: 'पेमेंट रद्द या असफल।',
         billingNeedLoginAfterPay: 'पेमेंट के बाद फिर लॉगिन करें।',
         billingTossReturnIncomplete: 'रिटर्न URL में paymentKey/amount नहीं है। टेस्ट पेमेंट फिर से करें।',
@@ -4371,6 +4385,8 @@
         upgradeStripeYearlyButton: 'Stripe Yearly',
         billingTossOpening: 'Ouverture de Toss...',
         billingPaymentSuccess: 'Paiement terminé. Pro sera activé.',
+        billingAlreadyActive: 'Cet abonnement Pro est encore en cours. Aucun nouveau paiement n’a été lancé.',
+        billingEntitlementNotActive: 'Pro n’a pas été activé. Vérifiez la période d’abonnement.',
         billingPaymentFailed: 'Paiement annulé ou échoué.',
         billingNeedLoginAfterPay: 'Reconnectez-vous après le paiement.',
         billingTossReturnIncomplete: 'paymentKey/amount manquant dans l’URL de retour. Refaites le paiement test.',
@@ -5549,9 +5565,16 @@
         try {
           const result = await SweatManagerBilling.confirmTossFromUrl(params);
           if (result) {
-            showToast(t('billingPaymentSuccess'));
             await refreshBillingSummary();
             await refreshPaymentHistory();
+            const notice = SweatManagerBilling.billingConfirmNotice(result, billingSummary);
+            if (notice === 'already_active') {
+              showToast(t('billingAlreadyActive'));
+            } else if (notice === 'payment_success') {
+              showToast(t('billingPaymentSuccess'));
+            } else {
+              showToast(t('billingEntitlementNotActive'), 'warning');
+            }
           }
         } catch (error) {
           if (error?.code === 'TOSS_RETURN_INCOMPLETE' || error?.message === 'TOSS_RETURN_INCOMPLETE' ||

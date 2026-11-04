@@ -202,9 +202,24 @@ Deno.serve(async (req) => {
     const paymentType = claimValue(claim, "payment_type");
 
     if (action === "already_completed") {
+      const periodEnd = claimValue(claim, "current_period_end");
+      const periodEndMs = Date.parse(periodEnd);
+      const entitlementCurrent = Number.isFinite(periodEndMs) && periodEndMs > Date.now();
+      if (!entitlementCurrent) {
+        return jsonResponse({
+          ok: false,
+          alreadyActive: false,
+          entitlementCurrent: false,
+          action: "entitlement_expired",
+          message: "PRO_ENTITLEMENT_EXPIRED",
+        }, 409);
+      }
+
       return jsonResponse({
         ok: true,
         alreadyActive: true,
+        entitlementCurrent: true,
+        currentPeriodEnd: periodEnd,
         gymId,
         interval: "monthly",
         paymentAttemptId,
