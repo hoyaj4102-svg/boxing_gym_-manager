@@ -8,6 +8,8 @@
 -- it does not update gyms, delete members, call payment APIs, or alter billing
 -- renewal/recovery state.
 
+-- Temporary pre-fix function bodies for a CI failure check. Do not merge.
+
 create or replace function public.gym_has_pro_access(p_gym public.gyms)
 returns boolean
 language sql
@@ -18,9 +20,7 @@ as $$
       when p_gym.subscription_status = 'trialing'
            and p_gym.trial_ends_at > now() then true
       when p_gym.plan_code = 'pro'
-           and p_gym.subscription_status = 'active'
-           and p_gym.current_period_end is not null
-           and p_gym.current_period_end > now() then true
+           and p_gym.subscription_status = 'active' then true
       when p_gym.plan_code = 'pro'
            and p_gym.subscription_status = 'canceled'
            and p_gym.current_period_end is not null
@@ -44,7 +44,15 @@ begin
     return 0;
   end if;
 
-  if public.gym_has_pro_access(v_gym) then
+  if v_gym.plan_code = 'pro'
+     and v_gym.subscription_status = 'active' then
+    return -1;
+  end if;
+
+  if v_gym.plan_code = 'pro'
+     and v_gym.subscription_status = 'canceled'
+     and v_gym.current_period_end is not null
+     and v_gym.current_period_end > now() then
     return -1;
   end if;
 
