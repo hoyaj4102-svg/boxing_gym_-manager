@@ -1,8 +1,8 @@
 name: CI
 
-# Runs the repo's existing unit tests offline.
-# No deploys, no billing scheduler, no production credentials, and no calls
-# to Toss, Supabase, or Vercel.
+# Runs the repo's existing unit tests offline, plus SQL tests on a temporary
+# Postgres service started by this workflow, plus any Node test files.
+# No deploys, no billing scheduler, and no calls to Toss, Supabase, or Vercel.
 
 on:
   pull_request:
@@ -83,3 +83,67 @@ jobs:
 
       - name: Billing scheduler workflow checks
         run: node scripts/check-billing-scheduler-workflow.mjs
+
+      - name: Additional Node checks
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          ran=0
+          for file in scripts/check-*.mjs; do
+            case "$file" in
+              scripts/check-billing-ui-actions.mjs|scripts/check-billing-scheduler-workflow.mjs)
+                continue
+                ;;
+            esac
+            echo "Running ${file}"
+            node "$file"
+            ran=1
+          done
+          if [[ "$ran" -eq 0 ]]; then
+            echo "No additional Node check scripts."
+          fi
+
+      - name: Node test files
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find . -type f \( -name '*.test.mjs' -o -name '*.test.js' -o -name '*.test.cjs' \) ! -path './node_modules/*' | sort)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No Node test files."
+            exit 0
+          fi
+          echo "Running ${#files[@]} Node test file(s)"
+          printf '%s\n' "${files[@]}"
+          node --test "${files[@]}"
+
+  sql-tests:
+    name: SQL tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        # Password is only for this temporary Actions database.
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run SQL tests on temporary Postgres
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+        run: scripts/run-sql-tests.sh
