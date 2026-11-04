@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse, textResponse } from "../_shared/cors.ts";
+import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
 import {
   getAdminClient,
   getGymIdForUser,
@@ -18,37 +19,6 @@ function customerKeyForGym(gymId: string) {
   return `gym_${gymId.replace(/-/g, "")}`;
 }
 
-const SENSITIVE_KEYS = new Set([
-  "authkey",
-  "authorization",
-  "billingkey",
-  "card",
-  "cardnumber",
-  "customerkey",
-  "secret",
-  "secretkey",
-]);
-
-function sanitizeTossPayload(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizeTossPayload);
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, "").toLowerCase();
-        if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, "[REDACTED]"];
-        }
-        return [key, sanitizeTossPayload(entry)];
-      }),
-    );
-  }
-
-  return value;
-}
-
 function logTossBillingKeyFailure(
   stage: string,
   status: number,
@@ -63,7 +33,7 @@ function logTossBillingKeyFailure(
     status,
     code: body.code || body.errorCode || null,
     message: body.message || body.errorMessage || null,
-    raw: sanitizeTossPayload(payload),
+    raw: sanitizeProviderPayload(payload),
   });
 }
 
@@ -325,17 +295,39 @@ Deno.serve(async (req) => {
         status: "charge_failed",
         activation_status: "not_started",
         error_message: "Failed to issue billing key",
-        provider_response: sanitizeTossPayload(issued),
+        provider_response: sanitizeProviderPayload(issued),
       });
       return textResponse("Failed to issue billing key", 502);
     }
 
+    const { error: credentialError } = await admin.rpc(
+      "upsert_gym_billing_credential",
+      {
+        p_gym_id: gymId,
+        p_billing_key: billingKey,
+        p_provider: "toss",
+      },
+    );
+    if (credentialError) {
+      console.error("BILLING_CREDENTIAL_STORE_FAILED", {
+        gymId,
+        code: credentialError.code || null,
+      });
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: "charge_failed",
+        activation_status: "not_started",
+        recovery_status: "none",
+        error_message: "BILLING_CREDENTIAL_STORE_FAILED",
+        provider_response: sanitizeProviderPayload(issued),
+      });
+      return textResponse("Failed to store billing credential", 502);
+    }
+
     await updatePaymentAttempt(admin, paymentAttemptId, {
       status: "auth_issued",
-      billing_key_ref: billingKey,
       provider_response: {
         mode: "billing_key_issued",
-        response: sanitizeTossPayload(issued),
+        response: sanitizeProviderPayload(issued),
       },
     });
 
@@ -351,11 +343,11 @@ Deno.serve(async (req) => {
         currency: "KRW",
         status: "pending",
         order_id: orderId,
-        raw: {
+        raw: sanitizeProviderPayload({
           mode: "billing_key",
           cardCompany: issued.card?.company || null,
           cardNumber: issued.card?.number || null,
-        },
+        }),
       })
       .select("id")
       .single();
@@ -389,11 +381,11 @@ Deno.serve(async (req) => {
         .from("checkout_sessions")
         .update({
           status: "pending",
-          raw: {
+          raw: sanitizeProviderPayload({
             error: chargeOutcome.message,
             errorCode: chargeOutcome.code,
             chargeResult: "uncertain",
-          },
+          }),
         })
         .eq("id", sessionRow.id);
       await updatePaymentAttempt(admin, paymentAttemptId, {
@@ -405,7 +397,7 @@ Deno.serve(async (req) => {
         provider_response: {
           mode: "initial_billing_charge_uncertain",
           billingKeyIssued: true,
-          charge: sanitizeTossPayload(chargeOutcome.payload),
+          charge: sanitizeProviderPayload(chargeOutcome.payload),
         },
       });
       return jsonResponse({
@@ -424,11 +416,11 @@ Deno.serve(async (req) => {
         .from("checkout_sessions")
         .update({
           status: "failed",
-          raw: {
+          raw: sanitizeProviderPayload({
             error: chargeOutcome.message,
             errorCode: chargeOutcome.code,
             chargeResult: "rejected",
-          },
+          }),
         })
         .eq("id", sessionRow.id);
       await updatePaymentAttempt(admin, paymentAttemptId, {
@@ -440,7 +432,7 @@ Deno.serve(async (req) => {
         provider_response: {
           mode: "initial_billing_charge_rejected",
           billingKeyIssued: true,
-          charge: sanitizeTossPayload(chargeOutcome.payload),
+          charge: sanitizeProviderPayload(chargeOutcome.payload),
         },
       });
       return textResponse(chargeOutcome.message, 400);
@@ -454,7 +446,7 @@ Deno.serve(async (req) => {
       activation_status: "pending",
       recovery_status: "none",
       payment_key: paymentKey,
-      provider_response: sanitizeTossPayload(charged),
+      provider_response: sanitizeProviderPayload(charged),
     }, "PAYMENT_ATTEMPT_DURABLE_CHARGE_UPDATE_FAILED");
 
     const activateError = await activatePaymentAttempt(admin, paymentAttemptId);
@@ -484,7 +476,7 @@ Deno.serve(async (req) => {
         status: "completed",
         provider_session_id: paymentKey,
         completed_at: new Date().toISOString(),
-        raw: { ...charged, billingKeyIssued: true },
+        raw: sanitizeProviderPayload({ ...charged, billingKeyIssued: true }),
       })
       .eq("id", sessionRow.id);
 

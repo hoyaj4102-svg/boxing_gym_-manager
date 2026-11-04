@@ -60,7 +60,8 @@ jobs:
             supabase/functions/confirm-toss-payment/handler_test.ts \
             supabase/functions/create-checkout/handler_test.ts \
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
-            supabase/functions/toss-webhook/merchant_validation_test.ts
+            supabase/functions/toss-webhook/merchant_validation_test.ts \
+            supabase/functions/_shared/sanitize_provider_payload_test.ts
 
   node-checks:
     name: Node checks
@@ -83,3 +84,6 @@ jobs:
 
       - name: Billing scheduler workflow checks
         run: node scripts/check-billing-scheduler-workflow.mjs
+
+      - name: Payment data protection checks
+        run: node scripts/check-payment-data-protection.mjs

@@ -1,3 +1,4 @@
+import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
 import { chargeTossBilling } from "../_shared/toss_charge_outcome.ts";
 
 export type ClaimedSubscriptionCharge = {
@@ -57,16 +58,6 @@ class NonTerminalChargeError extends Error {
   }
 }
 
-const SENSITIVE_KEYS = new Set([
-  "authorization",
-  "billingkey",
-  "card",
-  "cardnumber",
-  "customerkey",
-  "secret",
-  "secretkey",
-]);
-
 function tossAuthHeader(secret: string) {
   if (!secret) {
     throw new NonTerminalChargeError(
@@ -77,24 +68,20 @@ function tossAuthHeader(secret: string) {
   return `Basic ${btoa(`${secret}:`)}`;
 }
 
-function sanitizeProviderPayload(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizeProviderPayload);
+export async function resolveBillingCredential(
+  admin: AdminClientLike,
+  claim: ClaimedSubscriptionCharge,
+): Promise<string> {
+  const gymId = String(claim.gym_id || "");
+  if (gymId) {
+    const { data, error } = await admin.rpc("read_gym_billing_credential", {
+      p_gym_id: gymId,
+    });
+    if (!error && typeof data === "string" && data.trim()) {
+      return data.trim();
+    }
   }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, "").toLowerCase();
-        if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, "[REDACTED]"];
-        }
-        return [key, sanitizeProviderPayload(entry)];
-      }),
-    );
-  }
-
-  return value;
+  return String(claim.billing_key_ref || "");
 }
 
 function errorMessage(error: unknown) {
@@ -173,7 +160,7 @@ export async function processClaimedSubscriptionCharge(
   const checkedAt = (options.now ?? (() => new Date()))().toISOString();
   const gymId = String(claim.gym_id || "");
   const ownerId = claim.user_id ? String(claim.user_id) : "";
-  const billingKey = String(claim.billing_key_ref || "");
+  const billingKey = await resolveBillingCredential(admin, claim);
   const customerKey = String(claim.customer_key || "");
   const orderId = String(claim.order_id || "");
   const paymentAttemptId = String(claim.payment_attempt_id || "");
@@ -297,7 +284,7 @@ export async function processClaimedSubscriptionCharge(
       order_id: orderId,
       provider_session_id: paymentKey,
       completed_at: checkedAt,
-      raw: { mode: "auto_renew", ...charged },
+      raw: sanitizeProviderPayload({ mode: "auto_renew", ...charged }),
     });
     if (checkoutSessionError) {
       throw new Error(
