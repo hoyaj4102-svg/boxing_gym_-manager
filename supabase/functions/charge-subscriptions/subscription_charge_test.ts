@@ -53,6 +53,7 @@ function createMockAdmin(options: {
   rpcError?: null | { message: string; code?: string };
   rpcData?: unknown;
   billingCredential?: string | null;
+  billingCredentialError?: null | { message: string; code?: string };
 } = {}) {
   const updates: Array<{
     table: string;
@@ -86,8 +87,10 @@ function createMockAdmin(options: {
       rpcCalls.push({ name, args });
       if (name === "read_gym_billing_credential") {
         return {
-          data: options.billingCredential ?? null,
-          error: null,
+          data: options.billingCredentialError
+            ? null
+            : options.billingCredential ?? null,
+          error: options.billingCredentialError ?? null,
         };
       }
       return {
@@ -699,4 +702,36 @@ Deno.test("renewal keeps the claim credential when private storage is empty", as
     "empty private storage falls back to the claim credential",
   );
   assertEquals(chargedBody.amount, 10000, "fallback charge amount stays unchanged");
+});
+
+Deno.test("renewal does not charge when the credential read is unavailable", async () => {
+  const { admin, updates, inserts } = createMockAdmin({
+    billingCredentialError: {
+      message: "function does not exist",
+      code: "PGRST202",
+    },
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+        status: 200,
+      });
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  assertEquals(fetchCalls, 0, "missing credential read must not call the provider");
+  assertEquals(result.ok, false, "missing credential read fails closed");
+  assertEquals(result.chargeResult, "credential_unavailable", "failure stays distinct");
+  assertEquals(updates.length, 0, "missing credential read does not rewrite the attempt");
+  assertEquals(inserts.length, 0, "missing credential read does not store a payload");
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "missing credential read must not mark the gym past due",
+  );
 });

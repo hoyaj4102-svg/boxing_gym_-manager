@@ -5,7 +5,9 @@
 -- Does not enable or edit the recurring charge scheduler.
 --
 -- Run after the existing billing SQL files, in the SQL editor.
--- Do not apply this file to production until Founder approval.
+-- Recommended order: this file, then the expired-plan claim SQL, then functions.
+-- The two SQL files also apply safely in the other order, and either file can
+-- be run again. Do not apply this file to production until Founder approval.
 --
 -- The final section is marked:
 -- requires Founder approval before applying to production
@@ -895,6 +897,9 @@ grant execute on function public.get_billing_summary() to authenticated;
 --
 -- Idempotent. Does not change plan status, charge amounts, period dates,
 -- or the renewal schedule. Does not delete gyms, members, or payment rows.
+--
+-- A repeated run does not replace a value already stored privately.
+-- A previous copy is cleared only when it matches the private value.
 -- =============================================================================
 
 create or replace function private.backfill_billing_credentials()
@@ -919,11 +924,7 @@ begin
   where g.billing_provider = 'toss'
     and g.billing_subscription_id is not null
     and length(btrim(g.billing_subscription_id)) > 0
-  on conflict (gym_id, provider) do update
-  set
-    billing_key = excluded.billing_key,
-    updated_at = now()
-  where private.billing_credentials.billing_key is distinct from excluded.billing_key;
+  on conflict (gym_id, provider) do nothing;
 
   insert into private.billing_credentials (
     gym_id,
@@ -980,6 +981,7 @@ begin
       from private.billing_credentials c
       where c.gym_id = pa.gym_id
         and c.provider = 'toss'
+        and c.billing_key = btrim(pa.billing_key_ref)
     );
 
   update public.checkout_sessions

@@ -73,13 +73,28 @@ export async function resolveBillingCredential(
   claim: ClaimedSubscriptionCharge,
 ): Promise<string> {
   const gymId = String(claim.gym_id || "");
-  if (gymId) {
-    const { data, error } = await admin.rpc("read_gym_billing_credential", {
-      p_gym_id: gymId,
-    });
-    if (!error && typeof data === "string" && data.trim()) {
-      return data.trim();
-    }
+  if (!gymId) {
+    throw new NonTerminalChargeError(
+      "BILLING_CREDENTIAL_UNAVAILABLE",
+      "Billing credential store is unavailable",
+      "credential_unavailable",
+      false,
+    );
+  }
+
+  const { data, error } = await admin.rpc("read_gym_billing_credential", {
+    p_gym_id: gymId,
+  });
+  if (error) {
+    throw new NonTerminalChargeError(
+      "BILLING_CREDENTIAL_UNAVAILABLE",
+      "Billing credential store is unavailable",
+      "credential_unavailable",
+      false,
+    );
+  }
+  if (typeof data === "string" && data.trim()) {
+    return data.trim();
   }
   return String(claim.billing_key_ref || "");
 }
@@ -160,14 +175,15 @@ export async function processClaimedSubscriptionCharge(
   const checkedAt = (options.now ?? (() => new Date()))().toISOString();
   const gymId = String(claim.gym_id || "");
   const ownerId = claim.user_id ? String(claim.user_id) : "";
-  const billingKey = await resolveBillingCredential(admin, claim);
   const customerKey = String(claim.customer_key || "");
   const orderId = String(claim.order_id || "");
   const paymentAttemptId = String(claim.payment_attempt_id || "");
   const amountKrw = Number(claim.amount_krw || 10000);
+  let billingKey = "";
   let chargeSucceeded = false;
 
   try {
+    billingKey = await resolveBillingCredential(admin, claim);
     if (!paymentAttemptId || !billingKey || !customerKey || !orderId) {
       throw new NonTerminalChargeError(
         "AUTO_RENEW_CLAIM_INVALID",

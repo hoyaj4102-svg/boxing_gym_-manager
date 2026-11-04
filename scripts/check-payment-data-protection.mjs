@@ -116,6 +116,26 @@ assert(
   "renewal charge must read the private credential",
 );
 assert(
+  chargeSource.includes("BILLING_CREDENTIAL_UNAVAILABLE"),
+  "renewal charge must stop when the credential read fails",
+);
+const credentialReadAt = confirmSource.indexOf("read_gym_billing_credential");
+const providerIssueAt = confirmSource.indexOf(
+  'tossPost("/v1/billing/authorizations/issue"',
+);
+assert(
+  credentialReadAt > 0 && providerIssueAt > credentialReadAt,
+  "billing confirmation must check the credential store before the provider call",
+);
+assert(
+  migration.includes("on conflict (gym_id, provider) do nothing"),
+  "repeated backfill must not replace a stored value",
+);
+assert(
+  migration.includes("c.billing_key = btrim(pa.billing_key_ref)"),
+  "backfill must clear only a copied attempt value",
+);
+assert(
   /raw:\s*sanitizeProviderPayload\(/.test(chargeSource),
   "renewal payload writes must go through the sanitizer",
 );

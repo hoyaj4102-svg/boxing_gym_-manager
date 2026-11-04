@@ -1,5 +1,6 @@
 import { corsHeaders, jsonResponse, textResponse } from "../_shared/cors.ts";
 import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
+import { alreadyCompletedIsCurrent } from "./claim_gate.ts";
 import {
   getAdminClient,
   getGymIdForUser,
@@ -203,8 +204,7 @@ Deno.serve(async (req) => {
 
     if (action === "already_completed") {
       const periodEnd = claimValue(claim, "current_period_end");
-      const periodEndMs = Date.parse(periodEnd);
-      const entitlementCurrent = Number.isFinite(periodEndMs) && periodEndMs > Date.now();
+      const entitlementCurrent = alreadyCompletedIsCurrent(claim);
       if (!entitlementCurrent) {
         return jsonResponse({
           ok: false,
@@ -281,6 +281,18 @@ Deno.serve(async (req) => {
 
     if (!paymentAttemptId || !orderId) {
       return textResponse("INITIAL_BILLING_CLAIM_INVALID", 500);
+    }
+
+    const { error: credentialStoreError } = await admin.rpc(
+      "read_gym_billing_credential",
+      { p_gym_id: gymId },
+    );
+    if (credentialStoreError) {
+      console.error("BILLING_CREDENTIAL_STORE_FAILED", {
+        gymId,
+        code: credentialStoreError.code || null,
+      });
+      return textResponse("Failed to store billing credential", 502);
     }
 
     let issued;

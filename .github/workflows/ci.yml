@@ -61,7 +61,8 @@ jobs:
             supabase/functions/create-checkout/handler_test.ts \
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
             supabase/functions/toss-webhook/merchant_validation_test.ts \
-            supabase/functions/_shared/sanitize_provider_payload_test.ts
+            supabase/functions/_shared/sanitize_provider_payload_test.ts \
+            supabase/functions/confirm-billing-auth/claim_gate_test.ts
 
   node-checks:
     name: Node checks
@@ -87,3 +88,38 @@ jobs:
 
       - name: Payment data protection checks
         run: node scripts/check-payment-data-protection.mjs
+
+      - name: Billing confirmation notice checks
+        run: node --test js/billing-confirm-notice.test.mjs
+
+  sql-integration:
+    name: SQL integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Disposable billing checks
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: scripts/run-payment-integration.sh
