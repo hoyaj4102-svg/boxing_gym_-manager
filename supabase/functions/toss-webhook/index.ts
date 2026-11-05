@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
+import { sanitizeProviderPayload as sanitizePayload } from '../_shared/sanitize_provider_payload.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
 import {
   expectedTossMerchantId,
@@ -32,16 +33,6 @@ type TossLookupResult =
   | { kind: 'not_found'; status: number; payload: unknown }
   | { kind: 'retryable_error'; status?: number; message: string; payload?: unknown };
 
-const SENSITIVE_KEYS = new Set([
-  'authorization',
-  'billingkey',
-  'card',
-  'cardnumber',
-  'customerkey',
-  'secret',
-  'secretkey'
-]);
-
 class DbWriteError extends Error {
   code: string | null;
 
@@ -60,26 +51,6 @@ function tossAuthHeader() {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-function sanitizePayload(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizePayload);
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, '').toLowerCase();
-        if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, '[REDACTED]'];
-        }
-        return [key, sanitizePayload(entry)];
-      })
-    );
-  }
-
-  return value;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

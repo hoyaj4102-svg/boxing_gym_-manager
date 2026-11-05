@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
+import { sanitizeProviderPayload } from '../_shared/sanitize_provider_payload.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
 
 const DEFAULT_STALE_MINUTES = 10;
@@ -39,36 +40,6 @@ function isAuthorizedCron(req: Request, cronSecret: string) {
   const auth = req.headers.get('Authorization') || '';
   const headerSecret = req.headers.get('x-cron-secret') || '';
   return auth === `Bearer ${cronSecret}` || headerSecret === cronSecret;
-}
-
-const SENSITIVE_KEYS = new Set([
-  'authorization',
-  'billingkey',
-  'card',
-  'cardnumber',
-  'customerkey',
-  'secret',
-  'secretkey'
-]);
-
-function sanitizeProviderPayload(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizeProviderPayload);
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, '').toLowerCase();
-        if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, '[REDACTED]'];
-        }
-        return [key, sanitizeProviderPayload(entry)];
-      })
-    );
-  }
-
-  return value;
 }
 
 function errorMessage(error: unknown) {

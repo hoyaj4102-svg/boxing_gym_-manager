@@ -1,3 +1,4 @@
+import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
 import { chargeTossBilling } from "../_shared/toss_charge_outcome.ts";
 
 export type ClaimedSubscriptionCharge = {
@@ -57,16 +58,6 @@ class NonTerminalChargeError extends Error {
   }
 }
 
-const SENSITIVE_KEYS = new Set([
-  "authorization",
-  "billingkey",
-  "card",
-  "cardnumber",
-  "customerkey",
-  "secret",
-  "secretkey",
-]);
-
 function tossAuthHeader(secret: string) {
   if (!secret) {
     throw new NonTerminalChargeError(
@@ -77,24 +68,35 @@ function tossAuthHeader(secret: string) {
   return `Basic ${btoa(`${secret}:`)}`;
 }
 
-function sanitizeProviderPayload(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizeProviderPayload);
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, "").toLowerCase();
-        if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, "[REDACTED]"];
-        }
-        return [key, sanitizeProviderPayload(entry)];
-      }),
+export async function resolveBillingCredential(
+  admin: AdminClientLike,
+  claim: ClaimedSubscriptionCharge,
+): Promise<string> {
+  const gymId = String(claim.gym_id || "");
+  if (!gymId) {
+    throw new NonTerminalChargeError(
+      "BILLING_CREDENTIAL_UNAVAILABLE",
+      "Billing credential store is unavailable",
+      "credential_unavailable",
+      false,
     );
   }
 
-  return value;
+  const { data, error } = await admin.rpc("read_gym_billing_credential", {
+    p_gym_id: gymId,
+  });
+  if (error) {
+    throw new NonTerminalChargeError(
+      "BILLING_CREDENTIAL_UNAVAILABLE",
+      "Billing credential store is unavailable",
+      "credential_unavailable",
+      false,
+    );
+  }
+  if (typeof data === "string" && data.trim()) {
+    return data.trim();
+  }
+  return String(claim.billing_key_ref || "");
 }
 
 function errorMessage(error: unknown) {
@@ -173,14 +175,15 @@ export async function processClaimedSubscriptionCharge(
   const checkedAt = (options.now ?? (() => new Date()))().toISOString();
   const gymId = String(claim.gym_id || "");
   const ownerId = claim.user_id ? String(claim.user_id) : "";
-  const billingKey = String(claim.billing_key_ref || "");
   const customerKey = String(claim.customer_key || "");
   const orderId = String(claim.order_id || "");
   const paymentAttemptId = String(claim.payment_attempt_id || "");
   const amountKrw = Number(claim.amount_krw || 10000);
+  let billingKey = "";
   let chargeSucceeded = false;
 
   try {
+    billingKey = await resolveBillingCredential(admin, claim);
     if (!paymentAttemptId || !billingKey || !customerKey || !orderId) {
       throw new NonTerminalChargeError(
         "AUTO_RENEW_CLAIM_INVALID",
@@ -297,7 +300,7 @@ export async function processClaimedSubscriptionCharge(
       order_id: orderId,
       provider_session_id: paymentKey,
       completed_at: checkedAt,
-      raw: { mode: "auto_renew", ...charged },
+      raw: sanitizeProviderPayload({ mode: "auto_renew", ...charged }),
     });
     if (checkoutSessionError) {
       throw new Error(

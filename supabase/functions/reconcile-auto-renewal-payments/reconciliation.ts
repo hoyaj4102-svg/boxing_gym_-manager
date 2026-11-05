@@ -1,3 +1,5 @@
+import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
+
 const TOSS_LOOKUP_TIMEOUT_MS = 10000;
 
 export type ReconciliationAction = "lookup_required" | "recovery_only";
@@ -55,16 +57,6 @@ type ProcessOptions = {
   now?: () => Date;
 };
 
-const SENSITIVE_KEYS = new Set([
-  "authorization",
-  "billingkey",
-  "card",
-  "cardnumber",
-  "customerkey",
-  "secret",
-  "secretkey",
-]);
-
 function tossAuthHeader(secret: string) {
   if (!secret) throw new Error("TOSS_SECRET_KEY is missing");
   return `Basic ${btoa(`${secret}:`)}`;
@@ -72,26 +64,6 @@ function tossAuthHeader(secret: string) {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-function sanitizeProviderPayload(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizeProviderPayload);
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        const normalizedKey = key.replace(/[_\-\s]/g, "").toLowerCase();
-        if (SENSITIVE_KEYS.has(normalizedKey)) {
-          return [key, "[REDACTED]"];
-        }
-        return [key, sanitizeProviderPayload(entry)];
-      }),
-    );
-  }
-
-  return value;
 }
 
 async function readJsonResponse(response: Response) {

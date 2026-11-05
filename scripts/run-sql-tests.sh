@@ -112,18 +112,23 @@ trap 'cleanup_summary; drop_db' EXIT
 
 for file in "${test_files[@]}"; do
   csv_file="$(mktemp)"
+  notice_file="$(mktemp)"
   set +e
-  psql_db "$DB_NAME" -q --csv -f "$file" >"$csv_file"
+  psql_db "$DB_NAME" -q --csv -f "$file" >"$csv_file" 2>"$notice_file"
   psql_status=$?
   set -e
+  if [[ -s "$notice_file" ]]; then
+    cat "$notice_file" >&2
+  fi
   if [[ "$psql_status" -ne 0 ]]; then
     echo "SQL test command failed: ${file}" >&2
   fi
-  python3 - "$file" "$csv_file" "$summary_file" "$psql_status" <<'PY'
+  python3 - "$file" "$csv_file" "$summary_file" "$psql_status" "$notice_file" <<'PY'
 import csv
+import re
 import sys
 
-path, csv_path, summary_path, psql_status = sys.argv[1:]
+path, csv_path, summary_path, psql_status, notice_path = sys.argv[1:]
 passed = 0
 failed = 0
 failures = []
@@ -141,6 +146,20 @@ with open(csv_path, newline="") as handle:
             detail = row[2] if len(row) > 2 else ""
             failures.append(f"{row[0]}: {detail}")
 
+if passed == 0 and failed == 0:
+    seen = {}
+    with open(notice_path, encoding="utf-8", errors="replace") as handle:
+        for match in re.finditer(r"NOTICE:\s+(PASS|FAIL):\s+(.+)", handle.read()):
+            status, rest = match.group(1), match.group(2).strip()
+            name = re.split(r"\s+\(", rest, maxsplit=1)[0].strip()
+            if not name:
+                continue
+            if name not in seen or status == "FAIL":
+                seen[name] = status
+    passed = sum(1 for status in seen.values() if status == "PASS")
+    failed = sum(1 for status in seen.values() if status == "FAIL")
+    failures = [name for name, status in seen.items() if status == "FAIL"]
+
 print(f"{path}: {passed} passed, {failed} failed")
 if psql_status != "0" or passed == 0 or failed:
     if passed == 0:
@@ -151,7 +170,7 @@ if psql_status != "0" or passed == 0 or failed:
 with open(summary_path, "a", encoding="utf-8") as summary:
     summary.write(f"{passed}\n")
 PY
-  rm -f "$csv_file"
+  rm -f "$csv_file" "$notice_file"
 done
 
 total_passed="$(awk '{s+=$1} END {print s+0}' "$summary_file")"

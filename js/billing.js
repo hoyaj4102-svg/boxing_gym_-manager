@@ -438,6 +438,17 @@
     return data;
   }
 
+  function billingConfirmNotice(result, summary) {
+    if (!result || typeof result !== 'object') return null;
+    if (result.alreadyActive === true) {
+      const currentEntitlement = result.entitlementCurrent === true
+        || summary?.hasPro === true;
+      return currentEntitlement ? 'already_active' : 'not_activated';
+    }
+    if (result.ok === false) return 'failed';
+    return 'payment_success';
+  }
+
   global.SweatManagerBilling = {
     PLANS,
     getBillingConfig,
@@ -452,6 +463,7 @@
     startCheckout,
     confirmTossFromUrl,
     confirmBillingAuthFromUrl,
+    billingConfirmNotice,
     cancelSubscription,
     resumeSubscription
   };

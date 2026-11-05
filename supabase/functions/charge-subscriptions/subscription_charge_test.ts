@@ -52,6 +52,8 @@ function createMockAdmin(options: {
   ) => null | { message: string; code?: string };
   rpcError?: null | { message: string; code?: string };
   rpcData?: unknown;
+  billingCredential?: string | null;
+  billingCredentialError?: null | { message: string; code?: string };
 } = {}) {
   const updates: Array<{
     table: string;
@@ -83,6 +85,14 @@ function createMockAdmin(options: {
     },
     async rpc(name: string, args: Record<string, unknown>) {
       rpcCalls.push({ name, args });
+      if (name === "read_gym_billing_credential") {
+        return {
+          data: options.billingCredentialError
+            ? null
+            : options.billingCredential ?? null,
+          error: options.billingCredentialError ?? null,
+        };
+      }
       return {
         data: options.rpcData ??
           { ok: true, payment_attempt_id: args.p_attempt_id },
@@ -92,6 +102,13 @@ function createMockAdmin(options: {
   };
 
   return { admin, updates, inserts, rpcCalls };
+}
+
+function activationRpcCount(
+  rpcCalls: Array<{ name: string }>,
+) {
+  return rpcCalls.filter((call) => call.name === "activate_payment_attempt")
+    .length;
 }
 
 function updatesFor(
@@ -129,7 +146,7 @@ Deno.test("auto-renewal success stores paymentKey, inserts checkout session, and
 
   assertEquals(fetchCalls, 1, "success should not retry POST");
   assertEquals(result.ok, true, "success should return ok");
-  assertEquals(rpcCalls.length, 1, "success should activate attempt");
+  assertEquals(activationRpcCount(rpcCalls), 1, "success should activate attempt");
   assertEquals(inserts.length, 1, "success should insert checkout session");
   assertEquals(
     updatesFor(updates, "payment_attempts")[0].values.payment_key,
@@ -158,7 +175,7 @@ Deno.test("clear auto-renewal rejection marks past_due and does not recover", as
 
   assertEquals(result.ok, false, "rejection should fail");
   assertEquals(result.chargeResult, "rejected", "rejection should be explicit");
-  assertEquals(rpcCalls.length, 0, "rejection should not recover");
+  assertEquals(activationRpcCount(rpcCalls), 0, "rejection should not recover");
   assertEquals(
     inserts.length,
     0,
@@ -226,7 +243,7 @@ Deno.test("rejected charge persistence failure does not mark gym past_due", asyn
     0,
     "failed rejection write should not insert checkout session",
   );
-  assertEquals(rpcCalls.length, 0, "failed rejection write should not recover");
+  assertEquals(activationRpcCount(rpcCalls), 0, "failed rejection write should not recover");
 });
 
 Deno.test("missing Toss secret is an internal retryable error and does not mark past_due", async () => {
@@ -261,7 +278,7 @@ Deno.test("missing Toss secret is an internal retryable error and does not mark 
     "none",
     "pre-Toss errors should remain stale-claim eligible after the delay",
   );
-  assertEquals(rpcCalls.length, 0, "pre-Toss errors should not recover");
+  assertEquals(activationRpcCount(rpcCalls), 0, "pre-Toss errors should not recover");
   assertEquals(
     inserts.length,
     0,
@@ -304,7 +321,7 @@ Deno.test("invalid claim data is an internal retryable error and does not mark p
     "AUTO_RENEW_CLAIM_INVALID",
     "attempt should keep an operator-visible error code",
   );
-  assertEquals(rpcCalls.length, 0, "invalid claim should not recover");
+  assertEquals(activationRpcCount(rpcCalls), 0, "invalid claim should not recover");
   assertEquals(
     updatesFor(updates, "gyms").length,
     0,
@@ -339,7 +356,7 @@ async function assertUncertainOutcome(
       "result should be uncertain",
     );
     assertEquals(
-      rpcCalls.length,
+      activationRpcCount(rpcCalls),
       0,
       "uncertain outcome should not recover yet",
     );
@@ -448,7 +465,7 @@ Deno.test("uncertain recovery-state write failure is reported without marking pa
     "failed pending write should not be hidden by a second attempt update",
   );
   assertEquals(
-    rpcCalls.length,
+    activationRpcCount(rpcCalls),
     0,
     "failed pending write should not activate",
   );
@@ -487,7 +504,7 @@ Deno.test("paymentKey save failure after successful charge keeps gym out of past
 
   assertEquals(fetchCalls, 1, "successful charge must not retry POST");
   assertEquals(result.ok, false, "durable write failure should be reported");
-  assertEquals(rpcCalls.length, 0, "failed durable save should not activate");
+  assertEquals(activationRpcCount(rpcCalls), 0, "failed durable save should not activate");
   assertEquals(
     updatesFor(updates, "payment_attempts").length,
     1,
@@ -548,7 +565,7 @@ Deno.test("checkout session insert failure after successful charge stops before 
     "paymentKey should be preserved for recovery",
   );
   assertEquals(
-    rpcCalls.length,
+    activationRpcCount(rpcCalls),
     0,
     "checkout insert failure should stop before activation",
   );
@@ -577,7 +594,7 @@ Deno.test("activation failure leaves attempt recoverable and keeps gym out of pa
     (update) => update.values.status === "activation_failed",
   );
   assertEquals(result.ok, false, "activation failure should be reported");
-  assertEquals(rpcCalls.length, 1, "activation should be attempted once");
+  assertEquals(activationRpcCount(rpcCalls), 1, "activation should be attempted once");
   assert(activationFailure, "activation failure should update attempt");
   assertEquals(
     activationFailure?.values.recovery_status,
@@ -588,5 +605,133 @@ Deno.test("activation failure leaves attempt recoverable and keeps gym out of pa
     updatesFor(updates, "gyms").length,
     0,
     "post-charge activation failure must not mark gym past_due",
+  );
+});
+
+Deno.test("renewal charges the private credential and stores a sanitized payload", async () => {
+  const stored = "stored-credential";
+  const legacy = "legacy-claim-value";
+  const cardNumber = "4111111111111111";
+  const email = "member@example.test";
+  const { admin, inserts, updates } = createMockAdmin({
+    billingCredential: stored,
+  });
+  let chargedUrl = "";
+  let chargedBody: Record<string, unknown> = {};
+
+  const result = await processClaimedSubscriptionCharge(
+    admin,
+    baseClaim({ billing_key_ref: legacy }),
+    {
+      tossSecret: "test_secret",
+      fetchImpl: async (input, init) => {
+        chargedUrl = String(input);
+        chargedBody = JSON.parse(String(init?.body || "{}"));
+        return new Response(JSON.stringify({
+          paymentKey: "payment_1",
+          orderId: "toss_renew_attempt_1",
+          status: "DONE",
+          totalAmount: 10000,
+          billingKey: stored,
+          card: { number: cardNumber },
+          customerEmail: email,
+          customerKey: "customer_1",
+        }), { status: 200 });
+      },
+      now: () => new Date("2026-01-01T00:10:00.000Z"),
+    },
+  );
+
+  const raw = JSON.stringify(inserts[0]?.values.raw ?? null);
+  const providerResponse = JSON.stringify(
+    updatesFor(updates, "payment_attempts")[0]?.values.provider_response ??
+      null,
+  );
+  assertEquals(result.ok, true, "private credential should still charge");
+  assert(
+    chargedUrl.includes(encodeURIComponent(stored)),
+    "charge uses the private credential",
+  );
+  assert(
+    !chargedUrl.includes(legacy),
+    "charge does not use the legacy claim field",
+  );
+  assertEquals(chargedBody.amount, 10000, "charge amount stays unchanged");
+  assert(!raw.includes(stored), "stored credential is not written to checkout");
+  assert(!raw.includes(cardNumber), "card number is not written to checkout");
+  assert(!raw.includes(email), "customer email is not written to checkout");
+  assert(raw.includes("[REDACTED]"), "checkout payload redacts sensitive fields");
+  assert(
+    !providerResponse.includes(stored),
+    "stored credential is not written to the attempt payload",
+  );
+  assert(
+    !providerResponse.includes(cardNumber),
+    "card number is not written to the attempt payload",
+  );
+  assertEquals(
+    updatesFor(updates, "payment_attempts")[0]?.values.billing_key_ref,
+    undefined,
+    "attempt update does not copy the credential",
+  );
+});
+
+Deno.test("renewal keeps the claim credential when private storage is empty", async () => {
+  const { admin } = createMockAdmin();
+  let chargedUrl = "";
+  let chargedBody: Record<string, unknown> = {};
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async (input, init) => {
+      chargedUrl = String(input);
+      chargedBody = JSON.parse(String(init?.body || "{}"));
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), { status: 200 });
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  assertEquals(result.ok, true, "legacy claim credential should still charge");
+  assert(
+    chargedUrl.includes(encodeURIComponent("billing_key_1")),
+    "empty private storage falls back to the claim credential",
+  );
+  assertEquals(chargedBody.amount, 10000, "fallback charge amount stays unchanged");
+});
+
+Deno.test("renewal does not charge when the credential read is unavailable", async () => {
+  const { admin, updates, inserts } = createMockAdmin({
+    billingCredentialError: {
+      message: "function does not exist",
+      code: "PGRST202",
+    },
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+        status: 200,
+      });
+    },
+    now: () => new Date("2026-01-01T00:10:00.000Z"),
+  });
+
+  assertEquals(fetchCalls, 0, "missing credential read must not call the provider");
+  assertEquals(result.ok, false, "missing credential read fails closed");
+  assertEquals(result.chargeResult, "credential_unavailable", "failure stays distinct");
+  assertEquals(updates.length, 0, "missing credential read does not rewrite the attempt");
+  assertEquals(inserts.length, 0, "missing credential read does not store a payload");
+  assertEquals(
+    updatesFor(updates, "gyms").length,
+    0,
+    "missing credential read must not mark the gym past due",
   );
 });

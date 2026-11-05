@@ -256,7 +256,9 @@ from p1_9c_context ctx;
 insert into p1_9c_test_results
 select
   'TEST 1: active Pro with remaining period blocks even when auto_renew is false',
-  case when r.result->>'can_charge' = 'false'
+  case when r.result->>'action' = 'already_completed'
+         and r.result->>'can_charge' = 'false'
+         and (r.result->>'current_period_end')::timestamptz > now()
        then 'PASS' else 'FAIL' end,
   r.result::text
 from p1_9c_context ctx
@@ -265,7 +267,9 @@ cross join lateral public.claim_initial_billing_attempt(ctx.active_future_auto_f
 insert into p1_9c_test_results
 select
   'TEST 2: canceled Pro with remaining period blocks',
-  case when r.result->>'can_charge' = 'false'
+  case when r.result->>'action' = 'already_completed'
+         and r.result->>'can_charge' = 'false'
+         and (r.result->>'current_period_end')::timestamptz > now()
        then 'PASS' else 'FAIL' end,
   r.result::text
 from p1_9c_context ctx
@@ -273,8 +277,10 @@ cross join lateral public.claim_initial_billing_attempt(ctx.canceled_future_gym_
 
 insert into p1_9c_test_results
 select
-  'TEST 3: expired active auto_renew Pro blocks initial billing',
-  case when r.result->>'can_charge' = 'false'
+  'TEST 3: expired active auto_renew Pro is not treated as already completed',
+  case when r.result->>'action' = 'charge'
+         and r.result->>'can_charge' = 'true'
+         and coalesce(r.result->>'already_completed', 'false') <> 'true'
        then 'PASS' else 'FAIL' end,
   r.result::text
 from p1_9c_context ctx

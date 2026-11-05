@@ -60,7 +60,9 @@ jobs:
             supabase/functions/confirm-toss-payment/handler_test.ts \
             supabase/functions/create-checkout/handler_test.ts \
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
-            supabase/functions/toss-webhook/merchant_validation_test.ts
+            supabase/functions/toss-webhook/merchant_validation_test.ts \
+            supabase/functions/_shared/sanitize_provider_payload_test.ts \
+            supabase/functions/confirm-billing-auth/claim_gate_test.ts
 
   node-checks:
     name: Node checks
