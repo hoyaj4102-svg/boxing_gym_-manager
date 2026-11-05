@@ -54,6 +54,8 @@ function createMockAdmin(options: {
   rpcData?: unknown;
   billingCredential?: string | null;
   billingCredentialError?: null | { message: string; code?: string };
+  dispatchResult?: boolean;
+  dispatchError?: null | { message: string; code?: string };
 } = {}) {
   const updates: Array<{
     table: string;
@@ -91,6 +93,12 @@ function createMockAdmin(options: {
             ? null
             : options.billingCredential ?? null,
           error: options.billingCredentialError ?? null,
+        };
+      }
+      if (name === "claim_subscription_charge_dispatch") {
+        return {
+          data: options.dispatchResult ?? true,
+          error: options.dispatchError ?? null,
         };
       }
       return {
@@ -705,7 +713,7 @@ Deno.test("renewal keeps the claim credential when private storage is empty", as
 });
 
 Deno.test("renewal does not charge when the credential read is unavailable", async () => {
-  const { admin, updates, inserts } = createMockAdmin({
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin({
     billingCredentialError: {
       message: "function does not exist",
       code: "PGRST202",
@@ -734,4 +742,82 @@ Deno.test("renewal does not charge when the credential read is unavailable", asy
     0,
     "missing credential read must not mark the gym past due",
   );
+  assertEquals(
+    rpcCalls.some((call) => call.name === "claim_subscription_charge_dispatch"),
+    false,
+    "missing credential read must not dispatch a charge",
+  );
+});
+
+Deno.test("dry run does not dispatch or call the provider", async () => {
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin();
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    dryRun: true,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+        status: 200,
+      });
+    },
+  });
+
+  assertEquals(result.dryRun, true, "dry run should identify itself");
+  assertEquals(result.providerCalls, 0, "dry run should report no provider calls");
+  assertEquals(fetchCalls, 0, "dry run must not call the provider");
+  assertEquals(rpcCalls.length, 0, "dry run must not dispatch or read credentials");
+  assertEquals(updates.length, 0, "dry run must not rewrite an attempt");
+  assertEquals(inserts.length, 0, "dry run must not insert a checkout session");
+});
+
+Deno.test("a second dispatch does not call the provider", async () => {
+  const { admin, updates, inserts, rpcCalls } = createMockAdmin({
+    dispatchResult: false,
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+        status: 200,
+      });
+    },
+  });
+
+  assertEquals(fetchCalls, 0, "already dispatched attempt must not call the provider");
+  assertEquals(result.ok, false, "already dispatched attempt should not succeed");
+  assertEquals(result.chargeResult, "already_dispatched", "duplicate dispatch stays explicit");
+  assertEquals(updates.length, 0, "duplicate dispatch must not rewrite the attempt");
+  assertEquals(inserts.length, 0, "duplicate dispatch must not insert a checkout session");
+  assertEquals(
+    rpcCalls.filter((call) => call.name === "claim_subscription_charge_dispatch")
+      .length,
+    1,
+    "dispatch should be checked once",
+  );
+});
+
+Deno.test("dispatch unavailable does not call the provider", async () => {
+  const { admin, updates } = createMockAdmin({
+    dispatchError: { message: "function does not exist", code: "PGRST202" },
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+        status: 200,
+      });
+    },
+  });
+
+  assertEquals(fetchCalls, 0, "unavailable dispatch must not call the provider");
+  assertEquals(result.chargeResult, "dispatch_unavailable", "failure stays distinct");
+  assertEquals(updates.length, 0, "unavailable dispatch must not rewrite the attempt");
 });

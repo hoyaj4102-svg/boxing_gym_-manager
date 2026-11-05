@@ -55,6 +55,7 @@ jobs:
             --no-npm \
             --no-lock \
             --cached-only \
+            supabase/functions/charge-subscriptions/billing_charge_mode_test.ts \
             supabase/functions/charge-subscriptions/subscription_charge_test.ts \
             supabase/functions/confirm-billing-auth/charge_outcome_test.ts \
             supabase/functions/confirm-toss-payment/handler_test.ts \

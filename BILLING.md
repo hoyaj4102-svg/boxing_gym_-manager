@@ -28,7 +28,7 @@
 4. 성공 리다이렉트(`authKey`) → `confirm-billing-auth`
 5. 서버가 빌링키 발급 + ₩10,000 첫 결제 +
    `activate_gym_pro(..., auto_renew=true)`
-6. 매일/매시간 `charge-subscriptions`(CRON)이 기간 종료분 재청구
+6. 승인된 운영 재개 이후에만 `charge-subscriptions`가 기간 종료분을 재청구합니다. 현재 스케줄은 꺼져 있습니다.
 
 시크릿 키는 절대 프론트에 넣지 마세요.
 
@@ -81,16 +81,10 @@ supabase functions deploy billing-webhook
 
 GitHub Actions 워크플로: `.github/workflows/charge-subscriptions.yml`
 
-- 매일 00:10 KST 자동 실행
-- Actions 탭에서 **Run workflow**로 수동 실행 가능
-- GitHub Secret `CRON_SECRET` 값이 Supabase Edge Secret `CRON_SECRET`과
-  **같아야** 함
-
-설정 위치: GitHub 저장소 → **Settings → Secrets and variables → Actions → New
-repository secret**
-
-- Name: `CRON_SECRET`
-- Value: Supabase에 넣은 것과 동일한 값
+- 운영 스케줄은 꺼 둔 상태입니다. 이 파일을 배포해도 매일 자동 실행되지 않습니다.
+- Actions 탭의 **Run workflow**는 dry-run만 실행합니다. 결제 제공자를 호출하지 않습니다.
+- 운영 스케줄을 다시 켜거나 실제 청구를 재개하려면 별도의 승인이 필요합니다.
+- dry-run은 저장소 시크릿 없이 동작합니다. 실제 청구 설정은 운영 재개 승인 이후에만 확인합니다.
 
 ---
 
