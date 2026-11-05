@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 
 const workflowPath = ".github/workflows/charge-subscriptions.yml";
 const workflow = readFileSync(workflowPath, "utf8");
+const chargeIndex = readFileSync(
+  "supabase/functions/charge-subscriptions/index.ts",
+  "utf8",
+);
 
 function assert(condition, message) {
   if (!condition) {
@@ -11,66 +15,45 @@ function assert(condition, message) {
 }
 
 assert(
-  workflow.includes("cron: '10 15 * * *'"),
-  "billing scheduler cron must remain 00:10 KST",
+  workflow.startsWith("name: Charge Toss Subscriptions\n"),
+  "workflow name should stay recognizable",
+);
+assert(
+  !/^\s*schedule\s*:/m.test(workflow) && !/^\s*cron\s*:/m.test(workflow),
+  "production schedule must stay disabled",
 );
 assert(
   workflow.includes("workflow_dispatch:"),
-  "manual dispatch declaration should remain visible for guarded manual runs",
+  "manual dry-run dispatch should stay available",
 );
 assert(
-  workflow.includes("environment: production"),
-  "billing scheduler job must use the protected production environment",
+  workflow.includes("- dry-run") && !workflow.includes("- live"),
+  "manual dispatch must offer dry-run only",
 );
 assert(
-  workflow.includes("SUPABASE_URL: ${{ secrets.SUPABASE_URL }}"),
-  "SUPABASE_URL must come from GitHub secrets",
+  !workflow.includes("environment: production"),
+  "dry run must not use the production environment",
 );
 assert(
-  workflow.includes("CRON_SECRET: ${{ secrets.CRON_SECRET }}"),
-  "CRON_SECRET must come from GitHub secrets",
+  !/functions\/v1\//.test(workflow) && !/\bcurl\b/.test(workflow),
+  "dry run must not call a billing endpoint",
 );
 assert(
-  workflow.includes("SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}"),
-  "SUPABASE_PROJECT_ID must come from GitHub environment/repository variables",
-);
-
-assert(
-  !/https:\/\/[a-z0-9-]+\.supabase\.co\/functions\/v1\//i.test(workflow),
-  "Edge Function calls must not contain hard-coded Supabase project URLs",
+  workflow.includes("node scripts/check-billing-scheduler-dry-run.mjs"),
+  "dry run must execute the local checker",
 );
 assert(
-  workflow.includes("${SUPABASE_URL%/}/functions/v1/${function_name}"),
-  "Edge Function endpoint must be derived from SUPABASE_URL",
+  workflow.includes("BILLING_SCHEDULER_MODE: dry-run"),
+  "manual run must force dry-run mode",
 );
 assert(
-  workflow.includes("SUPABASE_URL project ref does not match SUPABASE_PROJECT_ID"),
-  "workflow must fail closed when SUPABASE_URL project ref mismatches",
-);
-
-const callOrder = [...workflow.matchAll(/call_edge_function "([^"]+)"/g)].map(
-  (match) => match[1],
+  chargeIndex.includes("if (!isLiveBillingCharge"),
+  "charge function must check the live mode before doing work",
 );
 assert(
-  JSON.stringify(callOrder) ===
-    JSON.stringify([
-      "charge-subscriptions",
-      "reconcile-auto-renewal-payments",
-      "reconcile-initial-billing-payments",
-    ]),
-  `billing calls must preserve charge -> renewal reconciliation -> initial reconciliation order; got ${
-    JSON.stringify(callOrder)
-  }`,
-);
-
-assert(
-  !/echo\s+["']?\$body/.test(workflow) &&
-    !/echo\s+["']?\$\{body/.test(workflow),
-  "workflow must not echo Edge Function response bodies",
-);
-assert(
-  workflow.includes("response body omitted to avoid logging billing data"),
-  "workflow should explain that response bodies are intentionally omitted",
+  chargeIndex.indexOf("if (!isLiveBillingCharge") <
+    chargeIndex.indexOf("const admin = getAdminClient()"),
+  "charge function must return before opening a client when not live",
 );
 
 if (process.exitCode) {

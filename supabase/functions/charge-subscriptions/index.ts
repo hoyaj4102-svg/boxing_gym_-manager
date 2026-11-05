@@ -1,5 +1,6 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
+import { isLiveBillingCharge } from './billing_charge_mode.ts';
 import {
   type AdminClientLike,
   type ClaimedSubscriptionCharge,
@@ -40,6 +41,14 @@ Deno.serve(async (req) => {
     const cronSecret = Deno.env.get('CRON_SECRET') || '';
     if (!isAuthorizedCron(req, cronSecret)) {
       return textResponse('Unauthorized', 401);
+    }
+
+    if (!isLiveBillingCharge(Deno.env.get('BILLING_CHARGE_MODE'))) {
+      return jsonResponse({
+        ok: true,
+        dryRun: true,
+        providerCalls: 0
+      });
     }
 
     const admin = getAdminClient();
