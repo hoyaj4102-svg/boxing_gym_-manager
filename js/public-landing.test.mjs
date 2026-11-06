@@ -92,10 +92,20 @@ test('landing headline and signup CTA do not point at payment', () => {
   assert.doesNotMatch(landing, /data-i18n="brandTagline"/);
 });
 
-test('existing login tagline is unchanged', () => {
-  const matches = html.match(/재등록 관리에 특화된 가장 간단한 회비관리앱/g) || [];
-  assert.equal(matches.length, 8);
-  assert.match(html, /id="authGate"[\s\S]*data-i18n="brandTagline">재등록 관리에 특화된 가장 간단한 회비관리앱/);
+test('login and signup share the landing tagline', () => {
+  const phrase = '부담 없는 회원재등록 관리앱';
+  assert.match(html, new RegExp(`id="authGate"[\\s\\S]*data-i18n="brandTagline">${phrase}`));
+  assert.match(html, new RegExp(`brandTagline: '${phrase}'`));
+  assert.equal((html.match(/재등록 관리에 특화된 가장 간단한 회비관리앱/g) || []).length, 0);
+
+  const auth = html.slice(html.indexOf('id="authGate"'), html.indexOf('id="appShell"'));
+  assert.equal((html.match(/data-i18n="brandTagline">부담 없는 회원재등록 관리앱/g) || []).length, 2);
+  assert.equal(auth.includes(phrase), true);
+  assert.equal(auth.includes('가장'), false);
+  assert.equal(auth.toLowerCase().includes('crm'), false);
+
+  assert.match(html, /<h1[^>]*>부담 없는 회원재등록 관리앱<\/h1>/);
+  assert.match(html, /id="landingSignupLink"[^>]*href="\/signup"[^>]*>무료로 써보기<\/a>/);
 });
 
 test('a logged-out first visit does not show the sign-out notice', () => {
