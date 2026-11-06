@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v25-payment-history';
+const CACHE_VERSION = 'remember-v26-public-landing';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -11,6 +11,7 @@ const APP_SHELL = [
   '/app-icon-192.png',
   '/app-icon-512.png',
   '/js/config.js',
+  '/js/public-entry.js',
   '/js/billing-config.js',
   '/js/supabase-service.js',
   '/js/billing.js'
