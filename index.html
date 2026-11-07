@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>re;member — 재등록 관리에 특화된 가장 간단한 회비관리앱</title>
-  <meta name="description" content="re;member — 재등록 관리에 특화된 가장 간단한 회비관리앱. 회원·재등록·출석·미방문을 한 화면에서 관리하세요.">
+  <title>re;member — 부담 없는 회원재등록 관리앱</title>
+  <meta name="description" content="re;member — 부담 없는 회원재등록 관리앱. 회원·재등록·출석·미방문을 한 화면에서 관리하세요.">
   <meta name="theme-color" content="#2B5CFF">
   <meta name="application-name" content="re;member">
   <meta property="og:title" content="re;member">
-  <meta property="og:description" content="재등록 관리에 특화된 가장 간단한 회비관리앱">
+  <meta property="og:description" content="부담 없는 회원재등록 관리앱">
   <meta property="og:type" content="website">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -627,6 +627,65 @@
 
     .auth-message.error { color: var(--danger); }
     .auth-message.success { color: var(--success); }
+
+    .landing-card .brand-lockup {
+      margin-bottom: 14px;
+    }
+
+    .landing-headline {
+      font-family: var(--font-body);
+      font-weight: 800;
+      line-height: 1.35;
+      text-wrap: balance;
+    }
+
+    .landing-actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .btn.landing-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      color: #fff;
+      font-size: .95rem;
+      text-decoration: none;
+    }
+
+    .landing-cta:visited {
+      color: #fff;
+    }
+
+    .landing-cta:focus-visible,
+    .landing-login-link:focus-visible {
+      outline: 3px solid rgba(43, 92, 255, .7);
+      outline-offset: 3px;
+    }
+
+    .landing-login-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: var(--text-muted);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+
+    .landing-login-link {
+      color: var(--text);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .landing-login-link:hover {
+      color: #fff;
+    }
 
     .signup-only[hidden],
     .login-only[hidden],
@@ -1897,13 +1956,34 @@
   </style>
 </head>
 <body>
-  <div class="auth-gate" id="authGate">
+  <section class="auth-gate public-landing" id="publicLanding" aria-labelledby="landingHeadline">
+    <div class="auth-card landing-card">
+      <div class="brand-lockup">
+        <div class="brand-wordmark" aria-label="re;member">
+          <span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span>
+        </div>
+      </div>
+      <h1 class="landing-headline" id="landingHeadline">부담 없는 회원재등록 관리앱</h1>
+      <p class="lead">만기 임박 회원과 재등록을 한 화면에서 확인하세요.</p>
+      <div class="landing-actions">
+        <!-- Account and gym signup only. -->
+        <a class="btn btn-primary landing-cta" id="landingSignupLink" href="/signup">무료로 써보기</a>
+        <p class="landing-login-row">
+          <span>이미 계정이 있나요?</span>
+          <a class="landing-login-link" href="/login">로그인</a>
+        </p>
+      </div>
+      <p class="auth-message" id="landingMessage" hidden></p>
+    </div>
+  </section>
+
+  <div class="auth-gate" id="authGate" hidden>
     <div class="auth-card">
       <div class="brand-lockup">
         <div class="brand-wordmark" aria-label="re;member">
           <span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span>
         </div>
-        <p class="brand-tagline" data-i18n="brandTagline">재등록 관리에 특화된 가장 간단한 회비관리앱</p>
+        <p class="brand-tagline" data-i18n="brandTagline">부담 없는 회원재등록 관리앱</p>
       </div>
       <p class="lead" data-i18n="authLead">체육관 계정으로 로그인하면 회원 데이터가 안전하게 분리 저장됩니다.</p>
 
@@ -1959,6 +2039,10 @@
       <p class="auth-message" id="authMessage"></p>
     </div>
   </div>
+  <script src="./js/public-entry.js"></script>
+  <script>
+    RememberPublicEntry.applyPublicEntryVisibility(document, window.location);
+  </script>
 
   <div class="app" id="appShell" hidden>
     <header>
@@ -1966,7 +2050,7 @@
         <h1 class="brand-wordmark" aria-label="re;member">
           <span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span>
         </h1>
-        <p class="brand-tagline" data-i18n="brandTagline">재등록 관리에 특화된 가장 간단한 회비관리앱</p>
+        <p class="brand-tagline" data-i18n="brandTagline">부담 없는 회원재등록 관리앱</p>
       </div>
       <div class="header-actions">
         <select class="language-select" id="languageSelect" aria-label="Language">
@@ -2414,12 +2498,12 @@
     const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
     const TRANSLATIONS = {
       ko: {
-        documentTitle: 're;member — 재등록 관리에 특화된 가장 간단한 회비관리앱',
+        documentTitle: 're;member — 부담 없는 회원재등록 관리앱',
         brandName: 're;member',
-        brandTagline: '재등록 관리에 특화된 가장 간단한 회비관리앱',
+        brandTagline: '부담 없는 회원재등록 관리앱',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: '재등록 관리에 특화된 가장 간단한 회비관리앱',
+        appSubtitle: '부담 없는 회원재등록 관리앱',
         dashboardAria: '운영 대시보드',
         statRenewalLabel: '재등록 예정 회원',
         statRenewalHint: '만기 14일 이내',
@@ -2701,12 +2785,12 @@
         importInvalid: '올바른 JSON 파일이 아닙니다.'
       },
       en: {
-        documentTitle: 're;member — Simplest membership app for renewals',
+        documentTitle: 're;member — An easy membership renewal app',
         brandName: 're;member',
-        brandTagline: 'The simplest membership app focused on renewals',
+        brandTagline: 'An easy membership renewal app',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: 'The simplest membership app focused on renewals',
+        appSubtitle: 'An easy membership renewal app',
         dashboardAria: 'Operations dashboard',
         statRenewalLabel: 'Renewal candidates',
         statRenewalHint: 'Expiring within 14 days',
@@ -2976,12 +3060,12 @@
         importInvalid: 'This is not a valid JSON file.'
       },
       es: {
-        documentTitle: 're;member — App simple de cuotas y renovaciones',
+        documentTitle: 're;member — Una app sencilla para renovar cuotas',
         brandName: 're;member',
-        brandTagline: 'La app de cuotas más simple, enfocada en renovaciones',
+        brandTagline: 'Una app sencilla para renovar cuotas',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: 'La app de cuotas más simple, enfocada en renovaciones',
+        appSubtitle: 'Una app sencilla para renovar cuotas',
         dashboardAria: 'Panel operativo',
         statRenewalLabel: 'Renovaciones previstas',
         statRenewalHint: 'Vencen en 14 días',
@@ -3480,10 +3564,10 @@
       mn: {
         documentTitle: 're;member — сунгалтын энгийн төлбөрийн апп',
         brandName: 're;member',
-        brandTagline: 'Сунгалтад зориулсан хамгийн энгийн төлбөрийн апп',
+        brandTagline: 'Сунгалтад зориулсан энгийн төлбөрийн апп',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: 'Сунгалтад зориулсан хамгийн энгийн төлбөрийн апп',
+        appSubtitle: 'Сунгалтад зориулсан энгийн төлбөрийн апп',
         dashboardAria: 'Үйл ажиллагааны самбар',
         statRenewalLabel: 'Сунгах гишүүд',
         statRenewalHint: '14 хоногт дуусна',
@@ -3729,12 +3813,12 @@
         importInvalid: 'Зөв JSON файл биш байна.'
       },
       zh: {
-        documentTitle: 're;member — 专注续费的最简单会费应用',
+        documentTitle: 're;member — 专注续费的会费应用',
         brandName: 're;member',
-        brandTagline: '专注续费管理的最简单会费应用',
+        brandTagline: '专注续费管理的会费应用',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: '专注续费管理的最简单会费应用',
+        appSubtitle: '专注续费管理的会费应用',
         dashboardAria: '运营仪表板',
         statRenewalLabel: '待续费会员',
         statRenewalHint: '14天内到期',
@@ -3982,10 +4066,10 @@
       hi: {
         documentTitle: 're;member — नवीनीकरण केंद्रित सदस्यता ऐप',
         brandName: 're;member',
-        brandTagline: 'नवीनीकरण पर केंद्रित सबसे सरल सदस्यता ऐप',
+        brandTagline: 'नवीनीकरण पर केंद्रित सदस्यता ऐप',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: 'नवीनीकरण पर केंद्रित सबसे सरल सदस्यता ऐप',
+        appSubtitle: 'नवीनीकरण पर केंद्रित सदस्यता ऐप',
         dashboardAria: 'संचालन डैशबोर्ड',
         statRenewalLabel: 'नवीनीकरण सदस्य',
         statRenewalHint: '14 दिनों में समाप्त',
@@ -4233,10 +4317,10 @@
       fr: {
         documentTitle: 're;member — Appli cotisations axée renouvellement',
         brandName: 're;member',
-        brandTagline: 'L’appli cotisations la plus simple, axée renouvellement',
+        brandTagline: 'Appli cotisations simple, axée renouvellement',
         eyebrow: 're;member',
         appTitle: 're;member',
-        appSubtitle: 'L’appli cotisations la plus simple, axée renouvellement',
+        appSubtitle: 'Appli cotisations simple, axée renouvellement',
         dashboardAria: 'Tableau de bord opérationnel',
         statRenewalLabel: 'Renouvellements prévus',
         statRenewalHint: 'Expire dans 14 jours',
@@ -4812,32 +4896,32 @@
     }
 
     function getInitialAuthMode() {
-      const path = window.location.pathname.toLowerCase();
-      const params = new URLSearchParams(window.location.search);
-      const authParam = (params.get('auth') || params.get('mode') || '').toLowerCase();
-
-      if (path.endsWith('/signup') || authParam === 'signup' || params.has('signup')) {
-        return 'signup';
-      }
-
-      if (isRecoveryRoute()) {
-        return 'recovery';
-      }
-
-      if (authParam === 'reset' || params.has('reset')) {
-        return 'reset';
-      }
-
-      return 'login';
+      return RememberPublicEntry.initialAuthMode(window.location);
     }
 
     function showAuthGate(message = '', type = '') {
-      document.getElementById('authGate').hidden = false;
       document.getElementById('appShell').hidden = true;
-      setAuthMessage(message, type);
+      const authScreen = RememberPublicEntry.applyPublicEntryVisibility(document, window.location);
+      const landingMessage = document.getElementById('landingMessage');
+      if (authScreen) {
+        setAuthMessage(message, type);
+        if (landingMessage) {
+          landingMessage.textContent = '';
+          landingMessage.hidden = true;
+          landingMessage.className = 'auth-message';
+        }
+      } else {
+        setAuthMessage('');
+        if (landingMessage) {
+          landingMessage.textContent = message || '';
+          landingMessage.hidden = !message;
+          landingMessage.className = 'auth-message' + (type ? ' ' + type : '');
+        }
+      }
     }
 
     function showAppShell() {
+      document.getElementById('publicLanding').hidden = true;
       document.getElementById('authGate').hidden = true;
       document.getElementById('appShell').hidden = false;
       const gym = SweatManagerDB.getGym();
@@ -5161,10 +5245,12 @@
         if (authMode === 'recovery') return;
         if (session?.user) {
           await handleSignedIn(session.user);
-        } else {
+        } else if (event === 'SIGNED_OUT') {
           const message = pendingSignedOutMessage;
           pendingSignedOutMessage = '';
           await handleSignedOut(message);
+        } else {
+          showAuthGate();
         }
       });
 
