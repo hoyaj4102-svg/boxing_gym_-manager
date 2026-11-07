@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v27-auth-tagline';
+const CACHE_VERSION = 'remember-v28-product-copy';
 const APP_SHELL = [
   '/',
   '/index.html',

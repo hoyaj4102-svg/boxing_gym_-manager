@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import test from 'node:test';
 
+function readRepo(relativePath) {
+  return readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
+}
+
 const require = createRequire(import.meta.url);
 const { initialAuthMode, isAuthScreenRoute, applyPublicEntryVisibility } = require('./public-entry.js');
 
@@ -106,6 +110,25 @@ test('login and signup share the landing tagline', () => {
 
   assert.match(html, /<h1[^>]*>부담 없는 회원재등록 관리앱<\/h1>/);
   assert.match(html, /id="landingSignupLink"[^>]*href="\/signup"[^>]*>무료로 써보기<\/a>/);
+});
+
+test('docs and PWA metadata use the screen tagline', () => {
+  const phrase = '부담 없는 회원재등록 관리앱';
+  const files = ['README.md', 'manifest.json', 'manifest.webmanifest', 'SUPABASE_SETUP.md'];
+  for (const file of files) {
+    const source = readRepo(file);
+    assert.equal(source.includes(phrase), true, file);
+    assert.equal(source.includes('재등록 관리에 특화된 가장 간단한 회비관리앱'), false, file);
+    assert.equal(source.includes('회비관리앱'), false, file);
+    assert.equal(source.includes('가장'), false, file);
+    assert.equal(source.toLowerCase().includes('crm'), false, file);
+  }
+
+  for (const file of ['manifest.json', 'manifest.webmanifest']) {
+    const manifest = JSON.parse(readRepo(file));
+    assert.equal(manifest.name, `re;member — ${phrase}`);
+    assert.equal(manifest.description.startsWith(phrase), true);
+  }
 });
 
 test('a logged-out first visit does not show the sign-out notice', () => {
