@@ -146,7 +146,15 @@ assert(
 
 assert(
   workflow.startsWith("name: Charge Toss Subscriptions\n"),
-  "recurring charge workflow must stay unchanged",
+  "recurring charge workflow name must stay recognizable",
+);
+assert(
+  !/^\s*schedule\s*:/m.test(workflow) && !/^\s*cron\s*:/m.test(workflow),
+  "recurring charge workflow must not schedule a production run",
+);
+assert(
+  !/functions\/v1\//.test(workflow),
+  "recurring charge workflow must not call a billing endpoint",
 );
 assert(
   !workflow.includes("p0_payment_data_protection"),

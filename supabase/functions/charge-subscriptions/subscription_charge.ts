@@ -37,6 +37,7 @@ type ProcessOptions = {
   tossSecret: string;
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  dryRun?: boolean;
 };
 
 class NonTerminalChargeError extends Error {
@@ -182,6 +183,18 @@ export async function processClaimedSubscriptionCharge(
   let billingKey = "";
   let chargeSucceeded = false;
 
+  if (options.dryRun) {
+    return {
+      gymId,
+      ok: true,
+      dryRun: true,
+      orderId,
+      paymentAttemptId,
+      chargeResult: "not_sent",
+      providerCalls: 0,
+    };
+  }
+
   try {
     billingKey = await resolveBillingCredential(admin, claim);
     if (!paymentAttemptId || !billingKey || !customerKey || !orderId) {
@@ -198,9 +211,26 @@ export async function processClaimedSubscriptionCharge(
       );
     }
 
+    const authorization = tossAuthHeader(options.tossSecret);
+    const dispatch = await admin.rpc("claim_subscription_charge_dispatch", {
+      p_attempt_id: paymentAttemptId,
+    });
+    if (dispatch.error || dispatch.data !== true) {
+      throw new NonTerminalChargeError(
+        dispatch.error
+          ? "CHARGE_DISPATCH_UNAVAILABLE"
+          : "CHARGE_ALREADY_DISPATCHED",
+        dispatch.error
+          ? "Charge dispatch is unavailable"
+          : "Charge was already dispatched",
+        dispatch.error ? "dispatch_unavailable" : "already_dispatched",
+        false,
+      );
+    }
+
     const chargeOutcome = await chargeTossBilling({
       billingKey,
-      authorization: tossAuthHeader(options.tossSecret),
+      authorization,
       body: {
         customerKey,
         amount: amountKrw,

@@ -1,98 +1,36 @@
 name: Charge Toss Subscriptions
 
+# The production schedule is intentionally absent.
+# Enabling a live or scheduled run needs a separate approval.
 on:
-  # Every day at 00:10 KST (15:10 UTC)
-  schedule:
-    - cron: '10 15 * * *'
-  # Allow manual run from GitHub Actions tab
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Dry run only. This does not call a payment provider.
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
 
 jobs:
-  charge:
+  dry-run:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
     runs-on: ubuntu-latest
-    environment: production
     timeout-minutes: 10
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      CRON_SECRET: ${{ secrets.CRON_SECRET }}
-      SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
     steps:
-      - name: Validate production billing scheduler configuration
-        run: |
-          set -euo pipefail
-          if [ -z "${SUPABASE_URL:-}" ]; then
-            echo "Missing GitHub secret: SUPABASE_URL"
-            echo "Add it in the protected production environment secrets"
-            exit 1
-          fi
-          if [ -z "${CRON_SECRET:-}" ]; then
-            echo "Missing GitHub secret: CRON_SECRET"
-            echo "Add it in the protected production environment secrets"
-            exit 1
-          fi
-          if [ -z "${SUPABASE_PROJECT_ID:-}" ]; then
-            echo "Missing GitHub variable: SUPABASE_PROJECT_ID"
-            echo "Add it in the protected production environment variables"
-            exit 1
-          fi
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
-          node <<'NODE'
-          const configuredUrl = process.env.SUPABASE_URL || "";
-          const expectedProjectId = process.env.SUPABASE_PROJECT_ID || "";
-          let parsed;
-          try {
-            parsed = new URL(configuredUrl);
-          } catch {
-            console.error("SUPABASE_URL is not a valid URL");
-            process.exit(1);
-          }
+      - name: Setup Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.23.4
+          package-manager-cache: false
 
-          if (parsed.protocol !== "https:") {
-            console.error("SUPABASE_URL must use https");
-            process.exit(1);
-          }
-
-          if (!parsed.hostname.endsWith(".supabase.co")) {
-            console.error("SUPABASE_URL must point to a Supabase project host");
-            process.exit(1);
-          }
-
-          const actualProjectId = parsed.hostname.split(".")[0];
-          if (!actualProjectId || actualProjectId !== expectedProjectId) {
-            console.error("SUPABASE_URL project ref does not match SUPABASE_PROJECT_ID");
-            process.exit(1);
-          }
-          NODE
-
-      - name: Call billing scheduler Edge Functions in order
-        run: |
-          set -euo pipefail
-
-          call_edge_function() {
-            local function_name="$1"
-            local response
-            local code
-            local endpoint="${SUPABASE_URL%/}/functions/v1/${function_name}"
-
-            if ! response="$(curl -sS -w '\n%{http_code}' -X POST \
-              -H "Authorization: Bearer ${CRON_SECRET}" \
-              -H "x-cron-secret: ${CRON_SECRET}" \
-              -H "Content-Type: application/json" \
-              "${endpoint}")"; then
-              echo "${function_name} request failed before an HTTP response"
-              exit 1
-            fi
-
-            code="$(printf '%s' "$response" | tail -n 1)"
-
-            echo "${function_name} HTTP ${code}"
-
-            if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
-              echo "${function_name} response body omitted to avoid logging billing data"
-              exit 1
-            fi
-          }
-
-          call_edge_function "charge-subscriptions"
-          call_edge_function "reconcile-auto-renewal-payments"
-          call_edge_function "reconcile-initial-billing-payments"
+      - name: Run billing scheduler dry run
+        env:
+          BILLING_SCHEDULER_MODE: dry-run
+        run: node scripts/check-billing-scheduler-dry-run.mjs
