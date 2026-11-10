@@ -1,6 +1,6 @@
 # re;member — Supabase SaaS 전환 가이드
 
-체육관 CRM 앱을 **체육관(계정) 단위 멀티테넌트 SaaS**로 운영하기 위한 설정 문서입니다.
+**부담 없는 회원재등록 관리앱**을 체육관(계정) 단위 멀티테넌트 SaaS로 운영하기 위한 설정 문서입니다.
 
 - 인증: Supabase Auth (이메일 회원가입 / 로그인 / 로그아웃 / 비밀번호 재설정)
 - 저장소: Supabase Database (`gyms`, `profiles`, `members`, `attendance`)
