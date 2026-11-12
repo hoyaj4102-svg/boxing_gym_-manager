@@ -772,12 +772,19 @@ select
            and b.provider_ref is distinct from 'synthetic-provider-ref-key'
            and s.cmin::text is not distinct from b.cmin_text
          )
+         or (
+           b.provider_ref = 'synthetic-provider-ref-key'
+           and (
+             s.raw::text is distinct from b.raw_text
+             or s.cmin::text is distinct from b.cmin_text
+           )
+         )
     )
      and exists (
       select 1
       from public.checkout_sessions
       where order_id = 'synthetic-order-pending-key'
-        and raw ->> 'paymentKey' = 'synthetic-pay-pending'
+        and raw ->> 'paymentKey' = '[REDACTED]'
     )
     then 'PASS'
     else 'FAIL'
@@ -808,7 +815,8 @@ select
      and pa.amount_krw = b.attempt_amount
      and pa.updated_at = b.attempt_updated_at
      and pa.cmin::text = b.attempt_cmin
-     and pa.provider_response ->> 'paymentKey' = 'synthetic-attempt-payment-key'
+     and pa.provider_response ->> 'paymentKey' = '[REDACTED]'
+     and pa.payment_key = 'synthetic-attempt-payment-key'
      and pa.provider_response #>> '{initial_reconciliation,result}' = 'payment_found'
     then 'PASS'
     else 'FAIL'
