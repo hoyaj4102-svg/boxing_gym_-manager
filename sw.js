@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'remember-v25-payment-history';
+const CACHE_VERSION = 'remember-v26-billing-consent';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -13,7 +13,13 @@ const APP_SHELL = [
   '/js/config.js',
   '/js/billing-config.js',
   '/js/supabase-service.js',
-  '/js/billing.js'
+  '/js/billing.js',
+  '/js/business-identity.js',
+  '/js/billing-consent.js',
+  '/legal/legal.css',
+  '/legal/terms.html',
+  '/legal/privacy.html',
+  '/legal/refund.html'
 ];
 
 self.addEventListener('install', event => {

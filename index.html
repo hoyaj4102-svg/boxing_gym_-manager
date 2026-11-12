@@ -832,6 +832,69 @@
 
     .billing-policy li { margin: 4px 0; }
 
+    .business-footer {
+      margin-top: 22px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .03);
+      color: var(--text-muted);
+      font-size: .78rem;
+    }
+
+    .business-footer-draft {
+      margin: 0 0 10px;
+      color: #fde68a;
+    }
+
+    .business-identity {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px 16px;
+      margin: 0 0 12px;
+    }
+
+    .business-identity dt { font-size: .74rem; }
+    .business-identity dd { margin: 0; color: var(--text); }
+
+    .business-footer-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+    }
+
+    .business-footer-nav a { color: #9db4ff; }
+
+    .billing-readiness {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .billing-readiness-card,
+    .prepay-disclosure {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .consent-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .prepay-check {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .prepay-check input { margin-top: 4px; }
+
     .renewal-panel {
       display: none;
       border-color: rgba(239, 68, 68, .42);
@@ -1957,6 +2020,7 @@
         <button type="submit" class="btn btn-primary" id="authSubmitButton" data-i18n="authSubmitLogin">로그인</button>
       </form>
       <p class="auth-message" id="authMessage"></p>
+      <footer class="business-footer" data-business-footer data-legal-base="legal/"></footer>
     </div>
   </div>
 
@@ -2236,7 +2300,9 @@
                 <li data-i18n="billingPolicyRefund3">현재 결제 기간 중 해지하더라도 남은 기간에 대한 부분 환불은 제공되지 않습니다.</li>
                 <li data-i18n="billingPolicyRefund4">중복 결제 또는 시스템 오류는 확인 후 전액 환불해드립니다.</li>
               </ul>
+              <p class="billing-note"><a href="./legal/terms.html">이용약관 (초안)</a> · <a href="./legal/privacy.html">개인정보처리방침 (초안)</a> · <a href="./legal/refund.html">환불정책 (초안)</a></p>
             </div>
+            <div class="billing-readiness" id="billingReadiness"></div>
           </div>
         </section>
 
@@ -2282,6 +2348,7 @@
         </section>
       </aside>
     </main>
+    <footer class="business-footer" data-business-footer data-legal-base="legal/"></footer>
   </div>
 
   <div class="modal-overlay" id="attendanceModal">
@@ -2399,6 +2466,16 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="prePaymentModal" role="dialog" aria-modal="true" aria-labelledby="prePaymentTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="prePaymentTitle">결제 전 확인 (초안)</h3>
+        <button type="button" class="btn btn-ghost btn-sm" data-prepay-close>닫기</button>
+      </div>
+      <div class="modal-body" id="prePaymentBody"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2406,6 +2483,8 @@
   <script src="./js/billing-config.js"></script>
   <script src="./js/supabase-service.js"></script>
   <script src="./js/billing.js"></script>
+  <script src="./js/business-identity.js"></script>
+  <script src="./js/billing-consent.js"></script>
   <script>
     const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
@@ -4495,6 +4574,7 @@
     let isBootstrapping = true;
     let isSaving = false;
     let billingSummary = null;
+    let billingReadinessState = null;
     let paymentHistoryRows = [];
     let paymentHistoryState = 'idle';
     let isSubscribing = false;
@@ -5357,9 +5437,13 @@
         } else {
           noteEl.textContent = t('billingNoteDefault');
         }
+        await refreshBillingReadiness();
       } catch (error) {
-        console.error(error);
+        console.error('BILLING_SUMMARY_UNAVAILABLE');
         billingSummary = null;
+        billingReadinessState = null;
+        const readinessEl = document.getElementById('billingReadiness');
+        if (readinessEl) readinessEl.innerHTML = '';
         planEl.textContent = '-';
         statusEl.textContent = t('planStatusUnknown');
         usageEl.textContent = '-';
@@ -5502,6 +5586,206 @@
       }
     }
 
+    function renderBusinessFooters() {
+      if (window.SweatManagerBusiness) SweatManagerBusiness.renderAll(document);
+    }
+
+    function consentActionButtons(type, scheduleId) {
+      const schedule = scheduleId
+        ? ` data-schedule-id="${escapeHtml(scheduleId)}"`
+        : '';
+      return `<div class="consent-actions">
+        <button type="button" class="btn btn-primary" data-consent-action="grant" data-consent-type="${escapeHtml(type)}"${schedule}>동의</button>
+        <button type="button" class="btn btn-primary" data-consent-action="decline" data-consent-type="${escapeHtml(type)}"${schedule}>동의하지 않음</button>
+      </div>`;
+    }
+
+    function renderBillingReadiness(readiness) {
+      const root = document.getElementById('billingReadiness');
+      if (!root) return;
+      if (!readiness || readiness.ok !== true) {
+        root.innerHTML = '<p class="billing-note">동의 상태를 불러오지 못했습니다. 동의 저장이 되지 않으면 카드 등록으로 진행하지 않습니다.</p>';
+        return;
+      }
+
+      const trial = readiness.trial || {};
+      const schedules = Array.isArray(readiness.price_schedules) ? readiness.price_schedules : [];
+      const blocks = [
+        '<h3>결제 동의 (초안)</h3>',
+        '<p class="billing-note">법률 검토 전입니다. 무료 체험은 별도의 동의 없이 유료로 바뀌지 않고, 요금 인상도 동의 없이 기존 월 10,000원을 넘는 금액으로 결제되지 않습니다.</p>'
+      ];
+
+      if (trial.subscription_status === 'trialing') {
+        const when = trial.trial_ends_at ? formatDateTime(trial.trial_ends_at) : '-';
+        let action = '<p class="billing-note">이 체험 종료에 대한 동의가 기록되어 있습니다.</p>';
+        if (trial.window_open === true && trial.consent_status !== 'granted') {
+          action = consentActionButtons('trial_to_paid', '');
+        } else if (trial.window_open !== true) {
+          action = '<p class="billing-note">유료 전환 동의는 전환 시각 전 30일 안에만 기록합니다. 그 전에 받은 포괄 동의로 대신하지 않습니다.</p>';
+        }
+        blocks.push(`<div class="billing-readiness-card"><strong>무료 체험 종료 ${escapeHtml(when)}</strong><p>변경 전 0원, 변경 후 월 10,000원. ${escapeHtml(readiness.payment_method_label || '')}</p><p>${escapeHtml(readiness.cancellation_method || '')}</p>${action}</div>`);
+      }
+
+      schedules.forEach((schedule) => {
+        const when = schedule.effective_at ? formatDateTime(schedule.effective_at) : '-';
+        let action = '<p class="billing-note">이 일정의 30일 동의 기간이 아닙니다.</p>';
+        if (schedule.window_open === true && schedule.consent_status !== 'granted') {
+          action = consentActionButtons('price_increase', schedule.schedule_id || '');
+        } else if (schedule.consent_status === 'granted') {
+          action = '<p class="billing-note">이 인상에 대한 동의가 기록되어 있습니다. 동의만으로 청구 금액이 바뀌지는 않으며, 현재 청구 금액은 월 10,000원입니다.</p>';
+        }
+        blocks.push(`<div class="billing-readiness-card"><strong>요금 변경 ${escapeHtml(when)}</strong><p>월 ${escapeHtml(String(schedule.amount_before_krw))}원에서 월 ${escapeHtml(String(schedule.amount_after_krw))}원.</p><p>${escapeHtml(readiness.cancellation_method || '')}</p>${action}</div>`);
+      });
+
+      root.innerHTML = blocks.join('');
+    }
+
+    async function refreshBillingReadiness() {
+      const root = document.getElementById('billingReadiness');
+      if (!root || !window.SweatManagerDB?.isReady?.()) {
+        billingReadinessState = null;
+        if (root) root.innerHTML = '';
+        return;
+      }
+      try {
+        const { data, error } = await SweatManagerDB.client().rpc('get_billing_readiness');
+        if (error) throw error;
+        billingReadinessState = data;
+        renderBillingReadiness(data);
+      } catch (error) {
+        billingReadinessState = null;
+        root.innerHTML = '<p class="billing-note">동의 기록 함수가 이 데이터베이스에 아직 없습니다. 카드 등록 전 확인은 표시되지만, 동의를 저장하지 못하면 결제로 진행하지 않습니다.</p>';
+      }
+    }
+
+    async function submitBillingConsent(type, decision, scheduleId) {
+      const { data, error } = await SweatManagerDB.client().rpc('record_billing_consent', {
+        p_consent_type: type,
+        p_decision: decision,
+        p_schedule_id: scheduleId || null
+      });
+      if (error || !data || data.ok === false) {
+        throw new Error(data?.code || 'CONSENT_NOT_RECORDED');
+      }
+      return data;
+    }
+
+    function requestPrePaymentConfirmation(options = {}) {
+      const consentApi = window.SweatManagerBillingConsent;
+      const disclosure = consentApi.buildPrePaymentDisclosure(new Date().toISOString());
+      const readiness = billingReadinessState && billingReadinessState.ok === true
+        ? billingReadinessState
+        : null;
+      const trialRequired = consentApi.trialConsentRequired(readiness);
+      const priceSchedule = (readiness?.price_schedules || []).find((schedule) => (
+        schedule && schedule.window_open === true && schedule.consent_status !== 'granted'
+      )) || null;
+      const priceRequired = Boolean(priceSchedule);
+      const overlay = document.getElementById('prePaymentModal');
+      const body = document.getElementById('prePaymentBody');
+      const preview = options.preview === true;
+      overlay.dataset.preview = preview ? '1' : '';
+
+      const trialWhen = readiness?.trial?.trial_ends_at
+        ? formatDateTime(readiness.trial.trial_ends_at)
+        : '';
+      const nextWhen = disclosure.nextChargeAt ? formatDateTime(disclosure.nextChargeAt) : '-';
+      const amount = window.SweatManagerBilling
+        ? SweatManagerBilling.formatKrw(disclosure.amountKrw)
+        : `${disclosure.amountKrw}원`;
+
+      body.innerHTML = `
+        <div class="prepay-disclosure">
+          <p class="billing-note">법률 검토 전 초안입니다. 확인란은 미리 선택되어 있지 않습니다. 다음 결제일은 첫 결제일로부터 약 1개월 뒤의 예상입니다.</p>
+          <ul class="disclosure-list">
+            <li>가격: 월 ${escapeHtml(amount)}</li>
+            <li>결제 주기: 매월</li>
+            <li>자동갱신: 해지하기 전까지 매월 자동결제</li>
+            <li>첫 결제: 카드 등록 직후</li>
+            <li>다음 결제 예정: ${escapeHtml(nextWhen)} (예상)</li>
+            <li>결제 방법: ${escapeHtml(disclosure.paymentMethodLabel)}</li>
+            <li>해지 방법: ${escapeHtml(disclosure.cancellationMethod)}</li>
+          </ul>
+          <p><a href="./legal/terms.html">이용약관 (초안)</a> · <a href="./legal/privacy.html">개인정보처리방침 (초안)</a> · <a href="./legal/refund.html">환불정책 (초안)</a></p>
+          ${trialRequired ? `<label class="prepay-check"><input type="checkbox" data-prepay-trial><span>무료 체험이 ${escapeHtml(trialWhen)}에 끝나고 월 ${escapeHtml(amount)} 유료 결제로 바뀌는 것에 별도로 동의합니다. 동의하지 않으면 체험 종료 후 결제되지 않습니다.</span></label>` : ''}
+          ${priceRequired ? `<label class="prepay-check"><input type="checkbox" data-prepay-price><span>${escapeHtml(formatDateTime(priceSchedule.effective_at))}부터 월 ${escapeHtml(String(priceSchedule.amount_before_krw))}원이 월 ${escapeHtml(String(priceSchedule.amount_after_krw))}원으로 오르는 것에 동의합니다.</span></label>` : ''}
+          <label class="prepay-check"><input type="checkbox" data-prepay-payment><span>위 가격, 월 결제 주기, 자동갱신, 첫 결제 시점, 다음 결제 예정, 해지 방법을 확인했고 월간 자동결제에 동의합니다.</span></label>
+          <div class="consent-actions">
+            <button type="button" class="btn btn-primary" data-prepay-continue disabled>동의하고 계속</button>
+            <button type="button" class="btn btn-primary" data-prepay-decline>동의하지 않음</button>
+          </div>
+        </div>`;
+
+      const continueButton = body.querySelector('[data-prepay-continue]');
+      const syncContinue = () => {
+        const state = consentApi.prePaymentContinueState({
+          paymentChecked: Boolean(body.querySelector('[data-prepay-payment]')?.checked),
+          trialRequired,
+          trialChecked: Boolean(body.querySelector('[data-prepay-trial]')?.checked),
+          priceRequired,
+          priceChecked: Boolean(body.querySelector('[data-prepay-price]')?.checked)
+        });
+        continueButton.disabled = !state.ok;
+      };
+      body.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+        input.addEventListener('change', syncContinue);
+      });
+      syncContinue();
+      overlay.classList.add('active');
+
+      return new Promise((resolve) => {
+        let settled = false;
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          overlay.classList.remove('active');
+          document.removeEventListener('keydown', onKey);
+          resolve(value);
+        };
+        const onKey = (event) => {
+          if (event.key === 'Escape') finish(false);
+        };
+        document.addEventListener('keydown', onKey);
+        overlay.onclick = (event) => {
+          if (event.target === overlay) finish(false);
+        };
+        overlay.querySelector('[data-prepay-close]').onclick = () => finish(false);
+        body.querySelector('[data-prepay-decline]').onclick = async () => {
+          if (!preview) {
+            try {
+              if (trialRequired) await submitBillingConsent('trial_to_paid', 'decline', null);
+              if (priceSchedule) await submitBillingConsent('price_increase', 'decline', priceSchedule.schedule_id);
+              await submitBillingConsent('pre_payment', 'decline', null);
+              await refreshBillingReadiness();
+            } catch (error) {
+              showToast('거절 기록은 저장하지 못했고, 결제로 진행하지 않습니다.', 'warning');
+            }
+          }
+          finish(false);
+        };
+        continueButton.onclick = async () => {
+          syncContinue();
+          if (continueButton.disabled) return;
+          if (preview) {
+            showToast('미리보기에서는 결제와 저장을 하지 않습니다.');
+            finish(false);
+            return;
+          }
+          continueButton.disabled = true;
+          try {
+            if (trialRequired) await submitBillingConsent('trial_to_paid', 'grant', null);
+            if (priceSchedule) await submitBillingConsent('price_increase', 'grant', priceSchedule.schedule_id);
+            await submitBillingConsent('pre_payment', 'grant', null);
+            await refreshBillingReadiness();
+            finish(true);
+          } catch (error) {
+            continueButton.disabled = false;
+            showToast('동의를 저장하지 못해 카드 등록으로 진행하지 않습니다.', 'warning');
+          }
+        };
+      });
+    }
+
     async function handleSubscribe() {
       if (!requireAuth()) return;
       if (isSubscribing) return;
@@ -5519,6 +5803,9 @@
           await refreshBillingSummary();
           return;
         }
+
+        const confirmed = await requestPrePaymentConfirmation();
+        if (!confirmed) return;
 
         const result = await SweatManagerBilling.startSubscribe();
         if (result?.mode === 'manual') {
@@ -6572,6 +6859,25 @@
     document.getElementById('signOutButton').addEventListener('click', handleSignOut);
     document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
     document.getElementById('subscribeButton').addEventListener('click', handleSubscribe);
+    document.getElementById('billingReadiness').addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-consent-action]');
+      if (!button || !requireAuth()) return;
+      button.disabled = true;
+      try {
+        await submitBillingConsent(
+          button.dataset.consentType,
+          button.dataset.consentAction,
+          button.dataset.scheduleId || null
+        );
+        showToast(button.dataset.consentAction === 'grant'
+          ? '동의를 기록했습니다.'
+          : '동의하지 않음으로 기록했습니다.');
+        await refreshBillingReadiness();
+      } catch (error) {
+        showToast('동의 기록을 저장하지 못했습니다.', 'warning');
+        button.disabled = false;
+      }
+    });
     document.getElementById('openCancelPanelButton').addEventListener('click', openCancelPanel);
     document.getElementById('closeCancelPanelButton').addEventListener('click', closeCancelPanel);
     document.getElementById('confirmCancelSubscriptionButton').addEventListener('click', handleCancelSubscription);
@@ -6688,9 +6994,14 @@
 
     resetRegisterDates();
     applyTranslations();
+    renderBusinessFooters();
     setAuthMode(getInitialAuthMode());
     refreshAll();
     initAuth();
+
+    if (window.location.hash === '#preview-prepayment') {
+      requestPrePaymentConfirmation({ preview: true });
+    }
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

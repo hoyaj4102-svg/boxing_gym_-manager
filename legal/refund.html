@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>환불정책 (초안) · re;member</title>
+  <link rel="stylesheet" href="./legal.css">
+</head>
+<body>
+  <main>
+    <p class="draft-banner">법률 검토 전 초안입니다. 이 정책은 발효되지 않았고, 테스트 모드가 아닌 결제 취소 API는 호출하지 않습니다.</p>
+    <h1>환불정책 (초안)</h1>
+    <p class="lede">버전 draft-2026-11-12. 요금제 화면의 기존 안내와 같은 기준을 서버 판정에도 사용합니다.</p>
+
+    <section>
+      <h2>1. 해지와 환불은 다릅니다</h2>
+      <p>해지는 다음 결제일부터 자동결제를 멈추는 것입니다. 이미 결제한 이용 종료일까지는 Pro를 사용할 수 있습니다. 해지만으로 남은 기간의 요금이 되돌아가지는 않습니다.</p>
+    </section>
+
+    <section>
+      <h2>2. 전액 환불을 검토하는 경우</h2>
+      <ul>
+        <li>결제 후 7일 이내이고, 서비스를 정상적으로 이용하지 않은 경우.</li>
+        <li>중복 결제 또는 시스템 오류. 이 경우는 7일이 지난 뒤에도 전액 환불 대상으로 둡니다.</li>
+      </ul>
+      <p>7일의 계산은 결제일시부터 168시간입니다. 한국 표준시의 달력일로 셀지는 법률 검토 사항입니다.</p>
+    </section>
+
+    <section>
+      <h2>3. 제한</h2>
+      <ul>
+        <li>서비스가 정상적으로 이용된 경우 환불은 제한될 수 있습니다. 초안은 회원 수나 출석 기록으로 정상 이용을 자동 추정하지 않습니다. 확인되지 않으면 결제 취소 API를 호출하지 않습니다.</li>
+        <li>현재 결제 기간 중 해지하더라도 남은 기간에 대한 부분 환불은 없습니다.</li>
+        <li>부분 금액 취소는 이 초안에서 허용하지 않습니다. 취소 API가 부분 금액을 기술적으로 보낼 수 있더라도, 정책 판정이 거절하면 호출하지 않습니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. 요청 방법</h2>
+      <p>로그인한 요금제 화면에서 해당 결제를 선택해 환불을 요청합니다. 요청은 기록되고, 테스트 모드이며 테스트 키인 경우에만 토스 결제 취소 API를 호출합니다. 운영 모드의 취소는 이 초안에 포함되지 않습니다.</p>
+    </section>
+
+    <section>
+      <h2>5. 검토가 필요한 사항</h2>
+      <ul>
+        <li>전자상거래법 제17조의 청약철회와 “정상 이용 시 제한”, “부분 환불 없음”이 양립하는지.</li>
+        <li>누가 정상 이용을 판단하는지.</li>
+        <li>환불금 처리 기간과 카드사 반영 기간을 어떻게 고지할지.</li>
+      </ul>
+    </section>
+
+    <section data-business-identity data-legal-base=""></section>
+    <p><a href="../index.html">앱으로 돌아가기</a> · <a href="./terms.html">이용약관 (초안)</a></p>
+  </main>
+  <script src="../js/business-identity.js"></script>
+  <script>
+    window.SweatManagerBusiness.renderAll(document);
+  </script>
+</body>
+</html>
