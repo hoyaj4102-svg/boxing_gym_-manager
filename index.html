@@ -6715,19 +6715,61 @@
       e.target.value = '';
     });
 
+    if ('serviceWorker' in navigator) {
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      const reloadGuardKey = 'remember-sw-reload-at';
+
+      const reloadOnceForNewWorker = () => {
+        if (!hadController) return;
+        let recentlyReloaded = false;
+        try {
+          const now = Date.now();
+          const last = Number(sessionStorage.getItem(reloadGuardKey) || 0);
+          recentlyReloaded = Number.isFinite(last) && now - last < 15000;
+          if (!recentlyReloaded) sessionStorage.setItem(reloadGuardKey, String(now));
+        } catch (error) {
+          recentlyReloaded = window.__rememberSwReloaded === true;
+          window.__rememberSwReloaded = true;
+        }
+        if (!recentlyReloaded) window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', reloadOnceForNewWorker);
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (!event.data || event.data.type !== 'REMEMBER_SW_ACTIVATED') return;
+        if (hadController && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'REMEMBER_SW_RELOADING' });
+        }
+        reloadOnceForNewWorker();
+      });
+
+      window.addEventListener('load', () => {
+        const register = (options) => navigator.serviceWorker.register('/sw.js', options);
+        register({ scope: '/', updateViaCache: 'none' })
+          .catch(() => register({ scope: '/' }))
+          .then((registration) => {
+            if (!registration) return;
+            const checkForUpdate = () => {
+              registration.update().catch(() => {});
+            };
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') checkForUpdate();
+            });
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+          })
+          .catch(() => {
+            // The app still works normally if service worker registration is unavailable.
+          });
+      });
+    }
+
     resetRegisterDates();
     applyTranslations();
     setAuthMode(getInitialAuthMode());
     refreshAll();
     initAuth();
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
-          // The app still works normally if service worker registration is unavailable.
-        });
-      });
-    }
   </script>
 </body>
 </html>
