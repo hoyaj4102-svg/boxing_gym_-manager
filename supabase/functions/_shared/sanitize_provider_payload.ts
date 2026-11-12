@@ -14,6 +14,18 @@ const SENSITIVE_KEYS = new Set([
   "customername",
   "secret",
   "secretkey",
+  "approvalno",
+  "approvalnumber",
+  "approveno",
+  "checkout",
+  "checkouturl",
+  "lasttransactionkey",
+  "merchantid",
+  "mid",
+  "paymentkey",
+  "receipt",
+  "receipturl",
+  "transactionkey",
 ]);
 
 const CARD_LIKE_VALUE = /^(?:\d[ -]?){13,19}$/;
