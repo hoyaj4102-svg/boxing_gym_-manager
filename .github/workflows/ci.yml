@@ -63,7 +63,18 @@ jobs:
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
             supabase/functions/toss-webhook/merchant_validation_test.ts \
             supabase/functions/_shared/sanitize_provider_payload_test.ts \
-            supabase/functions/confirm-billing-auth/claim_gate_test.ts
+            supabase/functions/confirm-billing-auth/claim_gate_test.ts \
+            supabase/functions/_shared/toss_idempotency_test.ts \
+            supabase/functions/_shared/toss_test_guard_test.ts \
+            supabase/functions/_shared/refund_policy_test.ts \
+            supabase/functions/_shared/payment_failure_plan_test.ts \
+            supabase/functions/_shared/toss_receipt_test.ts \
+            supabase/functions/payment-receipt/handler_test.ts \
+            supabase/functions/_shared/outbound_notice_test.ts \
+            supabase/functions/_shared/consent_gate_test.ts \
+            supabase/functions/_shared/toss_cancel_test.ts \
+            supabase/functions/cancel-payment/handler_test.ts \
+            supabase/functions/retry-failed-payments/handler_test.ts
 
   node-checks:
     name: Node checks

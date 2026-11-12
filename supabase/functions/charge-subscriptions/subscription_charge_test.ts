@@ -56,6 +56,10 @@ function createMockAdmin(options: {
   billingCredentialError?: null | { message: string; code?: string };
   dispatchResult?: boolean;
   dispatchError?: null | { message: string; code?: string };
+  rpcByName?: Record<string, {
+    data: unknown;
+    error: null | { message: string; code?: string };
+  }>;
 } = {}) {
   const updates: Array<{
     table: string;
@@ -100,6 +104,13 @@ function createMockAdmin(options: {
           data: options.dispatchResult ?? true,
           error: options.dispatchError ?? null,
         };
+      }
+      if (options.rpcByName?.[name]) return options.rpcByName[name];
+      if (
+        name === "billing_charge_consent_gate" ||
+        name === "record_payment_failure"
+      ) {
+        return { data: { ok: true }, error: null };
       }
       return {
         data: options.rpcData ??
@@ -826,4 +837,55 @@ Deno.test("dispatch unavailable does not call the provider", async () => {
   assertEquals(fetchCalls, 0, "unavailable dispatch must not call the provider");
   assertEquals(result.chargeResult, "dispatch_unavailable", "failure stays distinct");
   assertEquals(updates.length, 0, "unavailable dispatch must not rewrite the attempt");
+});
+
+Deno.test("renewal sends a stable Idempotency-Key for the order", async () => {
+  const { admin } = createMockAdmin();
+  let idempotencyKey: string | null = null;
+
+  await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async (_input, init) => {
+      idempotencyKey = new Headers(init?.headers).get("Idempotency-Key");
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+      }), { status: 200 });
+    },
+  });
+
+  assertEquals(
+    idempotencyKey,
+    "charge_toss_renew_attempt_1",
+    "the charge reuses the order idempotency key",
+  );
+});
+
+Deno.test("a denied price gate does not call Toss or mark past_due", async () => {
+  const { admin, updates } = createMockAdmin({
+    rpcByName: {
+      billing_charge_consent_gate: {
+        data: { allowed: false, code: "PRICE_NOT_AUTHORIZED" },
+        error: null,
+      },
+    },
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), { status: 200 });
+    },
+  });
+
+  assertEquals(fetchCalls, 0, "denied consent must not call Toss");
+  assertEquals(result.chargeResult, "consent_blocked", "the charge result names the gate");
+  assertEquals(updatesFor(updates, "gyms").length, 0, "a consent block is not a card failure");
+  assertEquals(
+    updatesFor(updates, "payment_attempts")[0].values.error_code,
+    "PRICE_NOT_AUTHORIZED",
+    "the attempt keeps the gate code",
+  );
 });

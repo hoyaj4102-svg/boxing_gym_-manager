@@ -2257,6 +2257,7 @@
             </div>
             <div class="billing-actions">
               <button type="button" class="btn btn-primary" id="subscribeButton" data-i18n="subscribeButton">구독</button>
+              <button type="button" class="btn btn-ghost" id="reregisterCardButton" hidden>카드 다시 등록</button>
               <button type="button" class="btn btn-ghost" id="openCancelPanelButton" data-i18n="openCancelPanelButton">해지</button>
             </div>
             <div class="billing-cancel-panel" id="billingCancelPanel" hidden>
@@ -2303,6 +2304,30 @@
               <p class="billing-note"><a href="./legal/terms.html">이용약관 (초안)</a> · <a href="./legal/privacy.html">개인정보처리방침 (초안)</a> · <a href="./legal/refund.html">환불정책 (초안)</a></p>
             </div>
             <div class="billing-readiness" id="billingReadiness"></div>
+            <div class="billing-readiness" id="billingOps">
+              <div id="billingOpsStatus"></div>
+              <form id="refundRequestForm" class="billing-readiness-card" hidden>
+                <h3>환불 요청 (테스트 모드)</h3>
+                <p class="billing-note">부분 환불은 초안 정책에서 거절됩니다. 테스트 모드가 아니면 토스 취소 API를 호출하지 않습니다.</p>
+                <label class="field" for="refundAttempt">결제
+                  <select id="refundAttempt"></select>
+                </label>
+                <label class="field" for="refundReason">사유
+                  <select id="refundReason">
+                    <option value="customer_request">고객 요청</option>
+                    <option value="duplicate_charge">중복 결제</option>
+                    <option value="system_error">시스템 오류</option>
+                  </select>
+                </label>
+                <fieldset>
+                  <legend>정상 이용 여부</legend>
+                  <label><input type="radio" name="refundUse" value="false"> 정상 이용하지 않음</label>
+                  <label><input type="radio" name="refundUse" value="true"> 정상 이용함</label>
+                  <label><input type="radio" name="refundUse" value="unknown" checked> 확인하지 않음</label>
+                </fieldset>
+                <button type="submit" class="btn btn-primary">환불 요청 기록</button>
+              </form>
+            </div>
           </div>
         </section>
 
@@ -2485,6 +2510,7 @@
   <script src="./js/billing.js"></script>
   <script src="./js/business-identity.js"></script>
   <script src="./js/billing-consent.js"></script>
+  <script src="./js/billing-ops.js"></script>
   <script>
     const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
@@ -4583,6 +4609,7 @@
     let isSaving = false;
     let billingSummary = null;
     let billingReadinessState = null;
+    let billingOpsState = null;
     let paymentHistoryRows = [];
     let paymentHistoryState = 'idle';
     let isSubscribing = false;
@@ -5465,6 +5492,7 @@
           noteEl.textContent = t('billingNoteDefault');
         }
         await refreshBillingReadiness();
+        await refreshBillingOps();
       } catch (error) {
         console.error('BILLING_SUMMARY_UNAVAILABLE');
         billingSummary = null;
@@ -5535,6 +5563,9 @@
         const periodHtml = period
           ? `<div class="payment-history-period">${escapeHtml(period)}</div>`
           : '';
+        const receiptHtml = status === 'success'
+          ? `<button type="button" class="btn btn-ghost btn-sm" data-receipt-attempt="${escapeHtml(row.payment_attempt_id)}">영수증 조회</button>`
+          : '';
         return `
           <div class="payment-history-item">
             <div class="payment-history-main">
@@ -5545,6 +5576,7 @@
             <div class="payment-history-side">
               <div class="payment-history-amount">${escapeHtml(SweatManagerBilling.formatKrw(Number(row.amount_krw) || 0))}</div>
               <div class="payment-history-status" data-status="${escapeHtml(status)}">${escapeHtml(paymentHistoryStatusLabel(status))}</div>
+              ${receiptHtml}
             </div>
           </div>`;
       }).join('');
@@ -5572,7 +5604,112 @@
         paymentHistoryRows = [];
         paymentHistoryState = 'error';
       }
+      await refreshBillingOps();
       renderPaymentHistory();
+    }
+
+    async function refreshBillingOps() {
+      const statusEl = document.getElementById('billingOpsStatus');
+      const form = document.getElementById('refundRequestForm');
+      const reregister = document.getElementById('reregisterCardButton');
+      if (!statusEl) return;
+      if (!window.SweatManagerDB?.isReady?.()) {
+        billingOpsState = null;
+        statusEl.innerHTML = '';
+        if (form) form.hidden = true;
+        if (reregister) reregister.hidden = true;
+        return;
+      }
+      try {
+        const { data, error } = await SweatManagerDB.client().rpc('get_billing_ops_status');
+        if (error) throw error;
+        billingOpsState = data && data.ok === true ? data : null;
+      } catch (error) {
+        billingOpsState = null;
+      }
+      const failure = window.SweatManagerBillingOps?.failureNotice(billingOpsState?.failure);
+      const pastDue = billingSummary?.subscriptionStatus === 'past_due';
+      if (reregister) reregister.hidden = !(failure?.cardReregistrationRequired || pastDue);
+      const notices = Array.isArray(billingOpsState?.notifications) ? billingOpsState.notifications : [];
+      const noticeHtml = notices.slice(0, 8).map((notice) => {
+        return `<p><strong>${escapeHtml(notice.title || '')}</strong> ${escapeHtml(notice.body || '')}</p>`;
+      }).join('');
+      statusEl.innerHTML = `
+        ${failure ? `<p class="billing-note">결제 상태: ${escapeHtml(failure.state)}. 카드 재등록이 필요할 수 있습니다. 이메일·문자는 보내지 않습니다.</p>` : ''}
+        ${noticeHtml}`;
+      const successes = paymentHistoryRows.filter((row) => row.display_status === 'success');
+      if (form) {
+        form.hidden = successes.length === 0;
+        const select = document.getElementById('refundAttempt');
+        if (select) {
+          const current = select.value;
+          select.innerHTML = successes.map((row) => (
+            `<option value="${escapeHtml(row.payment_attempt_id)}">${escapeHtml(paymentHistoryDate(row))} · ${escapeHtml(SweatManagerBilling.formatKrw(Number(row.amount_krw) || 0))}</option>`
+          )).join('');
+          if (current) select.value = current;
+        }
+      }
+    }
+
+    async function submitRefundRequest(event) {
+      event.preventDefault();
+      if (!requireAuth()) return;
+      const attemptId = document.getElementById('refundAttempt')?.value;
+      const reason = document.getElementById('refundReason')?.value;
+      const useValue = document.querySelector('input[name="refundUse"]:checked')?.value;
+      const row = paymentHistoryRows.find((item) => item.payment_attempt_id === attemptId);
+      const normallyUsed = useValue === 'true' ? true : useValue === 'false' ? false : null;
+      const submission = window.SweatManagerBillingOps.refundSubmission({
+        reason,
+        amountKrw: Number(row?.amount_krw || 0),
+        normallyUsed
+      });
+      if (!submission.ok) {
+        showToast('환불 조건을 확인해 주세요. 정상 이용 여부를 확인하지 않으면 고객 요청 환불은 기록만 되고 취소 API로 가지 않습니다.', 'warning');
+        if (submission.code !== 'NORMAL_USE_UNCONFIRMED') return;
+      }
+      try {
+        const { data, error } = await SweatManagerDB.client().rpc('create_billing_refund_request', {
+          p_payment_attempt_id: attemptId,
+          p_reason: reason,
+          p_requested_amount_krw: Number(row?.amount_krw || 0),
+          p_normally_used: normallyUsed
+        });
+        if (error || !data || data.ok === false) throw error || new Error(data?.code || 'REFUND_NOT_RECORDED');
+        if (data.allowed !== true) {
+          showToast('환불 요청을 거절 상태로 기록했습니다. 토스에는 요청하지 않았습니다.');
+          await refreshBillingOps();
+          return;
+        }
+        const invoked = await SweatManagerDB.client().functions.invoke('cancel-payment', {
+          body: { refundRequestId: data.refund_request_id }
+        });
+        if (invoked.error || invoked.data?.providerCalls !== 1) {
+          showToast('환불 요청은 기록되었습니다. 테스트 모드가 아니거나 함수가 없어 토스 취소 API는 호출하지 않았습니다.');
+        } else {
+          showToast('테스트 모드에서 결제 취소를 요청했습니다.');
+        }
+        await refreshBillingOps();
+      } catch (error) {
+        showToast('환불 요청을 저장하지 못했습니다. 결제 취소 API는 호출하지 않았습니다.', 'warning');
+      }
+    }
+
+    async function handleReregisterCard() {
+      if (!requireAuth() || isSubscribing) return;
+      isSubscribing = true;
+      const button = document.getElementById('reregisterCardButton');
+      if (button) button.disabled = true;
+      try {
+        const confirmed = await requestPrePaymentConfirmation();
+        if (!confirmed) return;
+        await SweatManagerBilling.startSubscribe();
+      } catch (error) {
+        showToast('카드 등록을 시작하지 못했습니다.', 'warning');
+      } finally {
+        isSubscribing = false;
+        if (button) button.disabled = false;
+      }
     }
 
     function openCancelPanel() {
@@ -6888,6 +7025,28 @@
     document.getElementById('signOutButton').addEventListener('click', handleSignOut);
     document.getElementById('migrateLocalButton').addEventListener('click', migrateLocalData);
     document.getElementById('subscribeButton').addEventListener('click', handleSubscribe);
+    document.getElementById('reregisterCardButton').addEventListener('click', handleReregisterCard);
+    document.getElementById('refundRequestForm').addEventListener('submit', submitRefundRequest);
+    document.getElementById('paymentHistoryContent').addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-receipt-attempt]');
+      if (!button || !requireAuth()) return;
+      button.disabled = true;
+      try {
+        const invoked = await SweatManagerDB.client().functions.invoke('payment-receipt', {
+          body: { paymentAttemptId: button.dataset.receiptAttempt }
+        });
+        const url = window.SweatManagerBillingOps?.safeReceiptUrl(invoked.data?.receiptUrl);
+        if (invoked.error || invoked.data?.providerCalls !== 1 || !url) {
+          showToast('영수증은 테스트 모드에서 결제 키로 토스를 다시 조회합니다. 저장된 결제 응답은 사용하지 않으며, 지금은 호출하지 않았습니다.');
+          return;
+        }
+        window.open(url, '_blank', 'noopener');
+      } catch (error) {
+        showToast('영수증 조회를 시작하지 못했습니다.', 'warning');
+      } finally {
+        button.disabled = false;
+      }
+    });
     document.getElementById('billingReadiness').addEventListener('click', async (event) => {
       const button = event.target.closest('[data-consent-action]');
       if (!button || !requireAuth()) return;

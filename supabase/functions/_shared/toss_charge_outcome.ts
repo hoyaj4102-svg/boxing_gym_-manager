@@ -2,6 +2,7 @@ export type TossBillingChargeRequest = {
   billingKey: string;
   authorization: string;
   body: Record<string, unknown>;
+  idempotencyKey?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -83,6 +84,9 @@ export async function chargeTossBilling(
         headers: {
           Authorization: request.authorization,
           "Content-Type": "application/json",
+          ...(request.idempotencyKey
+            ? { "Idempotency-Key": request.idempotencyKey }
+            : {}),
         },
         body: JSON.stringify(request.body),
       },
