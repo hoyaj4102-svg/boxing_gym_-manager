@@ -21,3 +21,13 @@ verify_jwt = false
 
 [functions.toss-webhook]
 verify_jwt = false
+
+[functions.cancel-payment]
+verify_jwt = true
+
+[functions.payment-receipt]
+verify_jwt = true
+
+# Manual test-mode retry only. No schedule is declared.
+[functions.retry-failed-payments]
+verify_jwt = false

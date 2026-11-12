@@ -6,6 +6,8 @@ import {
   getGymIdForUser,
   requireUser,
 } from "../_shared/supabase.ts";
+import { interpretConsentGate } from "../_shared/consent_gate.ts";
+import { chargeIdempotencyKey } from "../_shared/toss_idempotency.ts";
 import { chargeTossBilling } from "./charge_outcome.ts";
 
 const AMOUNT_KRW = 10000;
@@ -383,9 +385,33 @@ Deno.serve(async (req) => {
       return textResponse(insertError.message, 500);
     }
 
+    const consentGate = await admin.rpc("billing_charge_consent_gate", {
+      p_gym_id: gymId,
+      p_amount_krw: AMOUNT_KRW,
+      p_purpose: "initial",
+    });
+    if (interpretConsentGate(consentGate) === "deny") {
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: "charge_failed",
+        activation_status: "not_started",
+        recovery_status: "none",
+        error_code: "BILLING_CONSENT_REQUIRED",
+        error_message: "BILLING_CONSENT_REQUIRED",
+      });
+      return jsonResponse({
+        ok: false,
+        action: "consent_required",
+        canCharge: false,
+        paymentAttemptId,
+        orderId,
+        message: "BILLING_CONSENT_REQUIRED",
+      }, 409);
+    }
+
     const chargeOutcome = await chargeTossBilling({
       billingKey,
       authorization: tossAuthHeader(),
+      idempotencyKey: chargeIdempotencyKey(orderId),
       body: {
         customerKey,
         amount: AMOUNT_KRW,
