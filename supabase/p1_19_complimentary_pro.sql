@@ -12,19 +12,23 @@
 --   plan_code = pro
 --   subscription_status = active
 --   auto_renew = false
---   no billing credential (private billing key or billing_subscription_id)
 --   the supplied id matches exactly one gym
+--
+-- A legacy billing reference on the gym row, or a row in the private
+-- credential table, does not block the call. apply_complimentary_pro does
+-- not read, clear, move, or modify either value. Both stay as they are.
 --
 -- A successful call sets complimentary_pro, complimentary_pro_at, and
 -- complimentary_pro_reason. It leaves current_period_end and every other
 -- gym column unchanged. It inserts one subscriptions history row with
 -- amount_krw 0 and reason complimentary_pro. Calling it again is a no-op.
 --
--- Complimentary gyms keep Pro access after current_period_end. They are
--- excluded from automatic renewal claims and from a new initial charge.
--- Cancel and resume reject them. Applying a payment result cannot turn
--- auto_renew back on. Owners cannot change the marker through a direct
--- update. Auto-renewal reconciliation is unchanged.
+-- Complimentary gyms keep Pro access after current_period_end. Renewal
+-- claims and a new initial charge skip them even when a credential is still
+-- present and even if auto_renew is true. Cancel and resume reject them.
+-- Applying a payment result cannot turn auto_renew back on. Owners cannot
+-- change the marker through a direct update. Auto-renewal reconciliation
+-- is unchanged.
 --
 -- Clear one gym with public.rollback_complimentary_pro(gym_id).
 -- Remove this migration with supabase/p1_19_complimentary_pro_rollback.sql.
@@ -402,11 +406,15 @@ as $$
     where g.billing_provider = 'toss'
       and g.auto_renew = true
       and g.subscription_status = 'active'
-      and g.complimentary_pro = false
       and g.billing_customer_id is not null
-      and private.resolve_toss_billing_credential(g.id) is not null
       and g.current_period_end is not null
       and g.current_period_end <= p_now
+      -- Skip complimentary Pro before resolving a credential. auto_renew
+      -- does not bring a complimentary gym back into the claim.
+      and case
+        when coalesce(g.complimentary_pro, false) then false
+        else private.resolve_toss_billing_credential(g.id) is not null
+      end
     order by g.current_period_end asc, g.id asc
     limit greatest(least(coalesce(p_limit, 50), 100), 1)
     for update of g skip locked
@@ -539,8 +547,20 @@ begin
     raise exception 'USER_GYM_MISMATCH';
   end if;
 
-  select *
-  into v_gym
+  select
+    id,
+    name,
+    plan_code,
+    subscription_status,
+    current_period_end,
+    complimentary_pro
+  into
+    v_gym.id,
+    v_gym.name,
+    v_gym.plan_code,
+    v_gym.subscription_status,
+    v_gym.current_period_end,
+    v_gym.complimentary_pro
   from public.gyms
   where id = p_gym_id
   for update;
@@ -549,6 +569,8 @@ begin
     raise exception 'GYM_NOT_FOUND';
   end if;
 
+  -- Complimentary Pro is not charged, even when a credential remains
+  -- and even when auto_renew is true.
   if coalesce(v_gym.complimentary_pro, false) then
     return jsonb_build_object(
       'ok', true,
@@ -1016,7 +1038,7 @@ create or replace function public.apply_complimentary_pro(
 returns jsonb
 language plpgsql
 security definer
-set search_path = private, public
+set search_path = public
 as $$
 declare
   v_gym public.gyms%rowtype;
@@ -1024,7 +1046,6 @@ declare
   v_updated integer;
   v_decision_ref text := btrim(p_decision_ref);
   v_subscription_id uuid;
-  v_has_credential boolean;
 begin
   select count(*)
   into v_targets
@@ -1035,8 +1056,20 @@ begin
     raise exception 'COMPLIMENTARY_PRO_TARGET_COUNT';
   end if;
 
-  select *
-  into v_gym
+  select
+    id,
+    complimentary_pro,
+    plan_code,
+    subscription_status,
+    auto_renew,
+    current_period_end
+  into
+    v_gym.id,
+    v_gym.complimentary_pro,
+    v_gym.plan_code,
+    v_gym.subscription_status,
+    v_gym.auto_renew,
+    v_gym.current_period_end
   from public.gyms
   where id = p_gym_id
   for update;
@@ -1065,21 +1098,6 @@ begin
     raise exception 'COMPLIMENTARY_PRO_PRECONDITION_FAILED:AUTO_RENEW';
   end if;
 
-  select
-    private.gym_has_billing_credential(v_gym.id)
-    or exists (
-      select 1
-      from private.billing_credentials c
-      where c.gym_id = v_gym.id
-        and c.billing_key is not null
-        and length(btrim(c.billing_key)) > 0
-    )
-  into v_has_credential;
-
-  if v_has_credential then
-    raise exception 'COMPLIMENTARY_PRO_PRECONDITION_FAILED:BILLING_CREDENTIAL';
-  end if;
-
   perform set_config('app.allow_billing_update', '1', true);
 
   update public.gyms
@@ -1091,15 +1109,7 @@ begin
     and complimentary_pro = false
     and plan_code = 'pro'
     and subscription_status = 'active'
-    and auto_renew = false
-    and (billing_subscription_id is null or length(btrim(billing_subscription_id)) = 0)
-    and not exists (
-      select 1
-      from private.billing_credentials c
-      where c.gym_id = public.gyms.id
-        and c.billing_key is not null
-        and length(btrim(c.billing_key)) > 0
-    );
+    and auto_renew = false;
 
   get diagnostics v_updated = row_count;
   if v_updated <> 1 then

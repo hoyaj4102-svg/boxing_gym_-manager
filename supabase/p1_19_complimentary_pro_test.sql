@@ -31,6 +31,8 @@ create temp table p1_19_context (
   bad_private_credential_gym_id uuid not null,
   noncomp_core_gym_id uuid not null,
   noncomp_legacy_gym_id uuid not null,
+  legacy_key_user_id uuid not null,
+  private_credential_user_id uuid not null,
   past_period_end timestamptz not null,
   future_period_end timestamptz not null
 ) on commit drop;
@@ -41,7 +43,8 @@ select
   gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
   gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
   gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
-  gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
+  gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
+  gen_random_uuid(),
   now() - interval '2 days',
   now() + interval '30 days';
 
@@ -65,7 +68,9 @@ cross join lateral (
     (ctx.comp_user_id, 'p1_19_comp@example.invalid'),
     (ctx.comp_credential_user_id, 'p1_19_comp_credential@example.invalid'),
     (ctx.active_user_id, 'p1_19_active@example.invalid'),
-    (ctx.expired_user_id, 'p1_19_expired@example.invalid')
+    (ctx.expired_user_id, 'p1_19_expired@example.invalid'),
+    (ctx.legacy_key_user_id, 'p1_19_legacy_key@example.invalid'),
+    (ctx.private_credential_user_id, 'p1_19_private_credential@example.invalid')
 ) as users_to_insert(user_id, email);
 
 insert into public.gyms (
@@ -92,7 +97,7 @@ cross join lateral (
     (ctx.bad_plan_gym_id, 'Synthetic Bad Plan Gym', 'free', 20, 'active', ctx.past_period_end, null::text, null::text, null::text, false, false),
     (ctx.bad_status_gym_id, 'Synthetic Bad Status Gym', 'pro', 20, 'canceled', ctx.future_period_end, null::text, null::text, null::text, false, false),
     (ctx.bad_autorenew_gym_id, 'Synthetic Bad Autorenew Gym', 'pro', 20, 'active', ctx.past_period_end, null::text, null::text, null::text, true, false),
-    (ctx.bad_column_credential_gym_id, 'Synthetic Column Credential Gym', 'pro', 20, 'active', ctx.past_period_end, 'toss', null::text, 'synthetic-column-billing-ref', false, false),
+    (ctx.bad_column_credential_gym_id, 'Synthetic Column Credential Gym', 'pro', 20, 'active', ctx.past_period_end, 'toss', 'synthetic-legacy-customer', 'synthetic-column-billing-ref', false, false),
     (ctx.bad_private_credential_gym_id, 'Synthetic Private Credential Gym', 'pro', 20, 'active', ctx.past_period_end, null::text, null::text, null::text, false, false),
     (ctx.noncomp_core_gym_id, 'Synthetic Noncomp Core Gym', 'pro', 20, 'active', ctx.past_period_end, null::text, null::text, null::text, false, false),
     (ctx.noncomp_legacy_gym_id, 'Synthetic Noncomp Legacy Gym', 'pro', 20, 'active', ctx.past_period_end, null::text, null::text, null::text, false, false)
@@ -113,7 +118,9 @@ cross join lateral (
     (ctx.comp_user_id, ctx.comp_gym_id),
     (ctx.comp_credential_user_id, ctx.comp_credential_gym_id),
     (ctx.active_user_id, ctx.active_gym_id),
-    (ctx.expired_user_id, ctx.expired_gym_id)
+    (ctx.expired_user_id, ctx.expired_gym_id),
+    (ctx.legacy_key_user_id, ctx.bad_column_credential_gym_id),
+    (ctx.private_credential_user_id, ctx.bad_private_credential_gym_id)
 ) as profiles_to_insert(user_id, gym_id)
 on conflict (id) do update
 set gym_id = excluded.gym_id, name = excluded.name;
@@ -723,6 +730,556 @@ from public.gyms comp
 join p1_19_context ctx on ctx.comp_legacy_gym_id = comp.id
 join public.gyms noncomp on noncomp.id = ctx.noncomp_legacy_gym_id;
 
+create temp table p1_19_legacy_before on commit drop as
+select
+  g.id,
+  g.plan_code,
+  g.member_limit,
+  g.subscription_status,
+  g.trial_ends_at,
+  g.current_period_end,
+  g.billing_provider,
+  g.billing_customer_id,
+  g.billing_subscription_id,
+  g.auto_renew,
+  g.name,
+  g.phone,
+  g.owner_name,
+  g.complimentary_pro,
+  g.complimentary_pro_at,
+  g.complimentary_pro_reason
+from public.gyms g
+join p1_19_context ctx on ctx.bad_column_credential_gym_id = g.id;
+
+create temp table p1_19_legacy_other_before on commit drop as
+select
+  g.id,
+  g.plan_code,
+  g.member_limit,
+  g.subscription_status,
+  g.trial_ends_at,
+  g.current_period_end,
+  g.billing_provider,
+  g.billing_customer_id,
+  g.billing_subscription_id,
+  g.auto_renew,
+  g.name,
+  g.phone,
+  g.owner_name,
+  g.complimentary_pro,
+  g.complimentary_pro_at,
+  g.complimentary_pro_reason,
+  g.updated_at
+from public.gyms g
+join p1_19_context ctx on g.id <> ctx.bad_column_credential_gym_id;
+
+create temp table p1_19_legacy_credential_before on commit drop as
+select c.gym_id, c.provider, c.billing_key, c.created_at, c.updated_at
+from private.billing_credentials c;
+
+create temp table p1_19_legacy_other_history_before on commit drop as
+select s.gym_id, count(*)::integer as history_count
+from public.subscriptions s
+join p1_19_context ctx on s.gym_id <> ctx.bad_column_credential_gym_id
+where s.raw->>'reason' = 'complimentary_pro'
+group by s.gym_id;
+
+create temp table p1_19_legacy_apply on commit drop as
+select public.apply_complimentary_pro(
+  ctx.bad_column_credential_gym_id,
+  'synthetic-decision-ref'
+) as result
+from p1_19_context ctx;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'apply succeeds when the legacy billing reference is present',
+  case
+    when applied.result->>'ok' = 'true'
+     and applied.result->>'already_applied' = 'false'
+     and before.complimentary_pro = false
+     and before.auto_renew = false
+     and before.plan_code = 'pro'
+     and before.subscription_status = 'active'
+     and before.billing_subscription_id is not null
+     and length(btrim(before.billing_subscription_id)) > 0
+     and g.complimentary_pro = true
+     and g.complimentary_pro_at is not null
+     and g.complimentary_pro_reason = 'synthetic-decision-ref'
+     and g.billing_subscription_id = before.billing_subscription_id
+     and convert_to(g.billing_subscription_id, 'UTF8') = convert_to(before.billing_subscription_id, 'UTF8')
+     and g.plan_code = before.plan_code
+     and g.member_limit = before.member_limit
+     and g.subscription_status = before.subscription_status
+     and g.trial_ends_at = before.trial_ends_at
+     and g.current_period_end = before.current_period_end
+     and g.billing_provider is not distinct from before.billing_provider
+     and g.billing_customer_id is not distinct from before.billing_customer_id
+     and g.auto_renew = false
+     and g.name = before.name
+     and g.phone = before.phone
+     and g.owner_name = before.owner_name
+     and public.gym_has_pro_access(g) = true
+     and public.gym_effective_member_limit(g.id) = -1
+     and g.current_period_end < now()
+     and (
+       select count(*)
+       from public.subscriptions s
+       where s.gym_id = g.id
+         and s.amount_krw = 0
+         and s.plan_code = 'pro'
+         and s.status = 'active'
+         and s.provider = 'manual'
+         and s.raw->>'reason' = 'complimentary_pro'
+         and s.raw->>'decision_ref' = 'synthetic-decision-ref'
+     ) = 1
+     and not exists (
+       select 1
+       from private.billing_credentials c
+       where c.gym_id = g.id
+     )
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'compared'
+from p1_19_legacy_apply applied
+join p1_19_context ctx on true
+join public.gyms g on g.id = ctx.bad_column_credential_gym_id
+join p1_19_legacy_before before on before.id = g.id;
+
+create temp table p1_19_legacy_marker_at on commit drop as
+select g.complimentary_pro_at
+from public.gyms g
+join p1_19_context ctx on ctx.bad_column_credential_gym_id = g.id;
+
+create temp table p1_19_legacy_apply_again on commit drop as
+select public.apply_complimentary_pro(
+  ctx.bad_column_credential_gym_id,
+  'synthetic-decision-another'
+) as result
+from p1_19_context ctx;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'repeat apply on a legacy billing reference is a no-op',
+  case
+    when again.result->>'ok' = 'true'
+     and again.result->>'already_applied' = 'true'
+     and g.complimentary_pro_at = marker.complimentary_pro_at
+     and g.complimentary_pro_reason = 'synthetic-decision-ref'
+     and g.billing_subscription_id = before.billing_subscription_id
+     and convert_to(g.billing_subscription_id, 'UTF8') = convert_to(before.billing_subscription_id, 'UTF8')
+     and g.auto_renew = false
+     and g.plan_code = before.plan_code
+     and g.subscription_status = before.subscription_status
+     and g.current_period_end = before.current_period_end
+     and (
+       select count(*)
+       from public.subscriptions s
+       where s.gym_id = g.id
+         and s.raw->>'reason' = 'complimentary_pro'
+     ) = 1
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'compared'
+from p1_19_legacy_apply_again again
+join p1_19_context ctx on true
+join public.gyms g on g.id = ctx.bad_column_credential_gym_id
+join p1_19_legacy_before before on before.id = g.id
+join p1_19_legacy_marker_at marker on true;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'other gyms stay unchanged when a legacy billing reference is marked complimentary',
+  case
+    when not exists (
+      select 1
+      from public.gyms g
+      join p1_19_legacy_other_before b on b.id = g.id
+      where g.plan_code is distinct from b.plan_code
+         or g.member_limit is distinct from b.member_limit
+         or g.subscription_status is distinct from b.subscription_status
+         or g.trial_ends_at is distinct from b.trial_ends_at
+         or g.current_period_end is distinct from b.current_period_end
+         or g.billing_provider is distinct from b.billing_provider
+         or g.billing_customer_id is distinct from b.billing_customer_id
+         or g.billing_subscription_id is distinct from b.billing_subscription_id
+         or convert_to(g.billing_subscription_id, 'UTF8') is distinct from convert_to(b.billing_subscription_id, 'UTF8')
+         or g.auto_renew is distinct from b.auto_renew
+         or g.name is distinct from b.name
+         or g.phone is distinct from b.phone
+         or g.owner_name is distinct from b.owner_name
+         or g.complimentary_pro is distinct from b.complimentary_pro
+         or g.complimentary_pro_at is distinct from b.complimentary_pro_at
+         or g.complimentary_pro_reason is distinct from b.complimentary_pro_reason
+         or g.updated_at is distinct from b.updated_at
+    )
+     and not exists (
+      select 1
+      from private.billing_credentials c
+      full join p1_19_legacy_credential_before b
+        on b.gym_id = c.gym_id
+       and b.provider = c.provider
+      where c.gym_id is distinct from b.gym_id
+         or c.billing_key is distinct from b.billing_key
+         or convert_to(c.billing_key, 'UTF8') is distinct from convert_to(b.billing_key, 'UTF8')
+         or c.created_at is distinct from b.created_at
+         or c.updated_at is distinct from b.updated_at
+    )
+     and not exists (
+      select 1
+      from public.subscriptions s
+      join p1_19_context ctx on s.gym_id <> ctx.bad_column_credential_gym_id
+      where s.raw->>'reason' = 'complimentary_pro'
+      group by s.gym_id
+      having count(*)::integer is distinct from (
+        select b.history_count
+        from p1_19_legacy_other_history_before b
+        where b.gym_id = s.gym_id
+      )
+    )
+     and not exists (
+      select 1
+      from p1_19_legacy_other_history_before b
+      where not exists (
+        select 1
+        from public.subscriptions s
+        where s.gym_id = b.gym_id
+          and s.raw->>'reason' = 'complimentary_pro'
+        having count(*)::integer = b.history_count
+      )
+    )
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'compared';
+
+do $$
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('app.allow_billing_update', '1', true);
+  update public.gyms g
+  set auto_renew = true
+  from p1_19_context ctx
+  where g.id = ctx.bad_column_credential_gym_id;
+end;
+$$;
+
+create temp table p1_19_legacy_due_claims on commit drop as
+select gym_id
+from public.claim_due_toss_subscription_charges(now(), 50, 10000);
+
+create temp table p1_19_legacy_initial_claim on commit drop as
+select public.claim_initial_billing_attempt(
+  ctx.bad_column_credential_gym_id,
+  ctx.legacy_key_user_id,
+  'synthetic-legacy-customer',
+  10000
+) as result
+from p1_19_context ctx;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'claim functions skip a complimentary gym that still has a legacy billing reference',
+  case
+    when not exists (
+      select 1
+      from p1_19_legacy_due_claims c
+      join p1_19_context ctx on c.gym_id = ctx.bad_column_credential_gym_id
+    )
+     and not exists (
+      select 1
+      from p1_19_legacy_due_claims c
+      join p1_19_context ctx on c.gym_id = ctx.comp_due_gym_id
+    )
+     and claim.result->>'ok' = 'true'
+     and claim.result->>'action' = 'already_completed'
+     and claim.result->>'can_charge' = 'false'
+     and claim.result->>'already_completed' = 'true'
+     and claim.result->>'complimentary_pro' = 'true'
+     and g.complimentary_pro = true
+     and g.auto_renew = true
+     and g.billing_subscription_id = before.billing_subscription_id
+     and convert_to(g.billing_subscription_id, 'UTF8') = convert_to(before.billing_subscription_id, 'UTF8')
+     and (
+       select count(*)
+       from public.payment_attempts pa
+       join p1_19_context ctx on pa.gym_id = ctx.bad_column_credential_gym_id
+     ) = 0
+    then 'PASS'
+    else 'FAIL'
+  end,
+  coalesce(claim.result->>'action', 'missing')
+from p1_19_legacy_initial_claim claim
+join p1_19_context ctx on true
+join public.gyms g on g.id = ctx.bad_column_credential_gym_id
+join p1_19_legacy_before before on before.id = g.id;
+
+do $$
+begin
+  update public.gyms g
+  set auto_renew = false
+  from p1_19_context ctx
+  where g.id = ctx.bad_column_credential_gym_id;
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('app.allow_billing_update', '0', true);
+end;
+$$;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'legacy billing reference stays unchanged after the claim check',
+  case
+    when g.auto_renew = false
+     and g.complimentary_pro = true
+     and g.billing_subscription_id = before.billing_subscription_id
+     and convert_to(g.billing_subscription_id, 'UTF8') = convert_to(before.billing_subscription_id, 'UTF8')
+     and g.billing_provider is not distinct from before.billing_provider
+     and g.billing_customer_id is not distinct from before.billing_customer_id
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'compared'
+from public.gyms g
+join p1_19_context ctx on ctx.bad_column_credential_gym_id = g.id
+join p1_19_legacy_before before on before.id = g.id;
+
+create temp table p1_19_private_before on commit drop as
+select
+  g.id,
+  g.plan_code,
+  g.member_limit,
+  g.subscription_status,
+  g.trial_ends_at,
+  g.current_period_end,
+  g.billing_provider,
+  g.billing_customer_id,
+  g.billing_subscription_id,
+  g.auto_renew,
+  g.name,
+  g.phone,
+  g.owner_name,
+  g.complimentary_pro
+from public.gyms g
+join p1_19_context ctx on ctx.bad_private_credential_gym_id = g.id;
+
+create temp table p1_19_private_key_before on commit drop as
+select c.gym_id, c.provider, c.billing_key, c.created_at, c.updated_at
+from private.billing_credentials c
+join p1_19_context ctx on c.gym_id = ctx.bad_private_credential_gym_id;
+
+create temp table p1_19_private_other_before on commit drop as
+select
+  g.id,
+  g.plan_code,
+  g.member_limit,
+  g.subscription_status,
+  g.trial_ends_at,
+  g.current_period_end,
+  g.billing_provider,
+  g.billing_customer_id,
+  g.billing_subscription_id,
+  g.auto_renew,
+  g.name,
+  g.phone,
+  g.owner_name,
+  g.complimentary_pro,
+  g.complimentary_pro_at,
+  g.complimentary_pro_reason,
+  g.updated_at
+from public.gyms g
+join p1_19_context ctx on g.id <> ctx.bad_private_credential_gym_id;
+
+create temp table p1_19_private_apply on commit drop as
+select public.apply_complimentary_pro(
+  ctx.bad_private_credential_gym_id,
+  'synthetic-decision-ref'
+) as result
+from p1_19_context ctx;
+
+create temp table p1_19_private_apply_again on commit drop as
+select public.apply_complimentary_pro(
+  ctx.bad_private_credential_gym_id,
+  'synthetic-decision-another'
+) as result
+from p1_19_context ctx;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'apply succeeds when a private billing credential row is present',
+  case
+    when applied.result->>'ok' = 'true'
+     and applied.result->>'already_applied' = 'false'
+     and again.result->>'ok' = 'true'
+     and again.result->>'already_applied' = 'true'
+     and before.billing_subscription_id is null
+     and before.auto_renew = false
+     and stored.billing_key is not null
+     and length(btrim(stored.billing_key)) > 0
+     and g.complimentary_pro = true
+     and g.complimentary_pro_reason = 'synthetic-decision-ref'
+     and g.billing_subscription_id is null
+     and g.auto_renew = false
+     and g.plan_code = before.plan_code
+     and g.member_limit = before.member_limit
+     and g.subscription_status = before.subscription_status
+     and g.current_period_end = before.current_period_end
+     and c.billing_key = stored.billing_key
+     and convert_to(c.billing_key, 'UTF8') = convert_to(stored.billing_key, 'UTF8')
+     and c.created_at = stored.created_at
+     and c.updated_at = stored.updated_at
+     and c.provider = stored.provider
+     and public.gym_has_pro_access(g) = true
+     and public.gym_effective_member_limit(g.id) = -1
+     and (
+       select count(*)
+       from public.subscriptions s
+       where s.gym_id = g.id
+         and s.amount_krw = 0
+         and s.raw->>'reason' = 'complimentary_pro'
+     ) = 1
+     and not exists (
+      select 1
+      from public.gyms other
+      join p1_19_private_other_before b on b.id = other.id
+      where other.plan_code is distinct from b.plan_code
+         or other.member_limit is distinct from b.member_limit
+         or other.subscription_status is distinct from b.subscription_status
+         or other.trial_ends_at is distinct from b.trial_ends_at
+         or other.current_period_end is distinct from b.current_period_end
+         or other.billing_provider is distinct from b.billing_provider
+         or other.billing_customer_id is distinct from b.billing_customer_id
+         or other.billing_subscription_id is distinct from b.billing_subscription_id
+         or convert_to(other.billing_subscription_id, 'UTF8') is distinct from convert_to(b.billing_subscription_id, 'UTF8')
+         or other.auto_renew is distinct from b.auto_renew
+         or other.name is distinct from b.name
+         or other.phone is distinct from b.phone
+         or other.owner_name is distinct from b.owner_name
+         or other.complimentary_pro is distinct from b.complimentary_pro
+         or other.complimentary_pro_at is distinct from b.complimentary_pro_at
+         or other.complimentary_pro_reason is distinct from b.complimentary_pro_reason
+         or other.updated_at is distinct from b.updated_at
+    )
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'compared'
+from p1_19_private_apply applied
+join p1_19_private_apply_again again on true
+join p1_19_context ctx on true
+join public.gyms g on g.id = ctx.bad_private_credential_gym_id
+join p1_19_private_before before on before.id = g.id
+join p1_19_private_key_before stored on stored.gym_id = g.id
+join private.billing_credentials c
+  on c.gym_id = g.id
+ and c.provider = stored.provider;
+
+do $$
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('app.allow_billing_update', '1', true);
+  update public.gyms g
+  set
+    billing_provider = 'toss',
+    billing_customer_id = 'synthetic-private-customer',
+    auto_renew = true
+  from p1_19_context ctx
+  where g.id = ctx.bad_private_credential_gym_id;
+end;
+$$;
+
+create temp table p1_19_private_due_claims on commit drop as
+select gym_id
+from public.claim_due_toss_subscription_charges(now(), 50, 10000);
+
+create temp table p1_19_private_initial_claim on commit drop as
+select public.claim_initial_billing_attempt(
+  ctx.bad_private_credential_gym_id,
+  ctx.private_credential_user_id,
+  'synthetic-private-customer',
+  10000
+) as result
+from p1_19_context ctx;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'claim functions skip a complimentary gym that still has a private credential',
+  case
+    when not exists (
+      select 1
+      from p1_19_private_due_claims c
+      join p1_19_context ctx on c.gym_id in (
+        ctx.bad_private_credential_gym_id,
+        ctx.bad_column_credential_gym_id
+      )
+    )
+     and claim.result->>'action' = 'already_completed'
+     and claim.result->>'can_charge' = 'false'
+     and claim.result->>'complimentary_pro' = 'true'
+     and g.complimentary_pro = true
+     and g.auto_renew = true
+     and g.billing_subscription_id is null
+     and c.billing_key = stored.billing_key
+     and convert_to(c.billing_key, 'UTF8') = convert_to(stored.billing_key, 'UTF8')
+     and c.updated_at = stored.updated_at
+     and (
+       select count(*)
+       from public.payment_attempts pa
+       join p1_19_context ctx on pa.gym_id = ctx.bad_private_credential_gym_id
+     ) = 0
+    then 'PASS'
+    else 'FAIL'
+  end,
+  coalesce(claim.result->>'action', 'missing')
+from p1_19_private_initial_claim claim
+join p1_19_context ctx on true
+join public.gyms g on g.id = ctx.bad_private_credential_gym_id
+join p1_19_private_key_before stored on stored.gym_id = g.id
+join private.billing_credentials c
+  on c.gym_id = g.id
+ and c.provider = stored.provider;
+
+do $$
+begin
+  update public.gyms g
+  set
+    billing_provider = null,
+    billing_customer_id = null,
+    auto_renew = false
+  from p1_19_context ctx
+  where g.id = ctx.bad_private_credential_gym_id;
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('app.allow_billing_update', '0', true);
+end;
+$$;
+
+insert into p1_19_results (test_name, status, detail)
+select
+  'apply does not reference billing credentials and claims still skip complimentary Pro',
+  case
+    when position('billing_subscription_id' in apply_def) = 0
+     and position('billing_credentials' in apply_def) = 0
+     and position('billing_key' in apply_def) = 0
+     and position('gym_has_billing_credential' in apply_def) = 0
+     and position('resolve_toss_billing_credential' in apply_def) = 0
+     and position('BILLING_CREDENTIAL' in apply_def) = 0
+     and position('COMPLIMENTARY_PRO_PRECONDITION_FAILED:AUTO_RENEW' in apply_def) > 0
+     and position('when coalesce(g.complimentary_pro, false) then false' in due_def) > 0
+     and position('coalesce(v_gym.complimentary_pro, false)' in initial_def) > 0
+     and position('billing_subscription_id' in initial_def) = 0
+     and position('billing_key' in initial_def) = 0
+    then 'PASS'
+    else 'FAIL'
+  end,
+  'compared'
+from (
+  select
+    pg_get_functiondef('public.apply_complimentary_pro(uuid, text)'::regprocedure) as apply_def,
+    pg_get_functiondef('public.claim_due_toss_subscription_charges(timestamptz, integer, integer)'::regprocedure) as due_def,
+    pg_get_functiondef('public.claim_initial_billing_attempt(uuid, uuid, text, integer)'::regprocedure) as initial_def
+) defs;
+
 do $$
 declare
   v_name text;
@@ -738,10 +1295,6 @@ begin
       select 'apply aborts when status is not active', bad_status_gym_id from p1_19_context
       union all
       select 'apply aborts when auto_renew is on', bad_autorenew_gym_id from p1_19_context
-      union all
-      select 'apply aborts when a billing reference exists', bad_column_credential_gym_id from p1_19_context
-      union all
-      select 'apply aborts when a private billing key exists', bad_private_credential_gym_id from p1_19_context
     ) as cases(test_name, gym_id)
   loop
     begin

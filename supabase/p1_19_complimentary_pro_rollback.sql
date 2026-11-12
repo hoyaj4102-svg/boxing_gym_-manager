@@ -7,6 +7,7 @@
 -- Run it only to undo supabase/p1_19_complimentary_pro.sql.
 -- Clearing one gym without removing the feature is
 -- public.rollback_complimentary_pro(gym_id), before this file is applied.
+-- Dropping the apply function does not read or modify stored billing keys.
 -- =============================================================================
 
 create or replace function public.gym_has_pro_access(p_gym public.gyms)
