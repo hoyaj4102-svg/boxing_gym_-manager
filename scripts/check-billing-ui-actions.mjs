@@ -175,6 +175,74 @@ assertActions("free gym keeps subscribe available and cancel unavailable", {
   isSubscribedAuto: false,
 });
 
+assertActions("complimentary Pro hides subscribe and cancel", {
+  plan_code: "pro",
+  subscription_status: "active",
+  current_period_end: "2020-01-01T00:00:00.000Z",
+  member_limit: -1,
+  member_count: 30,
+  has_pro: true,
+  can_add_member: true,
+  can_cancel: false,
+  can_resume: false,
+  auto_renew: false,
+  complimentary_pro: true,
+}, {
+  planCode: "pro",
+  status: "active",
+  canAddMember: true,
+  canCancel: false,
+  canResume: false,
+  canSubscribe: false,
+  isSubscribedAuto: false,
+});
+
+const complimentaryPanel = billing.billingPanelState(
+  summary({
+    plan_code: "pro",
+    subscription_status: "active",
+    has_pro: true,
+    complimentary_pro: true,
+    auto_renew: false,
+    current_period_end: "2020-01-01T00:00:00.000Z",
+  }),
+  (key) => (key === "billingComplimentaryPro" ? "무료 이용 · 기한 없음" : key),
+);
+assertEqual(
+  complimentaryPanel,
+  {
+    complimentaryPro: true,
+    periodText: "무료 이용 · 기한 없음",
+    showSubscribe: false,
+    showCancel: false,
+    showPrice: false,
+  },
+  "complimentary panel copy",
+);
+
+const paidPanel = billing.billingPanelState(summary({
+  plan_code: "pro",
+  subscription_status: "active",
+  has_pro: true,
+  auto_renew: true,
+  complimentary_pro: false,
+}));
+assertEqual(
+  {
+    complimentaryPro: paidPanel.complimentaryPro,
+    showPrice: paidPanel.showPrice,
+    showSubscribe: paidPanel.showSubscribe,
+    periodText: paidPanel.periodText,
+  },
+  {
+    complimentaryPro: false,
+    showPrice: true,
+    showSubscribe: true,
+    periodText: null,
+  },
+  "paid panel keeps the charge date and price",
+);
+
 assertActions("trialing Pro has no cancel action regression", {
   plan_code: "pro",
   subscription_status: "trialing",
@@ -193,5 +261,19 @@ assertActions("trialing Pro has no cancel action regression", {
   canSubscribe: true,
   isSubscribedAuto: false,
 });
+
+const page = readFileSync("index.html", "utf8");
+for (const snippet of [
+  "billingPanelState",
+  "무료 이용 · 기한 없음",
+  "noteEl.hidden = true",
+  "subscribeButton.hidden = true",
+  "openCancelButton.hidden = true",
+  "billingSummary?.complimentaryPro",
+]) {
+  if (!page.includes(snippet)) {
+    throw new Error(`billing page is missing complimentary Pro wiring: ${snippet}`);
+  }
+}
 
 console.log("Billing UI action checks passed.");

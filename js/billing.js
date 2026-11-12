@@ -59,7 +59,8 @@
       canCancel: Boolean(raw.can_cancel),
       canResume: Boolean(raw.can_resume),
       autoRenew: Boolean(raw.auto_renew),
-      billingProvider: raw.billing_provider || null
+      billingProvider: raw.billing_provider || null,
+      complimentaryPro: Boolean(raw.complimentary_pro)
     };
   }
 
@@ -96,18 +97,45 @@
 
   function actionState(summary) {
     const hasPro = Boolean(summary?.hasPro);
-    const canResume = Boolean(summary?.canResume);
+    const complimentaryPro = Boolean(summary?.complimentaryPro);
+    const canResume = complimentaryPro ? false : Boolean(summary?.canResume);
     const isSubscribedAuto = Boolean(
       hasPro &&
       summary?.subscriptionStatus === 'active' &&
-      summary?.autoRenew
+      summary?.autoRenew &&
+      !complimentaryPro
     );
 
     return {
-      canCancel: Boolean(summary?.canCancel && hasPro),
+      canCancel: complimentaryPro ? false : Boolean(summary?.canCancel && hasPro),
       canResume,
-      canSubscribe: !isSubscribedAuto && !canResume,
-      isSubscribedAuto
+      canSubscribe: complimentaryPro ? false : (!isSubscribedAuto && !canResume),
+      isSubscribedAuto,
+      complimentaryPro
+    };
+  }
+
+  function billingPanelState(summary, t) {
+    if (!summary?.complimentaryPro) {
+      return {
+        complimentaryPro: false,
+        periodText: null,
+        showSubscribe: true,
+        showCancel: null,
+        showPrice: true
+      };
+    }
+
+    const label = typeof t === 'function'
+      ? t('billingComplimentaryPro')
+      : '무료 이용 · 기한 없음';
+
+    return {
+      complimentaryPro: true,
+      periodText: label,
+      showSubscribe: false,
+      showCancel: false,
+      showPrice: false
     };
   }
 
@@ -457,6 +485,7 @@
     limitLabel,
     statusLabel,
     actionState,
+    billingPanelState,
     fetchBillingSummary,
     fetchPaymentHistory,
     startSubscribe,
