@@ -668,7 +668,13 @@ Deno.test("renewal charges the private credential and stores a sanitized payload
   assert(!raw.includes(stored), "stored credential is not written to checkout");
   assert(!raw.includes(cardNumber), "card number is not written to checkout");
   assert(!raw.includes(email), "customer email is not written to checkout");
+  assert(!raw.includes("payment_1"), "payment key is not written to checkout raw");
   assert(raw.includes("[REDACTED]"), "checkout payload redacts sensitive fields");
+  assertEquals(
+    updatesFor(updates, "payment_attempts")[0]?.values.payment_key,
+    "payment_1",
+    "payment key column still comes from the charge response",
+  );
   assert(
     !providerResponse.includes(stored),
     "stored credential is not written to the attempt payload",
