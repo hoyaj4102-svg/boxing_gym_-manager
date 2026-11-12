@@ -20,7 +20,13 @@ const APP_SHELL = [
   '/js/billing.js',
   '/js/language.js',
   '/js/month-picker.js',
-  '/js/acquisition.js'
+  '/js/acquisition.js',
+  '/js/business-identity.js',
+  '/js/billing-consent.js',
+  '/legal/legal.css',
+  '/legal/terms.html',
+  '/legal/privacy.html',
+  '/legal/refund.html'
 ];
 
 const APP_ROUTES = new Set(['/', '/index.html', '/signup', '/login', '/reset-password']);
