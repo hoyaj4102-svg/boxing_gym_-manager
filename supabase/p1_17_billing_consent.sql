@@ -36,6 +36,7 @@ create table if not exists public.billing_consents (
   cancellation_method text not null,
   notice_channel text not null default 'in_app' check (notice_channel in ('in_app')),
   created_at timestamptz not null default now(),
+  seq bigint generated always as identity,
   check (
     (consent_type = 'price_increase' and schedule_id is not null)
     or (consent_type <> 'price_increase' and schedule_id is null)
@@ -105,7 +106,7 @@ as $$
     and c.consent_type = p_consent_type
     and c.conversion_at is not distinct from p_conversion_at
     and c.schedule_id is not distinct from p_schedule_id
-  order by c.created_at desc, c.id desc
+  order by c.seq desc
   limit 1;
 $$;
 
@@ -136,7 +137,7 @@ as $$
       and c.consent_type = p_consent_type
       and c.conversion_at is not distinct from p_conversion_at
       and c.schedule_id is not distinct from p_schedule_id
-    order by c.created_at desc, c.id desc
+    order by c.seq desc
     limit 1
   ), false);
 $$;
@@ -304,7 +305,7 @@ begin
   from public.billing_consents c
   where c.gym_id = v_gym.id
     and c.consent_type = 'pre_payment'
-  order by c.created_at desc, c.id desc
+  order by c.seq desc
   limit 1;
 
   return jsonb_build_object(
@@ -418,7 +419,7 @@ begin
       from public.billing_consents c
       where c.gym_id = p_gym_id
         and c.consent_type = 'pre_payment'
-      order by c.created_at desc, c.id desc
+      order by c.seq desc
       limit 1
     ) latest
     where latest.decision = 'grant'
