@@ -157,7 +157,7 @@ BILLING.md
 해지 방법을 보여 주고 확인란에 동의하기 전에는 토스 카드 등록을 열지 않습니다.
 동의 저장이 실패하면 카드 등록으로 진행하지 않습니다.
 
-`supabase/p1_18_payment_ops.sql`도 생산 데이터베이스에 적용하지 않습니다.
+`supabase/p1_21_payment_ops.sql`도 생산 데이터베이스에 적용하지 않습니다.
 환불과 실패 재시도는 `BILLING_CANCEL_MODE` 또는 `BILLING_FAILURE_RETRY_MODE`가
 정확히 `test`이고 시크릿 키가 테스트 키일 때만 토스를 호출합니다. 기본값은
 호출하지 않는 것입니다. `BILLING_CHARGE_MODE`는 바꾸지 않았고, 스케줄이나

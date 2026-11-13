@@ -1,4 +1,4 @@
--- P1-18 payment operations tests. Synthetic rows only, rolled back. No provider calls.
+-- P1-21 payment operations tests. Synthetic rows only, rolled back. No provider calls.
 
 begin;
 
