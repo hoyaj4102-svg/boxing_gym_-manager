@@ -1,5 +1,5 @@
 -- =============================================================================
--- P1-18 test-mode refund and payment-failure records
+-- P1-21 test-mode refund and payment-failure records
 -- =============================================================================
 --
 -- NOT APPLIED TO PRODUCTION.
