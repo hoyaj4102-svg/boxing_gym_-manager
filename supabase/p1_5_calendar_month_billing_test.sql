@@ -249,6 +249,21 @@ cross join lateral (
   auto_renew
 );
 
+select public.upsert_gym_billing_credential(
+  g.id,
+  btrim(g.billing_subscription_id),
+  'toss'
+)
+from public.gyms g
+join p1_5_test_context ctx on g.id in (
+  ctx.claim_gym_id,
+  ctx.cancel_activation_gym_id,
+  ctx.cancel_recovery_gym_id,
+  ctx.preserve_gym_id
+)
+where g.billing_provider = 'toss'
+  and g.billing_subscription_id is not null;
+
 create temp table p1_5_first_claim on commit drop as
 select c.*
 from p1_5_test_context ctx

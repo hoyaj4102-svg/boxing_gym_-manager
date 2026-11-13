@@ -83,6 +83,17 @@ export async function resolveBillingCredential(
     );
   }
 
+  const vaultRead = await admin.rpc("read_gym_billing_vault_credential", {
+    p_gym_id: gymId,
+  });
+  if (
+    !vaultRead.error &&
+    typeof vaultRead.data === "string" &&
+    vaultRead.data.trim()
+  ) {
+    return vaultRead.data.trim();
+  }
+
   const { data, error } = await admin.rpc("read_gym_billing_credential", {
     p_gym_id: gymId,
   });
