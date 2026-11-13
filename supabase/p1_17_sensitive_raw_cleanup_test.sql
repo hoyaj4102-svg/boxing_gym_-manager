@@ -1,5 +1,9 @@
 -- Synthetic cleanup checks. This script rolls back.
 -- The bounds below are the fixture counts, not an audited production count.
+-- Rows inserted with the payload trigger disabled are the rows cleanup must mask.
+-- Rows inserted with that trigger enabled are masked on insert and must stay unchanged.
+-- The pending checkout and payment-attempt fixtures disable the trigger so the
+-- unchanged-row checks still cover a stored raw payload.
 
 begin;
 
@@ -33,6 +37,10 @@ insert into private.billing_credentials (gym_id, provider, billing_key)
 select p.gym_id, 'toss', 'synthetic-billing-key-value'
 from public.profiles p
 where p.id = '00000000-0000-0000-0000-00000000d101';
+
+-- Cleanup does not write payment attempts. Insert this row with redaction off
+-- so the unchanged-row check still sees a stored raw provider response.
+alter table public.payment_attempts disable trigger payment_attempts_redact_payload;
 
 insert into public.payment_attempts (
   gym_id,
@@ -74,6 +82,8 @@ select
   )
 from public.profiles p
 where p.id = '00000000-0000-0000-0000-00000000d101';
+
+alter table public.payment_attempts enable trigger payment_attempts_redact_payload;
 
 alter table public.checkout_sessions disable trigger checkout_sessions_redact_payload;
 alter table public.subscriptions disable trigger subscriptions_redact_payload;
@@ -221,6 +231,8 @@ cross join (
 ) as fixture(status, provider_ref, amount_krw, raw)
 where p.id = '00000000-0000-0000-0000-00000000d101';
 
+-- These inserts keep the redaction trigger enabled. Payment, merchant, and
+-- receipt fields are masked on insert, so those rows are not cleanup targets.
 alter table public.checkout_sessions enable trigger checkout_sessions_redact_payload;
 alter table public.subscriptions enable trigger subscriptions_redact_payload;
 
@@ -291,18 +303,6 @@ cross join (
       )
     ),
     (
-      'pending',
-      'synthetic-order-pending-key',
-      null,
-      10000,
-      null,
-      jsonb_build_object(
-        'paymentKey', 'synthetic-pay-pending',
-        'orderId', 'synthetic-order-pending-key',
-        'totalAmount', 10000
-      )
-    ),
-    (
       'failed',
       'synthetic-order-failed',
       null,
@@ -315,6 +315,40 @@ cross join (
     )
 ) as fixture(status, order_id, provider_session_id, amount_krw, completed_at, raw)
 where p.id = '00000000-0000-0000-0000-00000000d101';
+
+-- Cleanup rewrites completed checkout rows only. Insert this pending row with
+-- redaction off so the unchanged-row check still sees a stored raw payload.
+alter table public.checkout_sessions disable trigger checkout_sessions_redact_payload;
+
+insert into public.checkout_sessions (
+  gym_id, user_id, provider, "interval", amount_krw, amount_usd_cents, currency,
+  status, order_id, provider_session_id, success_url, fail_url, raw,
+  created_at, completed_at
+)
+select
+  p.gym_id,
+  p.id,
+  'toss',
+  'monthly',
+  10000,
+  0,
+  'KRW',
+  'pending',
+  'synthetic-order-pending-key',
+  null,
+  'https://example.test/success-return',
+  'https://example.test/fail-return',
+  jsonb_build_object(
+    'paymentKey', 'synthetic-pay-pending',
+    'orderId', 'synthetic-order-pending-key',
+    'totalAmount', 10000
+  ),
+  timestamptz '2026-01-15 00:00:00+00',
+  null
+from public.profiles p
+where p.id = '00000000-0000-0000-0000-00000000d101';
+
+alter table public.checkout_sessions enable trigger checkout_sessions_redact_payload;
 
 insert into public.subscriptions (
   gym_id, plan_code, status, provider, provider_ref, amount_krw,
@@ -724,7 +758,10 @@ select
          or b.ends_at is distinct from s.ends_at
          or b.created_at is distinct from s.created_at
          or (
-           b.provider_ref is null
+           (
+             b.provider_ref is null
+             or b.provider_ref = 'synthetic-provider-ref-key'
+           )
            and (
              s.raw::text is distinct from b.raw_text
              or s.cmin::text is distinct from b.cmin_text
@@ -732,7 +769,7 @@ select
          )
          or (
            b.provider_ref is not null
-           and b.provider_ref <> 'synthetic-provider-ref-key'
+           and b.provider_ref is distinct from 'synthetic-provider-ref-key'
            and s.cmin::text is not distinct from b.cmin_text
          )
          or (
@@ -747,7 +784,7 @@ select
       select 1
       from public.checkout_sessions
       where order_id = 'synthetic-order-pending-key'
-        and raw ->> 'paymentKey' = '[REDACTED]'
+        and raw ->> 'paymentKey' = 'synthetic-pay-pending'
     )
     then 'PASS'
     else 'FAIL'
@@ -778,7 +815,7 @@ select
      and pa.amount_krw = b.attempt_amount
      and pa.updated_at = b.attempt_updated_at
      and pa.cmin::text = b.attempt_cmin
-     and pa.provider_response ->> 'paymentKey' = '[REDACTED]'
+     and pa.provider_response ->> 'paymentKey' = 'synthetic-attempt-payment-key'
      and pa.payment_key = 'synthetic-attempt-payment-key'
      and pa.provider_response #>> '{initial_reconciliation,result}' = 'payment_found'
     then 'PASS'
@@ -877,7 +914,7 @@ declare
 begin
   select completed_checkout_updated, subscriptions_updated
   into v_checkout, v_subscription
-  from private.apply_sensitive_raw_cleanup(4, 4, 3, 3);
+  from private.apply_sensitive_raw_cleanup(3, 3, 2, 2);
 
   insert into cleanup_results (test_name, status, detail)
   values (

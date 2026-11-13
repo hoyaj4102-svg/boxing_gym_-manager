@@ -1,5 +1,5 @@
 -- =============================================================================
--- P1-17 billing consent records (NOT APPLIED TO PRODUCTION)
+-- P1-20 billing consent records (NOT APPLIED TO PRODUCTION)
 -- =============================================================================
 --
 -- Draft legal-readiness schema for pre-payment, trial-to-paid, and

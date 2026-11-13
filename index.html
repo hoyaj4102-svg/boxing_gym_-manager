@@ -2625,6 +2625,7 @@
         billingTrialLabel: '체험 종료',
         billingPeriodLabel: '이용 종료일',
         billingNoteDefault: '월 10,000원 자동결제입니다. 해지해도 현재 결제 기간 종료일까지 사용할 수 있습니다.',
+        billingComplimentaryPro: '무료 이용 · 기한 없음',
         paymentHistoryTitle: '결제내역',
         paymentHistorySubtitle: '최근 결제 처리 내역입니다.',
         paymentHistoryLoading: '결제내역을 불러오는 중입니다.',
@@ -2912,6 +2913,7 @@
         billingTrialLabel: 'Trial ends',
         billingPeriodLabel: 'Access ends',
         billingNoteDefault: '₩10,000 / month auto-pay. After cancel, access continues until period end.',
+        billingComplimentaryPro: 'Free access · no end date',
         paymentHistoryTitle: 'Payment history',
         paymentHistorySubtitle: 'Recent payment processing history.',
         paymentHistoryLoading: 'Loading payment history.',
@@ -3166,6 +3168,7 @@
         billingUsageLabel: 'Miembros',
         billingTrialLabel: 'Fin de prueba',
         billingNoteDefault: 'Pago mensual automático con Toss. Tras cancelar, acceso hasta fin de período.',
+        billingComplimentaryPro: 'Acceso gratuito · sin fecha de fin',
         paymentHistoryTitle: 'Historial de pagos',
         paymentHistorySubtitle: 'Historial reciente de procesamiento de pagos.',
         paymentHistoryLoading: 'Cargando historial de pagos.',
@@ -3417,6 +3420,7 @@
         billingUsageLabel: 'Клиенты',
         billingTrialLabel: 'Конец триала',
         billingNoteDefault: 'Ежемесячный автоплатеж Toss. После отмены доступ до конца периода.',
+        billingComplimentaryPro: 'Бесплатный доступ · без срока',
         paymentHistoryTitle: 'История платежей',
         paymentHistorySubtitle: 'Недавняя история обработки платежей.',
         paymentHistoryLoading: 'Загрузка истории платежей.',
@@ -3668,6 +3672,7 @@
         billingUsageLabel: 'Гишүүн',
         billingTrialLabel: 'Туршилт дуусах',
         billingNoteDefault: 'Toss сарын авто төлбөр. Цуцалсны дараа хугацаа дуустал ашиглана.',
+        billingComplimentaryPro: 'Үнэгүй эрх · хугацаагүй',
         paymentHistoryTitle: 'Төлбөрийн түүх',
         paymentHistorySubtitle: 'Сүүлийн төлбөр боловсруулалтын түүх.',
         paymentHistoryLoading: 'Төлбөрийн түүхийг ачаалж байна.',
@@ -3919,6 +3924,7 @@
         billingUsageLabel: '会员数',
         billingTrialLabel: '试用结束',
         billingNoteDefault: 'Toss 月付自动续费。取消后仍可使用至当前周期结束。',
+        billingComplimentaryPro: '免费使用 · 无期限',
         paymentHistoryTitle: '付款记录',
         paymentHistorySubtitle: '最近的付款处理记录。',
         paymentHistoryLoading: '正在加载付款记录。',
@@ -4170,6 +4176,7 @@
         billingUsageLabel: 'सदस्य',
         billingTrialLabel: 'ट्रायल समाप्ति',
         billingNoteDefault: 'Toss मासिक ऑटो-पे। रद्द के बाद अवधि अंत तक उपयोग जारी।',
+        billingComplimentaryPro: 'मुफ़्त उपयोग · कोई समाप्ति तिथि नहीं',
         paymentHistoryTitle: 'पेमेंट हिस्ट्री',
         paymentHistorySubtitle: 'हाल की पेमेंट प्रोसेसिंग हिस्ट्री।',
         paymentHistoryLoading: 'पेमेंट हिस्ट्री लोड हो रही है।',
@@ -4421,6 +4428,7 @@
         billingUsageLabel: 'Membres',
         billingTrialLabel: 'Fin d’essai',
         billingNoteDefault: 'Paiement mensuel automatique Toss. Après résiliation, accès jusqu’à la fin de période.',
+        billingComplimentaryPro: 'Accès gratuit · sans date de fin',
         paymentHistoryTitle: 'Historique des paiements',
         paymentHistorySubtitle: 'Historique récent du traitement des paiements.',
         paymentHistoryLoading: 'Chargement de l’historique des paiements.',
@@ -5382,7 +5390,12 @@
         statusEl.textContent = t('planStatusUnknown');
         usageEl.textContent = '-';
         if (periodEl) periodEl.textContent = '-';
-        if (subscribeButton) subscribeButton.disabled = true;
+        if (noteEl) noteEl.hidden = false;
+        if (subscribeButton) {
+          subscribeButton.disabled = true;
+          subscribeButton.hidden = false;
+        }
+        if (openCancelButton) openCancelButton.hidden = true;
         if (cancelPanel) cancelPanel.hidden = true;
         return;
       }
@@ -5395,6 +5408,20 @@
         usageEl.textContent = SweatManagerBilling.limitLabel(billingSummary, t);
 
         const periodDate = billingSummary.currentPeriodEnd || billingSummary.trialEndsAt;
+        const panelState = SweatManagerBilling.billingPanelState(billingSummary, t);
+        if (panelState.complimentaryPro) {
+          if (periodEl) periodEl.textContent = panelState.periodText;
+          if (noteEl) {
+            noteEl.hidden = true;
+            noteEl.textContent = '';
+          }
+          if (subscribeButton) subscribeButton.hidden = true;
+          if (openCancelButton) openCancelButton.hidden = true;
+          if (cancelPanel) cancelPanel.hidden = true;
+          return;
+        }
+
+        if (noteEl) noteEl.hidden = false;
         if (periodEl) {
           periodEl.textContent = periodDate ? formatDateTime(periodDate) : t('billingNoTrial');
         }
@@ -5448,6 +5475,7 @@
         statusEl.textContent = t('planStatusUnknown');
         usageEl.textContent = '-';
         if (periodEl) periodEl.textContent = '-';
+        if (noteEl) noteEl.hidden = false;
         if (subscribeButton) subscribeButton.disabled = true;
         if (cancelPanel) cancelPanel.hidden = true;
         noteEl.textContent = t('billingLoadFailed');
@@ -5788,6 +5816,7 @@
 
     async function handleSubscribe() {
       if (!requireAuth()) return;
+      if (billingSummary?.complimentaryPro) return;
       if (isSubscribing) return;
       const subscribeButton = document.getElementById('subscribeButton');
       isSubscribing = true;
@@ -6992,6 +7021,56 @@
       e.target.value = '';
     });
 
+    if ('serviceWorker' in navigator) {
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      const reloadGuardKey = 'remember-sw-reload-at';
+
+      const reloadOnceForNewWorker = () => {
+        if (!hadController) return;
+        let recentlyReloaded = false;
+        try {
+          const now = Date.now();
+          const last = Number(sessionStorage.getItem(reloadGuardKey) || 0);
+          recentlyReloaded = Number.isFinite(last) && now - last < 15000;
+          if (!recentlyReloaded) sessionStorage.setItem(reloadGuardKey, String(now));
+        } catch (error) {
+          recentlyReloaded = window.__rememberSwReloaded === true;
+          window.__rememberSwReloaded = true;
+        }
+        if (!recentlyReloaded) window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', reloadOnceForNewWorker);
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (!event.data || event.data.type !== 'REMEMBER_SW_ACTIVATED') return;
+        if (hadController && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'REMEMBER_SW_RELOADING' });
+        }
+        reloadOnceForNewWorker();
+      });
+
+      window.addEventListener('load', () => {
+        const register = (options) => navigator.serviceWorker.register('/sw.js', options);
+        register({ scope: '/', updateViaCache: 'none' })
+          .catch(() => register({ scope: '/' }))
+          .then((registration) => {
+            if (!registration) return;
+            const checkForUpdate = () => {
+              registration.update().catch(() => {});
+            };
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') checkForUpdate();
+            });
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+          })
+          .catch(() => {
+            // The app still works normally if service worker registration is unavailable.
+          });
+      });
+    }
+
     resetRegisterDates();
     applyTranslations();
     renderBusinessFooters();
@@ -7001,14 +7080,6 @@
 
     if (window.location.hash === '#preview-prepayment') {
       requestPrePaymentConfirmation({ preview: true });
-    }
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
-          // The app still works normally if service worker registration is unavailable.
-        });
-      });
     }
   </script>
 </body>

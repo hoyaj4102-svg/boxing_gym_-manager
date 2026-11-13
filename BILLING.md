@@ -144,7 +144,7 @@ BILLING.md
 
 ## 결제 준비 초안 (운영 적용 전)
 
-`supabase/p1_17_billing_consent.sql`은 생산 데이터베이스에 적용하지 않습니다.
+`supabase/p1_20_billing_consent.sql`은 생산 데이터베이스에 적용하지 않습니다.
 별도 승인이 있기 전에는 SQL Editor에서 실행하지 마세요.
 
 이 파일은 결제 전 동의, 무료 체험의 유료 전환 동의, 요금 인상 동의를 기록합니다.

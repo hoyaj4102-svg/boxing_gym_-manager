@@ -1,4 +1,4 @@
--- P1-17 consent tests. Synthetic rows only, rolled back. No payment provider calls.
+-- P1-20 consent tests. Synthetic rows only, rolled back. No payment provider calls.
 -- Each write is committed to this transaction in its own statement before the
 -- assertion reads it. Postgres does not show a function's insert to another
 -- function in the same statement.
