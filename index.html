@@ -881,6 +881,13 @@
       background: rgba(255, 255, 255, .03);
     }
 
+    .billing-readiness-card .btn:disabled,
+    .prepay-disclosure .btn:disabled,
+    .consent-actions .btn:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
     .consent-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -5628,6 +5635,12 @@
       </div>`;
     }
 
+    function formatConsentKrw(value) {
+      const amount = Number(value);
+      if (!Number.isFinite(amount)) return '';
+      return amount.toLocaleString('ko-KR');
+    }
+
     function renderBillingReadiness(readiness) {
       const root = document.getElementById('billingReadiness');
       if (!root) return;
@@ -5662,7 +5675,7 @@
         } else if (schedule.consent_status === 'granted') {
           action = '<p class="billing-note">이 인상에 대한 동의가 기록되어 있습니다. 동의만으로 청구 금액이 바뀌지는 않으며, 현재 청구 금액은 월 10,000원입니다.</p>';
         }
-        blocks.push(`<div class="billing-readiness-card"><strong>요금 변경 ${escapeHtml(when)}</strong><p>월 ${escapeHtml(String(schedule.amount_before_krw))}원에서 월 ${escapeHtml(String(schedule.amount_after_krw))}원.</p><p>${escapeHtml(readiness.cancellation_method || '')}</p>${action}</div>`);
+        blocks.push(`<div class="billing-readiness-card"><strong>요금 변경 ${escapeHtml(when)}</strong><p>월 ${escapeHtml(formatConsentKrw(schedule.amount_before_krw))}원에서 월 ${escapeHtml(formatConsentKrw(schedule.amount_after_krw))}원.</p><p>${escapeHtml(readiness.cancellation_method || '')}</p>${action}</div>`);
       });
 
       root.innerHTML = blocks.join('');
@@ -5736,7 +5749,7 @@
           </ul>
           <p><a href="./legal/terms.html">이용약관 (초안)</a> · <a href="./legal/privacy.html">개인정보처리방침 (초안)</a> · <a href="./legal/refund.html">환불정책 (초안)</a></p>
           ${trialRequired ? `<label class="prepay-check"><input type="checkbox" data-prepay-trial><span>무료 체험이 ${escapeHtml(trialWhen)}에 끝나고 월 ${escapeHtml(amount)} 유료 결제로 바뀌는 것에 별도로 동의합니다. 동의하지 않으면 체험 종료 후 결제되지 않습니다.</span></label>` : ''}
-          ${priceRequired ? `<label class="prepay-check"><input type="checkbox" data-prepay-price><span>${escapeHtml(formatDateTime(priceSchedule.effective_at))}부터 월 ${escapeHtml(String(priceSchedule.amount_before_krw))}원이 월 ${escapeHtml(String(priceSchedule.amount_after_krw))}원으로 오르는 것에 동의합니다.</span></label>` : ''}
+          ${priceRequired ? `<label class="prepay-check"><input type="checkbox" data-prepay-price><span>${escapeHtml(formatDateTime(priceSchedule.effective_at))}부터 월 ${escapeHtml(formatConsentKrw(priceSchedule.amount_before_krw))}원이 월 ${escapeHtml(formatConsentKrw(priceSchedule.amount_after_krw))}원으로 오르는 것에 동의합니다.</span></label>` : ''}
           <label class="prepay-check"><input type="checkbox" data-prepay-payment><span>위 가격, 월 결제 주기, 자동갱신, 첫 결제 시점, 다음 결제 예정, 해지 방법을 확인했고 월간 자동결제에 동의합니다.</span></label>
           <div class="consent-actions">
             <button type="button" class="btn btn-primary" data-prepay-continue disabled>동의하고 계속</button>
