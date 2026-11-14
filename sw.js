@@ -1,7 +1,7 @@
 // CACHE_VERSION is the content hash of APP_SHELL.
 // scripts/sw-cache-version.test.mjs fails CI when those files change
 // and this constant is left unchanged, so a deploy cannot keep the old shell.
-const CACHE_VERSION = 'remember-4e90389021655658';
+const CACHE_VERSION = 'remember-b59bcd84b3f2f523';
 
 const APP_SHELL = [
   '/',
@@ -63,6 +63,10 @@ function fetchStrategy(request) {
     return 'bypass';
   }
   if (url.origin !== self.location.origin) return 'bypass';
+  // Vercel Web Analytics is same-origin. Leave /_vercel/insights/* to the network
+  // so this worker cannot cache, rewrite, or fail the script and its beacon.
+  const insightsPath = url.pathname.toLowerCase();
+  if (insightsPath === '/_vercel/insights' || insightsPath.startsWith('/_vercel/insights/')) return 'bypass';
   if (isSensitiveRequest(url, request)) return 'bypass';
   if (isNetworkFirstRequest(request, url)) return 'network-first';
   return 'stale-while-revalidate';
