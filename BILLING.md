@@ -156,3 +156,13 @@ BILLING.md
 카드 등록 버튼은 가격, 월 결제 주기, 자동갱신, 첫 결제 시점, 다음 결제 예정일,
 해지 방법을 보여 주고 확인란에 동의하기 전에는 토스 카드 등록을 열지 않습니다.
 동의 저장이 실패하면 카드 등록으로 진행하지 않습니다.
+
+`supabase/p1_21_payment_ops.sql`도 생산 데이터베이스에 적용하지 않습니다.
+환불과 실패 재시도는 `BILLING_CANCEL_MODE` 또는 `BILLING_FAILURE_RETRY_MODE`가
+정확히 `test`이고 시크릿 키가 테스트 키일 때만 토스를 호출합니다. 기본값은
+호출하지 않는 것입니다. `BILLING_CHARGE_MODE`는 바꾸지 않았고, 스케줄이나
+크론도 추가하지 않았습니다. 이메일과 문자는 보내지 않습니다. 취소와 영수증 조회는
+`payment_attempts.payment_key`, 같은 주문의 `checkout_sessions.provider_session_id`,
+또는 그 체육관의 유일한 `subscriptions.provider_ref`만 사용합니다.
+`provider_response`는 읽지 않습니다. 영수증 주소는 저장하지 않고, 테스트 모드에서
+결제 키로 토스에 다시 조회합니다.

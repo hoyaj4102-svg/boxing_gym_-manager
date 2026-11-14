@@ -1,5 +1,7 @@
+import { interpretConsentGate, isMissingRpc } from "../_shared/consent_gate.ts";
 import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
 import { chargeTossBilling } from "../_shared/toss_charge_outcome.ts";
+import { chargeIdempotencyKey } from "../_shared/toss_idempotency.ts";
 
 export type ClaimedSubscriptionCharge = {
   payment_attempt_id: string;
@@ -211,6 +213,35 @@ export async function processClaimedSubscriptionCharge(
       );
     }
 
+    const consentGate = await admin.rpc("billing_charge_consent_gate", {
+      p_gym_id: gymId,
+      p_amount_krw: amountKrw,
+      p_purpose: "renewal",
+    });
+    if (interpretConsentGate(consentGate) === "deny") {
+      const gateData = consentGate.data && typeof consentGate.data === "object"
+        ? consentGate.data as { code?: unknown }
+        : {};
+      const gateCode = typeof gateData.code === "string"
+        ? gateData.code
+        : "CONSENT_REQUIRED";
+      await updatePaymentAttempt(admin, paymentAttemptId, {
+        status: "charge_failed",
+        activation_status: "not_started",
+        recovery_status: "none",
+        error_code: gateCode,
+        error_message: "BILLING_CONSENT_REQUIRED",
+      });
+      return {
+        gymId,
+        ok: false,
+        orderId,
+        paymentAttemptId,
+        chargeResult: "consent_blocked",
+        error: gateCode,
+      };
+    }
+
     const authorization = tossAuthHeader(options.tossSecret);
     const dispatch = await admin.rpc("claim_subscription_charge_dispatch", {
       p_attempt_id: paymentAttemptId,
@@ -231,6 +262,7 @@ export async function processClaimedSubscriptionCharge(
     const chargeOutcome = await chargeTossBilling({
       billingKey,
       authorization,
+      idempotencyKey: chargeIdempotencyKey(orderId),
       body: {
         customerKey,
         amount: amountKrw,
@@ -294,6 +326,17 @@ export async function processClaimedSubscriptionCharge(
         );
       }
       await markGymPastDue(admin, gymId, checkedAt);
+      const failureRecord = await admin.rpc("record_payment_failure", {
+        p_gym_id: gymId,
+        p_payment_attempt_id: paymentAttemptId,
+        p_failed_at: checkedAt,
+        p_error_code: chargeOutcome.code,
+      });
+      if (failureRecord.error && !isMissingRpc(failureRecord.error)) {
+        console.error("PAYMENT_FAILURE_RECORD_FAILED", {
+          code: failureRecord.error.code || "unknown",
+        });
+      }
       return {
         gymId,
         ok: false,
