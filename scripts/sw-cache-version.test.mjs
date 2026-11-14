@@ -143,6 +143,13 @@ test('icons revalidate in the background and API responses are never cached', ()
   assert.equal(policy.fetchStrategy(new Request(`${origin}/app-icon-192.png`)), 'stale-while-revalidate');
   assert.equal(policy.fetchStrategy(new Request(`${origin}/manifest.json`)), 'stale-while-revalidate');
   assert.equal(policy.fetchStrategy(new Request(`${origin}/sw.js`)), 'bypass');
+  assert.equal(policy.fetchStrategy(new Request(`${origin}/_vercel/insights/script.js`)), 'bypass');
+  assert.equal(policy.fetchStrategy(new Request(`${origin}/_vercel/insights/view`)), 'bypass');
+  assert.equal(
+    policy.fetchStrategy(new Request(`${origin}/_vercel/insights/view`, { method: 'POST' })),
+    'bypass',
+  );
+  assert.equal(policy.fetchStrategy(new Request(`${origin}/_vercel/insights/event`)), 'bypass');
   assert.equal(policy.fetchStrategy(new Request(`${origin}/`, { method: 'POST' })), 'bypass');
   assert.equal(
     policy.fetchStrategy(new Request(`${origin}/js/billing.js`, { headers: { Authorization: 'Bearer test' } })),

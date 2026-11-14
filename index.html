@@ -1895,6 +1895,25 @@
       }
     }
   </style>
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    window.va('beforeSend', function (event) {
+      if (!event || event.type === 'event' || typeof event.url !== 'string') return null;
+      try {
+        var url = new URL(event.url);
+        var sensitiveKeys = [
+          'code', 'access_token', 'refresh_token', 'token', 'provider_token', 'id_token',
+          'authKey', 'customerKey', 'paymentKey', 'orderId', 'amount', 'paymentType', 'email'
+        ];
+        url.hash = '';
+        sensitiveKeys.forEach(function (key) { url.searchParams.delete(key); });
+        return Object.assign({}, event, { url: url.toString() });
+      } catch (error) {
+        return null;
+      }
+    });
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <div class="auth-gate" id="authGate">
