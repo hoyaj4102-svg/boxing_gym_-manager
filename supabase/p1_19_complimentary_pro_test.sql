@@ -106,9 +106,24 @@ cross join lateral (
   billing_provider, billing_customer_id, billing_subscription_id, auto_renew, complimentary_pro
 );
 
-insert into private.billing_credentials (gym_id, provider, billing_key)
-select bad_private_credential_gym_id, 'toss', 'synthetic-private-billing-key'
+select public.upsert_gym_billing_credential(
+  bad_private_credential_gym_id,
+  'synthetic-private-billing-key',
+  'toss'
+)
 from p1_19_context;
+
+select public.upsert_gym_billing_credential(gym_id, billing_key, 'toss')
+from (
+  select control_due_gym_id as gym_id, 'synthetic-control-billing-ref' as billing_key
+  from p1_19_context
+  union all
+  select comp_credential_gym_id, 'synthetic-comp-billing-ref'
+  from p1_19_context
+  union all
+  select active_gym_id, 'synthetic-active-billing-ref'
+  from p1_19_context
+) as chargeable;
 
 insert into public.profiles (id, gym_id, name)
 select user_id, gym_id, 'Synthetic User'
@@ -774,7 +789,12 @@ from public.gyms g
 join p1_19_context ctx on g.id <> ctx.bad_column_credential_gym_id;
 
 create temp table p1_19_legacy_credential_before on commit drop as
-select c.gym_id, c.provider, c.billing_key, c.created_at, c.updated_at
+select
+  c.gym_id,
+  c.provider,
+  private.read_gym_vault_billing_key(c.gym_id, c.provider) as billing_key,
+  c.created_at,
+  c.updated_at
 from private.billing_credentials c;
 
 create temp table p1_19_legacy_other_history_before on commit drop as
@@ -922,8 +942,8 @@ select
         on b.gym_id = c.gym_id
        and b.provider = c.provider
       where c.gym_id is distinct from b.gym_id
-         or c.billing_key is distinct from b.billing_key
-         or convert_to(c.billing_key, 'UTF8') is distinct from convert_to(b.billing_key, 'UTF8')
+         or private.read_gym_vault_billing_key(c.gym_id, c.provider) is distinct from b.billing_key
+         or convert_to(private.read_gym_vault_billing_key(c.gym_id, c.provider), 'UTF8') is distinct from convert_to(b.billing_key, 'UTF8')
          or c.created_at is distinct from b.created_at
          or c.updated_at is distinct from b.updated_at
     )
@@ -1065,7 +1085,12 @@ from public.gyms g
 join p1_19_context ctx on ctx.bad_private_credential_gym_id = g.id;
 
 create temp table p1_19_private_key_before on commit drop as
-select c.gym_id, c.provider, c.billing_key, c.created_at, c.updated_at
+select
+  c.gym_id,
+  c.provider,
+  private.read_gym_vault_billing_key(c.gym_id, c.provider) as billing_key,
+  c.created_at,
+  c.updated_at
 from private.billing_credentials c
 join p1_19_context ctx on c.gym_id = ctx.bad_private_credential_gym_id;
 
@@ -1125,8 +1150,8 @@ select
      and g.member_limit = before.member_limit
      and g.subscription_status = before.subscription_status
      and g.current_period_end = before.current_period_end
-     and c.billing_key = stored.billing_key
-     and convert_to(c.billing_key, 'UTF8') = convert_to(stored.billing_key, 'UTF8')
+     and private.read_gym_vault_billing_key(c.gym_id, c.provider) = stored.billing_key
+     and convert_to(private.read_gym_vault_billing_key(c.gym_id, c.provider), 'UTF8') = convert_to(stored.billing_key, 'UTF8')
      and c.created_at = stored.created_at
      and c.updated_at = stored.updated_at
      and c.provider = stored.provider
@@ -1220,8 +1245,8 @@ select
      and g.complimentary_pro = true
      and g.auto_renew = true
      and g.billing_subscription_id is null
-     and c.billing_key = stored.billing_key
-     and convert_to(c.billing_key, 'UTF8') = convert_to(stored.billing_key, 'UTF8')
+     and private.read_gym_vault_billing_key(c.gym_id, c.provider) = stored.billing_key
+     and convert_to(private.read_gym_vault_billing_key(c.gym_id, c.provider), 'UTF8') = convert_to(stored.billing_key, 'UTF8')
      and c.updated_at = stored.updated_at
      and (
        select count(*)

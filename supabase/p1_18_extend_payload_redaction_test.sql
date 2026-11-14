@@ -29,8 +29,11 @@ from public.profiles p
 where p.id = '00000000-0000-0000-0000-00000000d201'
   and g.id = p.gym_id;
 
-insert into private.billing_credentials (gym_id, provider, billing_key)
-select p.gym_id, 'toss', 'synthetic-billing-key-value'
+select public.upsert_gym_billing_credential(
+  p.gym_id,
+  'synthetic-billing-key-value',
+  'toss'
+)
 from public.profiles p
 where p.id = '00000000-0000-0000-0000-00000000d201';
 
@@ -152,7 +155,7 @@ create temp table protected_before on commit drop as
 select
   g.billing_subscription_id,
   g.xmin::text as gym_xmin,
-  c.billing_key,
+  private.read_gym_vault_billing_key(c.gym_id, c.provider) as billing_key,
   c.xmin::text as credential_xmin,
   pa.billing_key_ref,
   pa.payment_key,
@@ -328,8 +331,8 @@ select
     when g.billing_subscription_id = b.billing_subscription_id
      and convert_to(g.billing_subscription_id, 'UTF8') = convert_to(b.billing_subscription_id, 'UTF8')
      and g.xmin::text = b.gym_xmin
-     and c.billing_key = b.billing_key
-     and convert_to(c.billing_key, 'UTF8') = convert_to(b.billing_key, 'UTF8')
+     and private.read_gym_vault_billing_key(c.gym_id, c.provider) = b.billing_key
+     and convert_to(private.read_gym_vault_billing_key(c.gym_id, c.provider), 'UTF8') = convert_to(b.billing_key, 'UTF8')
      and c.xmin::text = b.credential_xmin
      and pa.billing_key_ref = b.billing_key_ref
      and convert_to(pa.billing_key_ref, 'UTF8') = convert_to(b.billing_key_ref, 'UTF8')

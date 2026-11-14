@@ -188,7 +188,7 @@ begin
       ),
       (
         'owner role cannot read private credential storage',
-        'select billing_key from private.billing_credentials'
+        'select vault_secret_id from private.billing_credentials'
       ),
       (
         'owner role cannot execute credential read',

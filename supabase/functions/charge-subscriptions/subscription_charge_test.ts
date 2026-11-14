@@ -54,6 +54,8 @@ function createMockAdmin(options: {
   rpcData?: unknown;
   billingCredential?: string | null;
   billingCredentialError?: null | { message: string; code?: string };
+  vaultCredential?: string | null;
+  vaultCredentialError?: null | { message: string; code?: string };
   dispatchResult?: boolean;
   dispatchError?: null | { message: string; code?: string };
 } = {}) {
@@ -87,6 +89,14 @@ function createMockAdmin(options: {
     },
     async rpc(name: string, args: Record<string, unknown>) {
       rpcCalls.push({ name, args });
+      if (name === "read_gym_billing_vault_credential") {
+        return {
+          data: options.vaultCredentialError
+            ? null
+            : options.vaultCredential ?? null,
+          error: options.vaultCredentialError ?? null,
+        };
+      }
       if (name === "read_gym_billing_credential") {
         return {
           data: options.billingCredentialError
@@ -614,6 +624,138 @@ Deno.test("activation failure leaves attempt recoverable and keeps gym out of pa
     0,
     "post-charge activation failure must not mark gym past_due",
   );
+});
+
+Deno.test("renewal charges the vault key before the plaintext credential", async () => {
+  const vaultKey = "synthetic-vault-key";
+  const plaintextKey = "synthetic-plaintext-key";
+  const claimKey = "synthetic-claim-key";
+  const logged: string[] = [];
+  const originalError = console.error;
+  const originalLog = console.log;
+  console.error = (...args: unknown[]) => {
+    logged.push(args.map((part) => String(part)).join(" "));
+  };
+  console.log = (...args: unknown[]) => {
+    logged.push(args.map((part) => String(part)).join(" "));
+  };
+
+  try {
+    const { admin, rpcCalls } = createMockAdmin({
+      vaultCredential: vaultKey,
+      billingCredential: plaintextKey,
+    });
+    let chargedUrl = "";
+
+    const result = await processClaimedSubscriptionCharge(
+      admin,
+      baseClaim({ billing_key_ref: claimKey }),
+      {
+        tossSecret: "test_secret",
+        fetchImpl: async (input) => {
+          chargedUrl = String(input);
+          return new Response(JSON.stringify({
+            paymentKey: "payment_1",
+            orderId: "toss_renew_attempt_1",
+            status: "DONE",
+            totalAmount: 10000,
+          }), { status: 200 });
+        },
+      },
+    );
+
+    const vaultCall = rpcCalls.findIndex(
+      (call) => call.name === "read_gym_billing_vault_credential",
+    );
+    const plaintextCall = rpcCalls.findIndex(
+      (call) => call.name === "read_gym_billing_credential",
+    );
+    const loggedText = logged.join("\n");
+    assertEquals(result.ok, true, "vault credential should charge");
+    assert(vaultCall >= 0, "charge reads vault first");
+    assert(
+      plaintextCall === -1,
+      "a vault key skips the plaintext read",
+    );
+    assert(
+      chargedUrl.includes(encodeURIComponent(vaultKey)),
+      "charge uses the vault key",
+    );
+    assert(!chargedUrl.includes(plaintextKey), "charge skips the plaintext key");
+    assert(!chargedUrl.includes(claimKey), "charge skips the claim fallback");
+    assert(!loggedText.includes(vaultKey), "logs do not include the vault key");
+    assert(
+      !loggedText.includes(plaintextKey),
+      "logs do not include the plaintext key",
+    );
+    assert(!loggedText.includes(claimKey), "logs do not include the claim key");
+  } finally {
+    console.error = originalError;
+    console.log = originalLog;
+  }
+});
+
+Deno.test("renewal falls back to plaintext when vault has no key", async () => {
+  const plaintextKey = "synthetic-plaintext-fallback";
+  const { admin } = createMockAdmin({
+    vaultCredential: "",
+    billingCredential: plaintextKey,
+  });
+  let chargedUrl = "";
+
+  const result = await processClaimedSubscriptionCharge(
+    admin,
+    baseClaim({ billing_key_ref: "synthetic-claim-key" }),
+    {
+      tossSecret: "test_secret",
+      fetchImpl: async (input) => {
+        chargedUrl = String(input);
+        return new Response(JSON.stringify({
+          paymentKey: "payment_1",
+          status: "DONE",
+          totalAmount: 10000,
+        }), { status: 200 });
+      },
+    },
+  );
+
+  assertEquals(result.ok, true, "plaintext fallback should charge");
+  assert(
+    chargedUrl.includes(encodeURIComponent(plaintextKey)),
+    "empty vault falls back to plaintext",
+  );
+});
+
+Deno.test("renewal falls back to plaintext when the vault read fails", async () => {
+  const plaintextKey = "synthetic-plaintext-after-vault-error";
+  const { admin } = createMockAdmin({
+    vaultCredentialError: { message: "vault unavailable", code: "PGRST202" },
+    billingCredential: plaintextKey,
+  });
+  let chargedUrl = "";
+
+  const result = await processClaimedSubscriptionCharge(
+    admin,
+    baseClaim({ billing_key_ref: "synthetic-claim-key" }),
+    {
+      tossSecret: "test_secret",
+      fetchImpl: async (input) => {
+        chargedUrl = String(input);
+        return new Response(JSON.stringify({
+          paymentKey: "payment_1",
+          status: "DONE",
+          totalAmount: 10000,
+        }), { status: 200 });
+      },
+    },
+  );
+
+  assertEquals(result.ok, true, "vault failure should use plaintext");
+  assert(
+    chargedUrl.includes(encodeURIComponent(plaintextKey)),
+    "vault failure falls back to plaintext",
+  );
+  assert(!String(result.error || "").includes(plaintextKey), "errors omit the key");
 });
 
 Deno.test("renewal charges the private credential and stores a sanitized payload", async () => {
