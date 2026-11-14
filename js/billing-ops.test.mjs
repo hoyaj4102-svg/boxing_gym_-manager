@@ -37,6 +37,28 @@ test('a customer refund is not submitted until use is explicit', () => {
   }).requestedAmountKrw, 10000);
 });
 
+test('refund copy distinguishes an accepted decision from a rejected one', () => {
+  const accepted = ops.refundDecisionCopy({
+    allowed: true,
+    code: 'FULL_REFUND_WITHIN_7_DAYS'
+  });
+  const rejected = ops.refundDecisionCopy({
+    allowed: false,
+    decision_code: 'REFUND_WINDOW_EXPIRED'
+  });
+  const partial = ops.refundDecisionCopy({
+    allowed: false,
+    decision_code: 'PARTIAL_REFUND_NOT_IN_DRAFT_POLICY'
+  });
+  assert.equal(accepted.outcome, 'accepted');
+  assert.match(accepted.text, /접수/);
+  assert.equal(rejected.outcome, 'rejected');
+  assert.match(rejected.text, /거절/);
+  assert.match(rejected.text, /7일/);
+  assert.match(partial.text, /부분 환불/);
+  assert.notEqual(accepted.text, rejected.text);
+});
+
 test('failure notices do not enable email or sms', () => {
   const notice = ops.failureNotice({
     state: 'past_due',
