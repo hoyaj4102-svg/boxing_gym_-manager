@@ -871,8 +871,8 @@
       margin-top: 14px;
     }
 
-    .billing-readiness-card,
-    .prepay-disclosure {
+    .billing-readiness-card:not([hidden]),
+    .prepay-disclosure:not([hidden]) {
       display: grid;
       gap: 8px;
       padding: 12px;
@@ -5638,11 +5638,21 @@
       const pastDue = billingSummary?.subscriptionStatus === 'past_due';
       if (reregister) reregister.hidden = !(failure?.cardReregistrationRequired || pastDue);
       const notices = Array.isArray(billingOpsState?.notifications) ? billingOpsState.notifications : [];
-      const noticeHtml = notices.slice(0, 8).map((notice) => {
+      const refunds = Array.isArray(billingOpsState?.refunds) ? billingOpsState.refunds : [];
+      const refundHtml = refunds.map((refund) => {
+        const copy = window.SweatManagerBillingOps?.refundDecisionCopy?.(refund) || {
+          outcome: refund.allowed === true ? 'accepted' : 'rejected',
+          code: refund.decision_code || '',
+          text: refund.decision_code || ''
+        };
+        return `<p data-refund-outcome="${escapeHtml(copy.outcome)}" data-decision-code="${escapeHtml(copy.code || refund.decision_code || '')}">${escapeHtml(copy.text)}</p>`;
+      }).join('');
+      const noticeHtml = notices.filter((notice) => notice.kind !== 'refund_recorded').slice(0, 8).map((notice) => {
         return `<p><strong>${escapeHtml(notice.title || '')}</strong> ${escapeHtml(notice.body || '')}</p>`;
       }).join('');
       statusEl.innerHTML = `
         ${failure ? `<p class="billing-note">결제 상태: ${escapeHtml(failure.state)}. 카드 재등록이 필요할 수 있습니다. 이메일·문자는 보내지 않습니다.</p>` : ''}
+        ${refundHtml}
         ${noticeHtml}`;
       const successes = paymentHistoryRows.filter((row) => row.display_status === 'success');
       if (form) {
@@ -5683,8 +5693,12 @@
           p_normally_used: normallyUsed
         });
         if (error || !data || data.ok === false) throw error || new Error(data?.code || 'REFUND_NOT_RECORDED');
+        const copy = window.SweatManagerBillingOps.refundDecisionCopy({
+          allowed: data.allowed,
+          code: data.code
+        });
         if (data.allowed !== true) {
-          showToast('환불 요청을 거절 상태로 기록했습니다. 토스에는 요청하지 않았습니다.');
+          showToast(copy.text);
           await refreshBillingOps();
           return;
         }
@@ -5692,7 +5706,7 @@
           body: { refundRequestId: data.refund_request_id }
         });
         if (invoked.error || invoked.data?.providerCalls !== 1) {
-          showToast('환불 요청은 기록되었습니다. 테스트 모드가 아니거나 함수가 없어 토스 취소 API는 호출하지 않았습니다.');
+          showToast(copy.text);
         } else {
           showToast('테스트 모드에서 결제 취소를 요청했습니다.');
         }
