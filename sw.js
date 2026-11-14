@@ -1,7 +1,7 @@
 // CACHE_VERSION is the content hash of APP_SHELL.
 // scripts/sw-cache-version.test.mjs fails CI when those files change
 // and this constant is left unchanged, so a deploy cannot keep the old shell.
-const CACHE_VERSION = 'remember-753170aa430dc1db';
+const CACHE_VERSION = 'remember-ee8b6722f58de397';
 
 const APP_SHELL = [
   '/',
