@@ -5,6 +5,24 @@ begin;
 
 set local timezone to 'UTC';
 
+-- P1-26 lifts the free cap through 2026-12-31 23:59:59 KST.
+-- These checks cover the cap that returns at 2027-01-01 00:00:00+09.
+do $$
+begin
+  if to_regprocedure('public.member_limit_now()') is not null then
+    execute $fn$
+      create or replace function public.member_limit_now()
+      returns timestamptz
+      language sql
+      stable
+      as $body$
+        select timestamptz '2027-01-01 00:00:00+09';
+      $body$
+    $fn$;
+  end if;
+end;
+$$;
+
 create temp table p1_19_results (
   test_name text primary key,
   status text not null check (status in ('PASS', 'FAIL')),

@@ -7,6 +7,7 @@
     free: {
       code: 'free',
       nameKey: 'planFreeName',
+      // Standing cap after the promo. effectiveFreeMemberLimit() applies the date.
       memberLimit: 20,
       priceKrw: 0
     },
@@ -18,6 +19,29 @@
       priceKrwYearly: 100000
     }
   };
+
+  // 2026-12-31 23:59:59.999 KST is still unlimited. 2027-01-01 00:00:00 KST restores 20.
+  const FREE_MEMBER_PROMO_ENDS_AT_MS = Date.parse('2027-01-01T00:00:00+09:00');
+
+  function freeMemberPromoActive(at = new Date()) {
+    const ms = at instanceof Date ? at.getTime() : Date.parse(String(at));
+    return Number.isFinite(ms) && ms < FREE_MEMBER_PROMO_ENDS_AT_MS;
+  }
+
+  function effectiveFreeMemberLimit(at = new Date()) {
+    return freeMemberPromoActive(at) ? -1 : PLANS.free.memberLimit;
+  }
+
+  function billingSubtitleText(t, at = new Date()) {
+    if (typeof t !== 'function') return '';
+    return t(freeMemberPromoActive(at) ? 'billingSubtitlePromo' : 'billingSubtitle');
+  }
+
+  function clientBlocksMemberInsert(summary, at = new Date()) {
+    if (!summary || summary.canAddMember !== false) return false;
+    if (summary.hasPro === true) return true;
+    return !freeMemberPromoActive(at);
+  }
 
   function getBillingConfig() {
     return global.SWEAT_MANAGER_BILLING || {
@@ -37,11 +61,14 @@
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   }
 
-  function normalizeSummary(summary) {
+  function normalizeSummary(summary, at = new Date()) {
     const raw = summary || {};
-    const memberLimit = Number(raw.member_limit);
+    const parsedLimit = Number(raw.member_limit);
     const memberCount = Number(raw.member_count) || 0;
     const hasPro = Boolean(raw.has_pro);
+    const memberLimit = Number.isFinite(parsedLimit)
+      ? parsedLimit
+      : effectiveFreeMemberLimit(at);
     const canAdd = raw.can_add_member != null
       ? Boolean(raw.can_add_member)
       : (memberLimit === -1 || memberCount < memberLimit);
@@ -52,7 +79,7 @@
       subscriptionStatus: raw.subscription_status || 'expired',
       trialEndsAt: raw.trial_ends_at || null,
       currentPeriodEnd: raw.current_period_end || null,
-      memberLimit: Number.isFinite(memberLimit) ? memberLimit : 20,
+      memberLimit,
       memberCount,
       hasPro,
       canAddMember: canAdd,
@@ -64,9 +91,9 @@
     };
   }
 
-  function limitLabel(summary, t) {
+  function limitLabel(summary, t, at = new Date()) {
     if (!summary) return '';
-    if (summary.memberLimit === -1 || summary.hasPro) {
+    if (summary.hasPro || summary.memberLimit === -1 || freeMemberPromoActive(at)) {
       return t('planUnlimitedMembers');
     }
     return t('planMemberUsage', {
@@ -481,6 +508,10 @@
     PLANS,
     getBillingConfig,
     formatKrw,
+    freeMemberPromoActive,
+    effectiveFreeMemberLimit,
+    billingSubtitleText,
+    clientBlocksMemberInsert,
     normalizeSummary,
     limitLabel,
     statusLabel,

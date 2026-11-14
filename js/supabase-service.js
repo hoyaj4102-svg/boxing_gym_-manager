@@ -262,7 +262,10 @@
           isReady: () => isReady(),
           client
         });
-        if (!summary.canAddMember) {
+        const blockInsert = typeof global.SweatManagerBilling.clientBlocksMemberInsert === 'function'
+          ? global.SweatManagerBilling.clientBlocksMemberInsert(summary)
+          : !summary.canAddMember;
+        if (blockInsert) {
           const err = new Error('MEMBER_LIMIT_REACHED');
           err.code = 'MEMBER_LIMIT_REACHED';
           err.limit = summary.memberLimit;
