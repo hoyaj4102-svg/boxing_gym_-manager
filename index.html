@@ -2169,7 +2169,7 @@
           <div class="panel-header">
             <div>
               <h2 data-i18n="billingTitle">요금제</h2>
-              <p class="panel-subtitle" data-i18n="billingSubtitle">Free 20명 · Pro 월간 구독 (토스)</p>
+              <p class="panel-subtitle" data-i18n="billingSubtitle">2026년 12월 31일까지 회원 수 제한 없이 무료</p>
             </div>
           </div>
           <div class="panel-body">
@@ -2540,6 +2540,7 @@
         authPasswordHide: '비밀번호 숨기기',
         billingTitle: '요금제',
         billingSubtitle: 'Free 20명 · Pro 월간 구독 (토스)',
+        billingSubtitlePromo: '2026년 12월 31일까지 회원 수 제한 없이 무료',
         billingPlanLabel: '현재 플랜',
         billingStatusLabel: '상태',
         billingUsageLabel: '회원 수',
@@ -2828,6 +2829,7 @@
         authPasswordHide: 'Hide password',
         billingTitle: 'Billing',
         billingSubtitle: 'Free 20 · Pro monthly (Toss)',
+        billingSubtitlePromo: 'Free with no member limit through December 31, 2026',
         billingPlanLabel: 'Current plan',
         billingStatusLabel: 'Status',
         billingUsageLabel: 'Members',
@@ -3084,6 +3086,7 @@
         authPasswordPlaceholder: '6+ caracteres',
         billingTitle: 'Suscripción',
         billingSubtitle: 'Free 20 · Pro mensual (Toss)',
+        billingSubtitlePromo: 'Gratis y sin límite de miembros hasta el 31 de diciembre de 2026',
         billingPlanLabel: 'Plan actual',
         billingStatusLabel: 'Estado',
         billingUsageLabel: 'Miembros',
@@ -3336,6 +3339,7 @@
         authPasswordPlaceholder: 'от 6 символов',
         billingTitle: 'Тариф',
         billingSubtitle: 'Free 20 · Pro месяц (Toss)',
+        billingSubtitlePromo: 'Бесплатно и без лимита участников до 31 декабря 2026',
         billingPlanLabel: 'Текущий план',
         billingStatusLabel: 'Статус',
         billingUsageLabel: 'Клиенты',
@@ -3588,6 +3592,7 @@
         authPasswordPlaceholder: '6+ тэмдэгт',
         billingTitle: 'Төлбөрийн төлөвлөгөө',
         billingSubtitle: 'Free 20 · Pro сар (Toss)',
+        billingSubtitlePromo: '2026 оны 12-р сарын 31 хүртэл гишүүний хязгааргүй үнэгүй',
         billingPlanLabel: 'Одоогийн төлөвлөгөө',
         billingStatusLabel: 'Төлөв',
         billingUsageLabel: 'Гишүүн',
@@ -3840,6 +3845,7 @@
         authPasswordPlaceholder: '至少6位',
         billingTitle: '套餐',
         billingSubtitle: 'Free 20人 · Pro 月付（Toss）',
+        billingSubtitlePromo: '2026年12月31日前免费，不限会员人数',
         billingPlanLabel: '当前套餐',
         billingStatusLabel: '状态',
         billingUsageLabel: '会员数',
@@ -4092,6 +4098,7 @@
         authPasswordPlaceholder: '6+ अक्षर',
         billingTitle: 'प्लान',
         billingSubtitle: 'Free 20 · Pro मासिक (Toss)',
+        billingSubtitlePromo: '31 दिसंबर 2026 तक मुफ्त, सदस्य सीमा नहीं',
         billingPlanLabel: 'वर्तमान प्लान',
         billingStatusLabel: 'स्थिति',
         billingUsageLabel: 'सदस्य',
@@ -4344,6 +4351,7 @@
         authPasswordPlaceholder: '6+ caractères',
         billingTitle: 'Formule',
         billingSubtitle: 'Free 20 · Pro mensuel (Toss)',
+        billingSubtitlePromo: 'Gratuit sans limite de membres jusqu’au 31 décembre 2026',
         billingPlanLabel: 'Formule actuelle',
         billingStatusLabel: 'Statut',
         billingUsageLabel: 'Membres',
@@ -4584,6 +4592,8 @@
         const key = element.dataset.i18n;
         if (key === 'appTitle') {
           element.innerHTML = t(key);
+        } else if (key === 'billingSubtitle' && window.SweatManagerBilling && window.SweatManagerBilling.billingSubtitleText) {
+          element.textContent = window.SweatManagerBilling.billingSubtitleText(t);
         } else {
           element.textContent = t(key);
         }
