@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>개인정보처리방침 (초안) · re;member</title>
+  <link rel="stylesheet" href="./legal.css">
+</head>
+<body>
+  <main>
+    <p class="draft-banner">법률 검토 전 초안입니다. 개인정보 보호책임자와 처리 주체는 아직 정하지 않았습니다.</p>
+    <h1>개인정보처리방침 (초안)</h1>
+    <p class="lede">버전 draft-2026-11-12. 시행일은 정하지 않았습니다. 처리자 이름, 주소, 연락처는 자리표시자입니다.</p>
+
+    <section>
+      <h2>1. 처리하는 정보</h2>
+      <ul>
+        <li>계정: 이메일, 비밀번호(인증 제공자가 저장), 체육관 이름, 대표자 이름, 체육관 연락처.</li>
+        <li>체육관이 입력하는 회원 정보: 이름, 연락처, 주소, 등록·만기일, PT 횟수, 메모, 출석.</li>
+        <li>결제: 결제 금액, 주문 식별자, 결제 상태, 동의 시각, 환불 요청 상태. 카드번호 전체는 이 서비스가 저장하지 않으며 토스페이먼츠가 처리합니다.</li>
+        <li>접속 기록과 브라우저에 남는 언어 설정.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. 목적</h2>
+      <ul>
+        <li>계정 식별, 체육관별 데이터 분리, 회원·출석 관리 기능 제공.</li>
+        <li>Pro 구독의 결제, 해지, 환불 검토, 결제 실패 안내.</li>
+        <li>법령이 정한 기록 보관.</li>
+      </ul>
+      <p>이 초안은 광고 목적의 제3자 제공이나 판매를 포함하지 않습니다.</p>
+    </section>
+
+    <section>
+      <h2>3. 보관 기간 (검토 전)</h2>
+      <p>계정과 회원 정보는 이용자가 삭제하거나 탈퇴한 뒤 지체 없이 지우되, 아래 기록은 전자상거래법 시행령에서 흔히 인용되는 기간 동안 보관하는 방안을 검토합니다. 조문과 적용 범위는 확정되지 않았습니다.</p>
+      <ul>
+        <li>계약 또는 청약철회 기록, 대금결제 및 서비스 공급 기록: 5년으로 알려진 항목.</li>
+        <li>소비자 불만 또는 분쟁처리 기록: 3년으로 알려진 항목.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. 처리 위탁과 국외 이전</h2>
+      <p>초안이 전제로 하는 수탁자는 다음과 같습니다. 계약 주체와 이전 국가는 법률 검토와 실제 계약으로 확정해야 합니다.</p>
+      <ul>
+        <li>Supabase: 인증과 데이터베이스.</li>
+        <li>토스페이먼츠: 카드 등록, 자동결제, 취소, 영수증.</li>
+        <li>Vercel: 웹 애플리케이션 호스팅.</li>
+      </ul>
+      <p>각 서비스의 서버 위치가 대한민국 밖일 수 있습니다. 국외 이전의 법적 근거와 고지 문안은 비어 있습니다.</p>
+    </section>
+
+    <section>
+      <h2>5. 권리</h2>
+      <p>이용자는 자신의 계정 정보에 대한 열람, 정정, 삭제, 처리정지를 요청할 수 있습니다. 요청 창구 이메일은 아직 없습니다. 체육관이 입력한 회원 정보에 대한 권리 행사 상대가 체육관인지 re;member인지도 확정되지 않았습니다.</p>
+    </section>
+
+    <section>
+      <h2>6. 안전조치</h2>
+      <p>체육관별 데이터는 데이터베이스의 행 단위 접근 제어로 나눕니다. 결제 비밀키는 브라우저 코드에 넣지 않습니다. 이 문단은 보안 인증을 의미하지 않습니다.</p>
+    </section>
+
+    <section data-business-identity data-legal-base=""></section>
+    <p><a href="../index.html">앱으로 돌아가기</a> · <a href="./terms.html">이용약관 (초안)</a></p>
+  </main>
+  <script src="../js/business-identity.js"></script>
+  <script>
+    window.SweatManagerBusiness.renderAll(document);
+  </script>
+</body>
+</html>
