@@ -25,9 +25,9 @@
     return `${year}-${pad2(month)}`;
   }
 
-  // Closed control. November 2026 is "2026.11", January 2026 is "2026.1".
+  // Closed month. January 2026 is "2026.01" and November 2026 is "2026.11".
   function formatMonthDisplay(year, month) {
-    return `${Number(year)}.${Number(month)}`;
+    return `${Number(year)}.${pad2(Number(month))}`;
   }
 
   function monthOptionLabel(month) {
@@ -74,6 +74,94 @@
     return null;
   }
 
+  function daysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function parseDateValue(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+    if (!match) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (year < MIN_YEAR || year > MAX_YEAR || month < 1 || month > 12) return null;
+    if (day < 1 || day > daysInMonth(year, month)) return null;
+    return { year, month, day };
+  }
+
+  function formatDateValue(year, month, day) {
+    return `${year}-${pad2(month)}-${pad2(day)}`;
+  }
+
+  // Closed date. 5 January 2026 is "2026.01.05".
+  function formatDateDisplay(year, month, day) {
+    return `${Number(year)}.${pad2(Number(month))}.${pad2(Number(day))}`;
+  }
+
+  function shiftMonth(parts, delta) {
+    const index = parts.year * 12 + (parts.month - 1) + delta;
+    const year = Math.floor(index / 12);
+    const month = (index % 12) + 1;
+    if (year < MIN_YEAR || year > MAX_YEAR) {
+      return { year: parts.year, month: parts.month, day: parts.day || 1 };
+    }
+    const day = Math.min(parts.day || 1, daysInMonth(year, month));
+    return { year, month, day };
+  }
+
+  // Sunday-first grid, matching the expiry calendar. Leading and trailing
+  // cells are real dates from the adjacent months.
+  function calendarCells(year, month) {
+    const firstWeekday = new Date(year, month - 1, 1).getDay();
+    const count = daysInMonth(year, month);
+    const cells = [];
+    const previous = shiftMonth({ year, month, day: 1 }, -1);
+    const previousCount = daysInMonth(previous.year, previous.month);
+    for (let i = 0; i < firstWeekday; i += 1) {
+      const day = previousCount - firstWeekday + 1 + i;
+      cells.push({ year: previous.year, month: previous.month, day, inMonth: false });
+    }
+    for (let day = 1; day <= count; day += 1) {
+      cells.push({ year, month, day, inMonth: true });
+    }
+    const next = shiftMonth({ year, month, day: 1 }, 1);
+    let day = 1;
+    while (cells.length % 7 !== 0) {
+      cells.push({ year: next.year, month: next.month, day, inMonth: false });
+      day += 1;
+    }
+    return cells;
+  }
+
+  function cellValue(cell) {
+    return formatDateValue(cell.year, cell.month, cell.day);
+  }
+
+  // Moves within the rendered grid. Returns the next YYYY-MM-DD, or null
+  // when the key is not a grid key.
+  function moveDateFocus(cells, focusValue, key) {
+    const index = cells.findIndex((cell) => cellValue(cell) === focusValue);
+    if (index < 0) return null;
+    let next = index;
+    if (key === 'ArrowRight') next = Math.min(cells.length - 1, index + 1);
+    else if (key === 'ArrowLeft') next = Math.max(0, index - 1);
+    else if (key === 'ArrowDown') next = Math.min(cells.length - 1, index + 7);
+    else if (key === 'ArrowUp') next = Math.max(0, index - 7);
+    else if (key === 'Home') next = cells.findIndex((cell) => cell.inMonth && cell.day === 1);
+    else if (key === 'End') {
+      for (let i = cells.length - 1; i >= 0; i -= 1) {
+        if (cells[i].inMonth) {
+          next = i;
+          break;
+        }
+      }
+    } else {
+      return null;
+    }
+    if (next < 0) return focusValue;
+    return cellValue(cells[next]);
+  }
+
   global.RememberMonthPicker = {
     MIN_YEAR,
     MAX_YEAR,
@@ -86,5 +174,18 @@
     shiftYear,
     adjacentYearLabels,
     moveMonthFocus
+  };
+
+  global.RememberDatePicker = {
+    MIN_YEAR,
+    MAX_YEAR,
+    daysInMonth,
+    parseDateValue,
+    formatDateValue,
+    formatDateDisplay,
+    formatMonthDisplay,
+    shiftMonth,
+    calendarCells,
+    moveDateFocus
   };
 })(typeof window !== 'undefined' ? window : globalThis);

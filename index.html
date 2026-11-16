@@ -1276,6 +1276,126 @@
       border: 0;
     }
 
+    .date-picker {
+      position: relative;
+    }
+
+    .date-picker-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-strong);
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      letter-spacing: .01em;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .date-picker-value {
+      min-width: 0;
+    }
+
+    .date-picker-caret {
+      flex: 0 0 auto;
+      color: var(--text-muted);
+    }
+
+    .date-picker-panel {
+      position: fixed;
+      z-index: 250;
+      width: min(18.75rem, calc(100vw - 16px));
+      padding: 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      background: var(--surface-card);
+      box-shadow: var(--shadow);
+    }
+
+    .date-picker-nav {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .date-picker-heading {
+      min-width: 5.5rem;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+
+    .date-picker-nav-btn,
+    .date-picker-day {
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .04);
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .date-picker-nav-btn {
+      min-width: 0;
+      padding: 0 4px;
+      font-size: .72rem;
+      white-space: nowrap;
+    }
+
+    .date-picker-nav-btn:disabled {
+      opacity: .35;
+      cursor: default;
+    }
+
+    .date-picker-weekdays,
+    .date-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 2px;
+    }
+
+    .date-picker-weekday {
+      padding: 2px 0 6px;
+      color: var(--text-muted);
+      font-size: .68rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .date-picker-day {
+      background: transparent;
+      font-size: .82rem;
+    }
+
+    .date-picker-day.is-outside {
+      color: var(--text-muted);
+      opacity: .4;
+    }
+
+    .date-picker-day[aria-selected="true"] {
+      background: var(--accent);
+      color: #fff;
+      opacity: 1;
+    }
+
+    .date-picker-trigger:focus-visible,
+    .date-picker-nav-btn:focus-visible,
+    .date-picker-day:focus-visible {
+      outline: 2px solid var(--brand-blue);
+      outline-offset: 2px;
+    }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -2316,12 +2436,42 @@
                 <input type="text" id="address" placeholder="서울시 강남구..." data-i18n-placeholder="addressPlaceholder" autocomplete="street-address">
               </div>
               <div class="field">
-                <label for="startDate" data-i18n="startDateLabel">등록일</label>
-                <input type="date" id="startDate" required>
+                <label id="startDateFieldLabel" for="startDateTrigger" data-i18n="startDateLabel">등록일</label>
+                <div class="date-picker" data-date-for="startDate">
+                  <button type="button" class="date-picker-trigger" id="startDateTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="startDatePanel" aria-required="true" aria-labelledby="startDateFieldLabel startDateDisplay">
+                    <span class="date-picker-value" id="startDateDisplay"></span>
+                    <svg class="date-picker-caret" viewBox="0 0 12 8" width="12" height="8" aria-hidden="true" focusable="false"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </button>
+                  <input type="hidden" id="startDate" value="">
+                  <div class="date-picker-panel" id="startDatePanel" role="dialog" aria-labelledby="startDateFieldLabel" hidden>
+                    <div class="date-picker-nav">
+                      <button type="button" class="date-picker-nav-btn" data-month-step="-1"></button>
+                      <span class="date-picker-heading"></span>
+                      <button type="button" class="date-picker-nav-btn" data-month-step="1"></button>
+                    </div>
+                    <div class="date-picker-weekdays"></div>
+                    <div class="date-picker-grid" role="grid"></div>
+                  </div>
+                </div>
               </div>
               <div class="field">
-                <label for="expireDate" data-i18n="expireDateLabel">만기일</label>
-                <input type="date" id="expireDate" required>
+                <label id="expireDateFieldLabel" for="expireDateTrigger" data-i18n="expireDateLabel">만기일</label>
+                <div class="date-picker" data-date-for="expireDate">
+                  <button type="button" class="date-picker-trigger" id="expireDateTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="expireDatePanel" aria-required="true" aria-labelledby="expireDateFieldLabel expireDateDisplay">
+                    <span class="date-picker-value" id="expireDateDisplay"></span>
+                    <svg class="date-picker-caret" viewBox="0 0 12 8" width="12" height="8" aria-hidden="true" focusable="false"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </button>
+                  <input type="hidden" id="expireDate" value="">
+                  <div class="date-picker-panel" id="expireDatePanel" role="dialog" aria-labelledby="expireDateFieldLabel" hidden>
+                    <div class="date-picker-nav">
+                      <button type="button" class="date-picker-nav-btn" data-month-step="-1"></button>
+                      <span class="date-picker-heading"></span>
+                      <button type="button" class="date-picker-nav-btn" data-month-step="1"></button>
+                    </div>
+                    <div class="date-picker-weekdays"></div>
+                    <div class="date-picker-grid" role="grid"></div>
+                  </div>
+                </div>
               </div>
               <div class="field">
                 <label for="ptTotal" data-i18n="ptTotalLabel">PT 총 횟수</label>
@@ -2517,12 +2667,42 @@
           </div>
           <div class="two-column">
             <div class="field">
-              <label for="editStartDate" data-i18n="startDateLabel">등록일</label>
-              <input type="date" id="editStartDate" required>
+              <label id="editStartDateFieldLabel" for="editStartDateTrigger" data-i18n="startDateLabel">등록일</label>
+              <div class="date-picker" data-date-for="editStartDate">
+                <button type="button" class="date-picker-trigger" id="editStartDateTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="editStartDatePanel" aria-required="true" aria-labelledby="editStartDateFieldLabel editStartDateDisplay">
+                  <span class="date-picker-value" id="editStartDateDisplay"></span>
+                  <svg class="date-picker-caret" viewBox="0 0 12 8" width="12" height="8" aria-hidden="true" focusable="false"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+                <input type="hidden" id="editStartDate" value="">
+                <div class="date-picker-panel" id="editStartDatePanel" role="dialog" aria-labelledby="editStartDateFieldLabel" hidden>
+                  <div class="date-picker-nav">
+                    <button type="button" class="date-picker-nav-btn" data-month-step="-1"></button>
+                    <span class="date-picker-heading"></span>
+                    <button type="button" class="date-picker-nav-btn" data-month-step="1"></button>
+                  </div>
+                  <div class="date-picker-weekdays"></div>
+                  <div class="date-picker-grid" role="grid"></div>
+                </div>
+              </div>
             </div>
             <div class="field">
-              <label for="editExpireDate" data-i18n="expireDateLabel">만기일</label>
-              <input type="date" id="editExpireDate" required>
+              <label id="editExpireDateFieldLabel" for="editExpireDateTrigger" data-i18n="expireDateLabel">만기일</label>
+              <div class="date-picker" data-date-for="editExpireDate">
+                <button type="button" class="date-picker-trigger" id="editExpireDateTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="editExpireDatePanel" aria-required="true" aria-labelledby="editExpireDateFieldLabel editExpireDateDisplay">
+                  <span class="date-picker-value" id="editExpireDateDisplay"></span>
+                  <svg class="date-picker-caret" viewBox="0 0 12 8" width="12" height="8" aria-hidden="true" focusable="false"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+                <input type="hidden" id="editExpireDate" value="">
+                <div class="date-picker-panel" id="editExpireDatePanel" role="dialog" aria-labelledby="editExpireDateFieldLabel" hidden>
+                  <div class="date-picker-nav">
+                    <button type="button" class="date-picker-nav-btn" data-month-step="-1"></button>
+                    <span class="date-picker-heading"></span>
+                    <button type="button" class="date-picker-nav-btn" data-month-step="1"></button>
+                  </div>
+                  <div class="date-picker-weekdays"></div>
+                  <div class="date-picker-grid" role="grid"></div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="two-column">
@@ -2641,6 +2821,8 @@
         calendarMonthAria: '만기 월 선택',
         calendarMonthPrevYear: '이전 해 {year}',
         calendarMonthNextYear: '다음 해 {year}',
+        datePickerPrevMonth: '이전 달 {month}',
+        datePickerNextMonth: '다음 달 {month}',
         memberListTitle: '회원 목록',
         memberListSubtitle: '출석, PT, 만기, 메모를 빠르게 확인하고 수정합니다.',
         searchPlaceholder: '이름, 연락처, 주소, 메모 검색',
@@ -2976,6 +3158,8 @@
         calendarMonthAria: 'Select expiry month',
         calendarMonthPrevYear: 'Previous year {year}',
         calendarMonthNextYear: 'Next year {year}',
+        datePickerPrevMonth: 'Previous month {month}',
+        datePickerNextMonth: 'Next month {month}',
         memberListTitle: 'Member List',
         memberListSubtitle: 'Quickly review and edit attendance, PT, expiry, and notes.',
         searchPlaceholder: 'Search name, phone, address, or notes',
@@ -3311,6 +3495,8 @@
         calendarMonthAria: 'Seleccionar mes de vencimiento',
         calendarMonthPrevYear: 'Año anterior {year}',
         calendarMonthNextYear: 'Año siguiente {year}',
+        datePickerPrevMonth: 'Mes anterior {month}',
+        datePickerNextMonth: 'Mes siguiente {month}',
         memberListTitle: 'Lista de miembros',
         memberListSubtitle: 'Revisa y edita asistencia, PT, vencimiento y notas rápidamente.',
         searchPlaceholder: 'Buscar nombre, teléfono, dirección o notas',
@@ -3622,6 +3808,8 @@
         calendarMonthAria: 'Выбрать месяц истечения',
         calendarMonthPrevYear: 'Предыдущий год {year}',
         calendarMonthNextYear: 'Следующий год {year}',
+        datePickerPrevMonth: 'Предыдущий месяц {month}',
+        datePickerNextMonth: 'Следующий месяц {month}',
         memberListTitle: 'Список клиентов',
         memberListSubtitle: 'Быстро проверяйте и редактируйте посещения, PT, истечение и заметки.',
         searchPlaceholder: 'Поиск по имени, телефону, адресу или заметкам',
@@ -3933,6 +4121,8 @@
         calendarMonthAria: 'Дуусах сарыг сонгох',
         calendarMonthPrevYear: 'Өмнөх жил {year}',
         calendarMonthNextYear: 'Дараагийн жил {year}',
+        datePickerPrevMonth: 'Өмнөх сар {month}',
+        datePickerNextMonth: 'Дараагийн сар {month}',
         memberListTitle: 'Гишүүдийн жагсаалт',
         memberListSubtitle: 'Ирц, PT, дуусах хугацаа, тэмдэглэлийг хурдан шалгаж засна.',
         searchPlaceholder: 'Нэр, утас, хаяг, тэмдэглэлээр хайх',
@@ -4244,6 +4434,8 @@
         calendarMonthAria: '选择到期月份',
         calendarMonthPrevYear: '上一年 {year}',
         calendarMonthNextYear: '下一年 {year}',
+        datePickerPrevMonth: '上一月 {month}',
+        datePickerNextMonth: '下一月 {month}',
         memberListTitle: '会员列表',
         memberListSubtitle: '快速查看和编辑出勤、PT、到期日和备注。',
         searchPlaceholder: '搜索姓名、电话、地址或备注',
@@ -4555,6 +4747,8 @@
         calendarMonthAria: 'समाप्ति महीना चुनें',
         calendarMonthPrevYear: 'पिछला वर्ष {year}',
         calendarMonthNextYear: 'अगला वर्ष {year}',
+        datePickerPrevMonth: 'पिछला महीना {month}',
+        datePickerNextMonth: 'अगला महीना {month}',
         memberListTitle: 'सदस्य सूची',
         memberListSubtitle: 'उपस्थिति, PT, समाप्ति और नोट्स को जल्दी देखें और संपादित करें।',
         searchPlaceholder: 'नाम, फोन, पता या नोट खोजें',
@@ -4866,6 +5060,8 @@
         calendarMonthAria: "Sélectionner le mois d'échéance",
         calendarMonthPrevYear: 'Année précédente {year}',
         calendarMonthNextYear: 'Année suivante {year}',
+        datePickerPrevMonth: 'Mois précédent {month}',
+        datePickerNextMonth: 'Mois suivant {month}',
         memberListTitle: 'Liste des membres',
         memberListSubtitle: 'Consultez et modifiez rapidement les présences, PT, échéances et notes.',
         searchPlaceholder: 'Rechercher nom, téléphone, adresse ou notes',
@@ -5272,6 +5468,7 @@
       document.querySelectorAll('select.language-select').forEach(element => {
         element.value = currentLanguage;
       });
+      refreshOpenDatePickers();
     }
 
     function setLanguage(language, options = {}) {
@@ -7023,11 +7220,267 @@
         </article>`;
     }
 
+    const datePickerViews = new Map();
+    let datePickerOpening = false;
+    let datePickerRendering = false;
+    let datePickerSuppressClick = false;
+    const DATE_PICKER_IDS = ['startDate', 'expireDate', 'editStartDate', 'editExpireDate'];
+
+    function datePickerRoot(id) {
+      return document.querySelector(`.date-picker[data-date-for="${id}"]`);
+    }
+
+    function datePickerPanel(id) {
+      return document.getElementById(`${id}Panel`);
+    }
+
+    function syncDatePicker(id) {
+      const input = document.getElementById(id);
+      const root = datePickerRoot(id);
+      if (!input || !root) return;
+      const parsed = window.RememberDatePicker.parseDateValue(input.value);
+      const display = root.querySelector('.date-picker-value');
+      display.textContent = parsed
+        ? window.RememberDatePicker.formatDateDisplay(parsed.year, parsed.month, parsed.day)
+        : '';
+    }
+
+    function refreshOpenDatePickers() {
+      DATE_PICKER_IDS.forEach(id => {
+        syncDatePicker(id);
+        const panel = datePickerPanel(id);
+        if (panel && !panel.hidden) renderDatePicker(id);
+      });
+    }
+
+    function positionDatePickerPanel(id) {
+      const root = datePickerRoot(id);
+      const panel = datePickerPanel(id);
+      const trigger = root.querySelector('.date-picker-trigger');
+      const rect = trigger.getBoundingClientRect();
+      const margin = 8;
+      const width = Math.min(300, window.innerWidth - margin * 2);
+      panel.style.width = `${width}px`;
+      let left = rect.left;
+      if (left + width > window.innerWidth - margin) left = window.innerWidth - margin - width;
+      if (left < margin) left = margin;
+      const height = panel.offsetHeight;
+      let top = rect.bottom + 6;
+      if (top + height > window.innerHeight - margin) {
+        const above = rect.top - height - 6;
+        top = above >= margin ? above : Math.max(margin, window.innerHeight - margin - height);
+      }
+      panel.style.left = `${Math.round(left)}px`;
+      panel.style.top = `${Math.round(top)}px`;
+    }
+
+    function renderDatePicker(id) {
+      const picker = window.RememberDatePicker;
+      const panel = datePickerPanel(id);
+      const input = document.getElementById(id);
+      const state = datePickerViews.get(id);
+      const cells = picker.calendarCells(state.year, state.month);
+      const names = t('weekdayNames');
+      datePickerRendering = true;
+      panel.querySelector('.date-picker-weekdays').innerHTML = (Array.isArray(names) ? names : [])
+        .map(name => `<div class="date-picker-weekday">${escapeHtml(name)}</div>`)
+        .join('');
+      const previous = picker.shiftMonth({ year: state.year, month: state.month, day: 1 }, -1);
+      const next = picker.shiftMonth({ year: state.year, month: state.month, day: 1 }, 1);
+      const prevButton = panel.querySelector('[data-month-step="-1"]');
+      const nextButton = panel.querySelector('[data-month-step="1"]');
+      const prevLabel = picker.formatMonthDisplay(previous.year, previous.month);
+      const nextLabel = picker.formatMonthDisplay(next.year, next.month);
+      const samePrev = previous.year === state.year && previous.month === state.month;
+      const sameNext = next.year === state.year && next.month === state.month;
+      prevButton.textContent = samePrev ? '' : prevLabel;
+      nextButton.textContent = sameNext ? '' : nextLabel;
+      prevButton.disabled = samePrev;
+      nextButton.disabled = sameNext;
+      prevButton.setAttribute('aria-label', t('datePickerPrevMonth', { month: prevLabel }));
+      nextButton.setAttribute('aria-label', t('datePickerNextMonth', { month: nextLabel }));
+      panel.querySelector('.date-picker-heading').textContent = picker.formatMonthDisplay(state.year, state.month);
+      panel.querySelector('.date-picker-grid').innerHTML = cells.map(cell => {
+        const value = picker.formatDateValue(cell.year, cell.month, cell.day);
+        const selected = value === input.value;
+        const focused = value === state.focus;
+        return `<button type="button" class="date-picker-day${cell.inMonth ? '' : ' is-outside'}" data-date="${value}" role="gridcell" tabindex="${focused ? '0' : '-1'}" aria-selected="${selected ? 'true' : 'false'}" aria-label="${picker.formatDateDisplay(cell.year, cell.month, cell.day)}">${cell.day}</button>`;
+      }).join('');
+      datePickerRendering = false;
+      syncDatePicker(id);
+    }
+
+    function focusDatePickerDay(id) {
+      const state = datePickerViews.get(id);
+      const panel = datePickerPanel(id);
+      const button = panel.querySelector(`.date-picker-day[data-date="${state.focus}"]`);
+      if (button) button.focus();
+    }
+
+    function openDatePicker(id) {
+      DATE_PICKER_IDS.forEach(other => {
+        if (other !== id) closeDatePicker(other);
+      });
+      const panel = datePickerPanel(id);
+      if (!panel.hidden) return;
+      const picker = window.RememberDatePicker;
+      const input = document.getElementById(id);
+      const parsed = picker.parseDateValue(input.value) || picker.parseDateValue(getTodayDateOnly());
+      datePickerViews.set(id, {
+        year: parsed.year,
+        month: parsed.month,
+        focus: picker.formatDateValue(parsed.year, parsed.month, parsed.day)
+      });
+      datePickerOpening = true;
+      panel.hidden = false;
+      document.body.appendChild(panel);
+      datePickerRoot(id).querySelector('.date-picker-trigger').setAttribute('aria-expanded', 'true');
+      renderDatePicker(id);
+      positionDatePickerPanel(id);
+      focusDatePickerDay(id);
+      datePickerOpening = false;
+    }
+
+    function closeDatePicker(id, options = {}) {
+      const root = datePickerRoot(id);
+      const panel = datePickerPanel(id);
+      if (!root || !panel || panel.hidden) return;
+      panel.hidden = true;
+      root.appendChild(panel);
+      root.querySelector('.date-picker-trigger').setAttribute('aria-expanded', 'false');
+      if (options.restoreFocus) root.querySelector('.date-picker-trigger').focus();
+    }
+
+    function commitDatePicker(id, value) {
+      const input = document.getElementById(id);
+      if (!window.RememberDatePicker.parseDateValue(value)) return;
+      if (input.value !== value) {
+        input.value = value;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      syncDatePicker(id);
+    }
+
+    function showDatePickerMonth(id, delta) {
+      const picker = window.RememberDatePicker;
+      const state = datePickerViews.get(id);
+      const next = picker.shiftMonth({ year: state.year, month: state.month, day: 1 }, delta);
+      if (next.year === state.year && next.month === state.month) return;
+      const focus = picker.parseDateValue(state.focus);
+      const day = Math.min(focus ? focus.day : 1, picker.daysInMonth(next.year, next.month));
+      state.year = next.year;
+      state.month = next.month;
+      state.focus = picker.formatDateValue(next.year, next.month, day);
+      renderDatePicker(id);
+      positionDatePickerPanel(id);
+      focusDatePickerDay(id);
+    }
+
+    function bindDatePickers() {
+      DATE_PICKER_IDS.forEach(id => {
+        const root = datePickerRoot(id);
+        const panel = datePickerPanel(id);
+        const trigger = root.querySelector('.date-picker-trigger');
+        document.getElementById(id).addEventListener('change', () => syncDatePicker(id));
+
+        trigger.addEventListener('pointerdown', (event) => {
+          if (panel.hidden) return;
+          event.preventDefault();
+          closeDatePicker(id, { restoreFocus: true });
+          datePickerSuppressClick = true;
+        });
+
+        trigger.addEventListener('click', () => {
+          if (datePickerSuppressClick) {
+            datePickerSuppressClick = false;
+            return;
+          }
+          openDatePicker(id);
+        });
+
+        trigger.addEventListener('keydown', (event) => {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            openDatePicker(id);
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            closeDatePicker(id, { restoreFocus: true });
+          }
+        });
+
+        panel.addEventListener('click', (event) => {
+          const step = event.target.closest('[data-month-step]');
+          if (step && panel.contains(step)) {
+            showDatePickerMonth(id, Number(step.dataset.monthStep));
+            return;
+          }
+          const day = event.target.closest('.date-picker-day');
+          if (!day || !panel.contains(day)) return;
+          commitDatePicker(id, day.dataset.date);
+          closeDatePicker(id, { restoreFocus: true });
+        });
+
+        panel.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            closeDatePicker(id, { restoreFocus: true });
+            return;
+          }
+          if (event.key === 'PageUp' || event.key === 'PageDown') {
+            event.preventDefault();
+            showDatePickerMonth(id, event.key === 'PageUp' ? -1 : 1);
+            return;
+          }
+          const day = event.target.closest('.date-picker-day');
+          if (!day) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            commitDatePicker(id, day.dataset.date);
+            closeDatePicker(id, { restoreFocus: true });
+            return;
+          }
+          const state = datePickerViews.get(id);
+          const cells = window.RememberDatePicker.calendarCells(state.year, state.month);
+          const moved = window.RememberDatePicker.moveDateFocus(cells, state.focus, event.key);
+          if (!moved) return;
+          event.preventDefault();
+          state.focus = moved;
+          renderDatePicker(id);
+          focusDatePickerDay(id);
+        });
+
+        const onFocusOut = (event) => {
+          if (datePickerOpening || datePickerRendering) return;
+          const next = event.relatedTarget;
+          if (next && (root.contains(next) || panel.contains(next))) return;
+          closeDatePicker(id);
+        };
+        root.addEventListener('focusout', onFocusOut);
+        panel.addEventListener('focusout', onFocusOut);
+      });
+
+      document.addEventListener('pointerdown', (event) => {
+        DATE_PICKER_IDS.forEach(id => {
+          const root = datePickerRoot(id);
+          const panel = datePickerPanel(id);
+          if (!root || !panel || panel.hidden) return;
+          if (root.contains(event.target) || panel.contains(event.target)) return;
+          closeDatePicker(id);
+        });
+      }, true);
+
+      window.addEventListener('resize', () => {
+        DATE_PICKER_IDS.forEach(id => closeDatePicker(id));
+      });
+    }
+
     function resetRegisterDates() {
       const today = getTodayDateOnly();
       document.getElementById('startDate').value = today;
       document.getElementById('expireDate').value = addDays(today, 30);
       document.getElementById('calendarMonth').value = today.slice(0, 7);
+      syncDatePicker('startDate');
+      syncDatePicker('expireDate');
     }
 
     function syncPtRemainingDefault() {
@@ -7154,6 +7607,8 @@
       document.getElementById('editAddress').value = member.address || '';
       document.getElementById('editStartDate').value = member.startDate;
       document.getElementById('editExpireDate').value = member.expireDate;
+      syncDatePicker('editStartDate');
+      syncDatePicker('editExpireDate');
       document.getElementById('editPtTotal').value = member.ptTotal;
       document.getElementById('editPtRemaining').value = member.ptRemaining;
       document.getElementById('editMemo').value = member.memo || '';
@@ -7448,7 +7903,10 @@
 
     document.getElementById('startDate').addEventListener('change', e => {
       document.getElementById('expireDate').value = addDays(e.target.value || getTodayDateOnly(), 30);
+      syncDatePicker('expireDate');
     });
+
+    bindDatePickers();
 
     document.getElementById('searchInput').addEventListener('input', e => {
       searchQuery = e.target.value.trim();
