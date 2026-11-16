@@ -12,6 +12,14 @@
     ready: false
   };
 
+  function serviceError(key) {
+    const translate = global.rememberT;
+    const message = typeof translate === 'function' ? translate(key) : key;
+    const error = new Error(message);
+    error.code = key;
+    return error;
+  }
+
   function getConfig() {
     return global.SWEAT_MANAGER_SUPABASE || {};
   }
@@ -142,7 +150,7 @@
 
     if (profileError) throw profileError;
     if (!profile) {
-      throw new Error('프로필이 없습니다. 회원가입 시 체육관 정보가 생성되어야 합니다.');
+      throw serviceError('serviceProfileMissing');
     }
 
     let { data: gym, error: gymError } = await STATE.client
@@ -162,7 +170,7 @@
     }
 
     if (gymError) throw gymError;
-    if (!gym) throw new Error('체육관 정보를 찾을 수 없습니다.');
+    if (!gym) throw serviceError('serviceGymMissing');
 
     STATE.profile = profile;
     STATE.gym = gym;
@@ -189,7 +197,7 @@
   }
 
   async function signUp({ email, password, gymName, ownerName, phone, locale }) {
-    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    if (!STATE.client) throw serviceError('serviceNotConfigured');
     const language = locale || 'ko';
 
     const { data, error } = await STATE.client.auth.signUp({
@@ -212,7 +220,7 @@
   }
 
   async function signIn(email, password) {
-    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    if (!STATE.client) throw serviceError('serviceNotConfigured');
     const { data, error } = await STATE.client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
@@ -229,7 +237,7 @@
   }
 
   async function resetPassword(email, locale) {
-    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    if (!STATE.client) throw serviceError('serviceNotConfigured');
     const redirectTo = authRedirectTo('/reset-password', locale || 'ko');
     const { data, error } = await STATE.client.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
@@ -237,21 +245,21 @@
   }
 
   async function exchangeCodeForSession(code) {
-    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    if (!STATE.client) throw serviceError('serviceNotConfigured');
     const { data, error } = await STATE.client.auth.exchangeCodeForSession(code);
     if (error) throw error;
     return data;
   }
 
   async function updatePassword(newPassword) {
-    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    if (!STATE.client) throw serviceError('serviceNotConfigured');
     const { data, error } = await STATE.client.auth.updateUser({ password: newPassword });
     if (error) throw error;
     return data;
   }
 
   async function updateLocale(locale) {
-    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    if (!STATE.client) throw serviceError('serviceNotConfigured');
     // Display language only. Never used for authorization.
     const { data, error } = await STATE.client.auth.updateUser({ data: { locale } });
     if (error) throw error;
@@ -265,7 +273,7 @@
   }
 
   async function fetchMembers() {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+    if (!isReady()) throw serviceError('serviceLoginRequired');
 
     const { data, error } = await STATE.client
       .from('members')
@@ -278,7 +286,7 @@
   }
 
   async function createMember(member) {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+    if (!isReady()) throw serviceError('serviceLoginRequired');
 
     if (global.SweatManagerBilling) {
       try {
@@ -322,7 +330,7 @@
   }
 
   async function updateMember(member) {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+    if (!isReady()) throw serviceError('serviceLoginRequired');
 
     const { data, error } = await STATE.client
       .from('members')
@@ -337,7 +345,7 @@
   }
 
   async function deleteMember(memberId) {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+    if (!isReady()) throw serviceError('serviceLoginRequired');
 
     const { error } = await STATE.client
       .from('members')
@@ -357,7 +365,7 @@
   }
 
   async function recordAttendance(memberId, attendanceDate = todayLocalDate()) {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+    if (!isReady()) throw serviceError('serviceLoginRequired');
 
     const { data, error } = await STATE.client.rpc('record_attendance', {
       p_member_id: memberId,
@@ -369,7 +377,7 @@
   }
 
 async function replaceAllMembers(memberList) {
-  if (!isReady()) throw new Error('로그인이 필요합니다.');
+  if (!isReady()) throw serviceError('serviceLoginRequired');
 
   const { error } = await STATE.client.rpc('restore_gym_members_from_json', {
     p_members: memberList
@@ -393,7 +401,7 @@ async function replaceAllMembers(memberList) {
 }
 
   async function migrateLocalMembers(localMembers) {
-    if (!isReady()) throw new Error('로그인이 필요합니다.');
+    if (!isReady()) throw serviceError('serviceLoginRequired');
     if (!localMembers.length) return fetchMembers();
 
     const gymId = getGymId();

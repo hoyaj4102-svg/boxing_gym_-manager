@@ -57,8 +57,16 @@
     };
   }
 
-  function formatKrw(amount) {
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+  function formatKrw(amount, language) {
+    const fromDocument = global.document && global.document.documentElement
+      ? global.document.documentElement.lang
+      : '';
+    const lang = language || fromDocument || 'ko';
+    const numeric = Number(amount);
+    const safe = Number.isFinite(numeric) ? numeric : 0;
+    const formatted = new Intl.NumberFormat(lang === 'ko' ? 'ko-KR' : 'en-US').format(safe);
+    // The amount stays in KRW. Only the suffix follows the display language.
+    return lang === 'ko' ? formatted + '원' : formatted + ' KRW';
   }
 
   function normalizeSummary(summary, at = new Date()) {
