@@ -508,6 +508,12 @@
       margin-bottom: 18px;
     }
 
+    .auth-language {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+
     .auth-tabs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -1918,6 +1924,18 @@
 <body>
   <div class="auth-gate" id="authGate">
     <div class="auth-card">
+      <div class="auth-language">
+        <select class="language-select" id="authLanguageSelect" aria-label="Language" data-i18n-aria-label="languageLabel">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="ru">Русский</option>
+          <option value="mn">Монгол</option>
+          <option value="zh">中文</option>
+          <option value="hi">हिन्दी</option>
+          <option value="fr">Français</option>
+        </select>
+      </div>
       <div class="brand-lockup">
         <div class="brand-wordmark" aria-label="re;member">
           <span class="brand-re">re</span><span class="brand-semi">;</span><span class="brand-member">member</span>
@@ -1988,7 +2006,7 @@
         <p class="brand-tagline" data-i18n="brandTagline">재등록 관리에 특화된 가장 간단한 회비관리앱</p>
       </div>
       <div class="header-actions">
-        <select class="language-select" id="languageSelect" aria-label="Language">
+        <select class="language-select" id="languageSelect" aria-label="Language" data-i18n-aria-label="languageLabel">
           <option value="ko">한국어</option>
           <option value="en">English</option>
           <option value="es">Español</option>
@@ -2425,15 +2443,17 @@
   <script src="./js/billing-config.js"></script>
   <script src="./js/supabase-service.js"></script>
   <script src="./js/billing.js"></script>
+  <script src="./js/language.js"></script>
   <script>
     const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
     const INSTALL_GUIDE_DISMISSED_KEY = 'remember_install_guide_dismissed';
     const DAY_MS = 24 * 60 * 60 * 1000;
-    const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
+    const SUPPORTED_LANGUAGES = window.RememberLanguage.SUPPORTED_LANGUAGES;
     const TRANSLATIONS = {
       ko: {
         documentTitle: 're;member — 재등록 관리에 특화된 가장 간단한 회비관리앱',
+        languageLabel: '언어',
         brandName: 're;member',
         brandTagline: '재등록 관리에 특화된 가장 간단한 회비관리앱',
         eyebrow: 're;member',
@@ -2723,6 +2743,7 @@
       },
       en: {
         documentTitle: 're;member — Simplest membership app for renewals',
+        languageLabel: 'Language',
         brandName: 're;member',
         brandTagline: 'The simplest membership app focused on renewals',
         eyebrow: 're;member',
@@ -3000,6 +3021,7 @@
       },
       es: {
         documentTitle: 're;member — App simple de cuotas y renovaciones',
+        languageLabel: 'Idioma',
         brandName: 're;member',
         brandTagline: 'La app de cuotas más simple, enfocada en renovaciones',
         eyebrow: 're;member',
@@ -3253,6 +3275,7 @@
       },
       ru: {
         documentTitle: 're;member — простое приложение для продлений',
+        languageLabel: 'Язык',
         brandName: 're;member',
         brandTagline: 'Простое приложение для продления абонементов',
         eyebrow: 're;member',
@@ -3506,6 +3529,7 @@
       },
       mn: {
         documentTitle: 're;member — сунгалтын энгийн төлбөрийн апп',
+        languageLabel: 'Хэл',
         brandName: 're;member',
         brandTagline: 'Сунгалтад зориулсан хамгийн энгийн төлбөрийн апп',
         eyebrow: 're;member',
@@ -3759,6 +3783,7 @@
       },
       zh: {
         documentTitle: 're;member — 专注续费的最简单会费应用',
+        languageLabel: '语言',
         brandName: 're;member',
         brandTagline: '专注续费管理的最简单会费应用',
         eyebrow: 're;member',
@@ -4012,6 +4037,7 @@
       },
       hi: {
         documentTitle: 're;member — नवीनीकरण केंद्रित सदस्यता ऐप',
+        languageLabel: 'भाषा',
         brandName: 're;member',
         brandTagline: 'नवीनीकरण पर केंद्रित सबसे सरल सदस्यता ऐप',
         eyebrow: 're;member',
@@ -4265,6 +4291,7 @@
       },
       fr: {
         documentTitle: 're;member — Appli cotisations axée renouvellement',
+        languageLabel: 'Langue',
         brandName: 're;member',
         brandTagline: 'L’appli cotisations la plus simple, axée renouvellement',
         eyebrow: 're;member',
@@ -4518,7 +4545,8 @@
       }
     };
 
-    let currentLanguage = getSavedLanguage();
+    let currentLanguage = 'ko';
+    let languageDecision = { search: '' };
     let members = [];
     let searchQuery = '';
     let memberFilter = 'all';
@@ -4588,9 +4616,48 @@
       }
     }
 
-    function getSavedLanguage() {
+    function storedLanguage() {
       const saved = localStorage.getItem(LANGUAGE_KEY);
-      return SUPPORTED_LANGUAGES.includes(saved) ? saved : 'ko';
+      return window.RememberLanguage.isSupportedLanguage(saved) ? saved : null;
+    }
+
+    function bootstrapLanguage() {
+      const search = window.location.search;
+      const resolved = window.RememberLanguage.resolveLanguage({
+        search,
+        stored: storedLanguage(),
+        sessionKnown: false
+      });
+      currentLanguage = resolved.language;
+      if (resolved.persist) localStorage.setItem(LANGUAGE_KEY, resolved.language);
+      languageDecision = { search };
+    }
+
+    function settleLanguage(user, sessionKnown) {
+      if (!sessionKnown) return;
+      const resolved = window.RememberLanguage.resolveLanguage({
+        search: languageDecision.search,
+        stored: storedLanguage(),
+        accountLocale: window.RememberLanguage.accountLocale(user),
+        sessionKnown: true
+      });
+      if (resolved.persist) localStorage.setItem(LANGUAGE_KEY, resolved.language);
+      if (resolved.language === currentLanguage) return;
+      currentLanguage = resolved.language;
+      applyTranslations();
+      setAuthMode(authMode);
+      refreshAll();
+      renderPaymentHistory();
+    }
+
+    async function syncAccountLocale(language) {
+      if (!window.SweatManagerDB || typeof SweatManagerDB.updateLocale !== 'function') return;
+      if (!SweatManagerDB.getUser()) return;
+      try {
+        await SweatManagerDB.updateLocale(language);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     function t(key, params = {}) {
@@ -4623,17 +4690,20 @@
       document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
         element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
       });
-      document.getElementById('languageSelect').value = currentLanguage;
+      document.querySelectorAll('select.language-select').forEach(element => {
+        element.value = currentLanguage;
+      });
     }
 
-    function setLanguage(language) {
-      if (!SUPPORTED_LANGUAGES.includes(language)) return;
+    function setLanguage(language, options = {}) {
+      if (!window.RememberLanguage.isSupportedLanguage(language)) return;
       currentLanguage = language;
-      localStorage.setItem(LANGUAGE_KEY, language);
+      if (options.persist !== false) localStorage.setItem(LANGUAGE_KEY, language);
       applyTranslations();
       setAuthMode(authMode);
       refreshAll();
       renderPaymentHistory();
+      if (options.syncAccount) syncAccountLocale(language);
     }
 
     function migrateMembers(data) {
@@ -4722,7 +4792,8 @@
 
     function cleanAuthUrl(path = window.location.pathname) {
       if (!window.history?.replaceState) return;
-      window.history.replaceState({}, '', path);
+      const next = window.RememberLanguage.cleanAuthPath(path, window.location.search, storedLanguage());
+      window.history.replaceState({}, '', next);
     }
 
     function friendlyAuthError(error, fallbackKey = 'authGenericError') {
@@ -5163,13 +5234,14 @@
         if (authMode === 'recovery' && hasRecoveryUrlToken()) {
           recoverySessionReady = true;
           const code = new URLSearchParams(window.location.search).get('code');
-          if (code) {
-            await SweatManagerDB.exchangeCodeForSession(code);
-            cleanAuthUrl('/reset-password');
-          }
+          if (code) await SweatManagerDB.exchangeCodeForSession(code);
         }
 
         const session = await SweatManagerDB.getSession();
+        settleLanguage(session?.user || null, true);
+        if (authMode === 'recovery' && (recoverySessionReady || isRecoveryRoute())) {
+          cleanAuthUrl('/reset-password');
+        }
         if (authMode === 'recovery') {
           if (session?.user && recoverySessionReady) {
             showAuthGate(t('authRecoveryReady'), 'success');
@@ -5188,6 +5260,7 @@
       SweatManagerDB.onAuthStateChange(async (event, session) => {
         if (event === 'PASSWORD_RECOVERY' && session?.user) {
           recoverySessionReady = true;
+          settleLanguage(session.user, true);
           setAuthMode('recovery');
           cleanAuthUrl('/reset-password');
           showAuthGate(t('authRecoveryReady'), 'success');
@@ -5197,6 +5270,7 @@
         if (isBootstrapping && event === 'INITIAL_SESSION') return;
         if (authMode === 'recovery') return;
         if (session?.user) {
+          settleLanguage(session.user, true);
           await handleSignedIn(session.user);
         } else {
           const message = pendingSignedOutMessage;
@@ -5232,7 +5306,7 @@
             setAuthMessage(t('authInvalidEmail'), 'error');
             return;
           }
-          await SweatManagerDB.resetPassword(email);
+          await SweatManagerDB.resetPassword(email, currentLanguage);
           setAuthMessage(t('authResetSent'), 'success');
           showToast(t('authResetSent'));
           return;
@@ -5290,7 +5364,8 @@
             password,
             gymName,
             ownerName,
-            phone
+            phone,
+            locale: currentLanguage
           });
           setAuthMessage(t('authSignupSuccess'), 'success');
           showToast(t('authSignupSuccess'));
@@ -6714,8 +6789,10 @@
       });
     });
 
-    document.getElementById('languageSelect').addEventListener('change', e => {
-      setLanguage(e.target.value);
+    document.querySelectorAll('select.language-select').forEach(select => {
+      select.addEventListener('change', e => {
+        setLanguage(e.target.value, { syncAccount: true });
+      });
     });
 
     document.getElementById('closeModal').addEventListener('click', () => {
@@ -6794,6 +6871,7 @@
       });
     }
 
+    bootstrapLanguage();
     resetRegisterDates();
     applyTranslations();
     setAuthMode(getInitialAuthMode());

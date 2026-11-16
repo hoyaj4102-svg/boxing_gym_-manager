@@ -177,17 +177,32 @@
     return data.session || null;
   }
 
-  async function signUp({ email, password, gymName, ownerName, phone }) {
+  function authRedirectTo(path, locale) {
+    const origin = global.location && global.location.origin;
+    if (!origin) return '';
+    if (global.RememberLanguage && typeof global.RememberLanguage.redirectUrl === 'function') {
+      return global.RememberLanguage.redirectUrl(origin, path, locale);
+    }
+    const url = new URL(path, origin);
+    if (locale) url.searchParams.set('lang', locale);
+    return url.toString();
+  }
+
+  async function signUp({ email, password, gymName, ownerName, phone, locale }) {
     if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    const language = locale || 'ko';
 
     const { data, error } = await STATE.client.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: authRedirectTo('/login', language),
         data: {
           gym_name: gymName,
           owner_name: ownerName || '',
-          phone: phone || ''
+          phone: phone || '',
+          // Display language only. Never used for authorization.
+          locale: language
         }
       }
     });
@@ -213,9 +228,9 @@
     STATE.ready = false;
   }
 
-  async function resetPassword(email) {
+  async function resetPassword(email, locale) {
     if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
-    const redirectTo = new URL('/reset-password', global.location.origin).toString();
+    const redirectTo = authRedirectTo('/reset-password', locale || 'ko');
     const { data, error } = await STATE.client.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
     return data;
@@ -232,6 +247,15 @@
     if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
     const { data, error } = await STATE.client.auth.updateUser({ password: newPassword });
     if (error) throw error;
+    return data;
+  }
+
+  async function updateLocale(locale) {
+    if (!STATE.client) throw new Error('Supabase가 설정되지 않았습니다.');
+    // Display language only. Never used for authorization.
+    const { data, error } = await STATE.client.auth.updateUser({ data: { locale } });
+    if (error) throw error;
+    if (data && data.user) STATE.user = data.user;
     return data;
   }
 
@@ -431,6 +455,7 @@ async function replaceAllMembers(memberList) {
     resetPassword,
     exchangeCodeForSession,
     updatePassword,
+    updateLocale,
     onAuthStateChange,
     fetchMembers,
     createMember,
