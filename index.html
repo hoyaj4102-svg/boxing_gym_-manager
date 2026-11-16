@@ -1961,7 +1961,7 @@
         </div>
         <div class="field signup-only" hidden>
           <label for="authGymPhone" data-i18n="authGymPhoneLabel">체육관 연락처</label>
-          <input type="tel" id="authGymPhone" autocomplete="tel" placeholder="010-0000-0000">
+          <input type="tel" id="authGymPhone" autocomplete="tel" placeholder="010-0000-0000" data-i18n-placeholder="authPhonePlaceholder">
         </div>
         <div class="field" id="authEmailField">
           <label for="authEmail" data-i18n="authEmailLabel">이메일</label>
@@ -2049,12 +2049,12 @@
       <article class="stat-card action" data-dashboard-key="register" role="button" tabindex="0">
         <div class="value">+</div>
         <div class="label" data-i18n="registerTitle">회원 등록</div>
-        <div class="hint">빠른 등록</div>
+        <div class="hint" data-i18n="registerHint">빠른 등록</div>
       </article>
       <article class="stat-card action" data-dashboard-key="members" role="button" tabindex="0">
         <div class="value">⌕</div>
         <div class="label" data-i18n="memberListTitle">회원 목록</div>
-        <div class="hint">검색 및 상세</div>
+        <div class="hint" data-i18n="memberListHint">검색 및 상세</div>
       </article>
     </section>
 
@@ -2148,7 +2148,7 @@
               </div>
               <div class="field">
                 <label for="phone" data-i18n="phoneLabel">연락처</label>
-                <input type="tel" id="phone" placeholder="010-1234-5678" autocomplete="tel" required>
+                <input type="tel" id="phone" placeholder="010-1234-5678" data-i18n-placeholder="phonePlaceholder" autocomplete="tel" required>
               </div>
               <div class="field form-full">
                 <label for="address" data-i18n="addressLabel">주소</label>
@@ -2348,7 +2348,7 @@
           </div>
           <div class="field">
             <label for="editPhone" data-i18n="phoneLabel">연락처</label>
-            <input type="tel" id="editPhone" required>
+            <input type="tel" id="editPhone" data-i18n-placeholder="phonePlaceholder" required>
           </div>
           <div class="field">
             <label for="editAddress" data-i18n="addressLabel">주소</label>
@@ -2651,18 +2651,61 @@
         memberLimitReached: 'Free 플랜 회원 한도({limit}명)에 도달했습니다. Pro로 업그레이드하세요.',
         billingLoadFailed: '요금제 정보를 불러오지 못했습니다. supabase/billing.sql 실행 여부를 확인하세요.',
         billingNoTrial: '해당 없음',
-        installGuideTitle: '📱 Re;Member를 휴대폰에 설치하세요',
-        installGuideDescription: '홈 화면에 추가하면 매일 앱처럼 바로 사용할 수 있습니다.',
-        installGuideIphoneButton: 'iPhone 설치 방법',
-        installGuideAndroidButton: 'Android 설치 방법',
-        installGuideLaterButton: '나중에 하기',
-        installGuideSettingsButton: '📱 휴대폰에 앱처럼 설치하기',
-        installGuideExampleLabel: '예시 화면',
-        installGuideBackButton: '이전',
-        installGuideNextButton: '다음',
-        installGuideDoneButton: '완료',
-        installGuideCompleteTitle: '🎉 설치 완료!',
-        installGuideCompleteBody: '이제 휴대폰 홈 화면의 Re;Member 아이콘을 눌러 바로 사용할 수 있습니다.',
+        registerHint: "빠른 등록",
+        memberListHint: "검색 및 상세",
+        authPhonePlaceholder: "010-0000-0000",
+        phonePlaceholder: "010-1234-5678",
+        installGuideTitle: "📱 Re;Member를 휴대폰에 설치하세요",
+        installGuideDescription: "홈 화면에 추가하면 매일 앱처럼 바로 사용할 수 있습니다.",
+        installGuideIphoneButton: "iPhone 설치 방법",
+        installGuideAndroidButton: "Android 설치 방법",
+        installGuideLaterButton: "나중에 하기",
+        installGuideSettingsButton: "📱 휴대폰에 앱처럼 설치하기",
+        installGuideExampleLabel: "예시 화면",
+        installGuideBackButton: "이전",
+        installGuideNextButton: "다음",
+        installGuideDoneButton: "완료",
+        installGuideCompleteTitle: "🎉 설치 완료!",
+        installGuideCompleteBody: "이제 휴대폰 홈 화면의 Re;Member 아이콘을 눌러 바로 사용할 수 있습니다.",
+        installGuideIphoneHeading: "iPhone에 Re;Member 추가하기",
+        installGuideAndroidHeading: "Android에 Re;Member 추가하기",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "iPhone에 Re;Member 추가하기",
+        installStepIphone1Copy: "① Chrome이면 오른쪽 아래 '…' 메뉴를 눌러주세요. Safari는 아래 공유 버튼에서 시작하면 됩니다.",
+        installStepIphone2Title: "공유 화면 열기",
+        installStepIphone2Copy: "② 메뉴에서 '공유'를 눌러주세요.",
+        installStepIphone3Title: "홈 화면에 추가 찾기",
+        installStepIphone3Copy: "③ 아래로 내려 '홈 화면에 추가'를 눌러주세요.",
+        installStepIphone4Title: "마지막으로 추가하기",
+        installStepIphone4Copy: "④ 오른쪽 위 '추가'를 눌러주세요.",
+        installStepAndroid1Title: "Android에 Re;Member 추가하기",
+        installStepAndroid1Copy: "① Chrome에서 Re;Member를 열고 오른쪽 위 메뉴를 눌러주세요.",
+        installStepAndroid2Title: "설치 메뉴 찾기",
+        installStepAndroid2Copy: "② '앱 설치' 또는 '홈 화면에 추가'를 찾아 눌러주세요.",
+        installStepAndroid3Title: "설치 확인하기",
+        installStepAndroid3Copy: "③ 확인 화면에서 '설치'를 눌러주세요.",
+        mockShare: "⇧ 공유",
+        mockAddBookmark: "🔖 북마크에 추가",
+        mockNewTab: "＋ 새로운 탭",
+        mockPrivateTab: "🕶 개인 정보 보호 탭",
+        mockShareTargets: "AirDrop · 메시지 · Mail",
+        mockCopyBookmarkReading: "복사 · 북마크 · 읽기 목록",
+        mockAddFavorite: "즐겨찾기에 추가",
+        mockFindOnPage: "페이지에서 찾기",
+        mockAddToHome: "＋ 홈 화면에 추가",
+        mockCancel: "취소",
+        mockAdd: "추가",
+        mockMessage: "💬 메시지",
+        mockRefresh: "↻ 새로고침",
+        mockInstallApp: "📱 앱 설치",
+        mockSettings: "⚙ 설정",
+        mockInstallTitle: "Re;Member 설치",
+        mockInstallBody: "홈 화면에서 바로 열 수 있습니다.",
+        mockInstallButton: "설치",
+        serviceProfileMissing: "프로필이 없습니다. 회원가입 시 체육관 정보가 생성되어야 합니다.",
+        serviceGymMissing: "체육관 정보를 찾을 수 없습니다.",
+        serviceNotConfigured: "Supabase가 설정되지 않았습니다.",
+        serviceLoginRequired: "로그인이 필요합니다.",
         storageInfoButton: '저장 방식 안내',
         jsonBackupButton: '전체 데이터 백업',
         csvExportButton: 'CSV 내보내기',
@@ -2941,6 +2984,61 @@
         memberLimitReached: 'Free plan member limit ({limit}) reached. Please upgrade to Pro.',
         billingLoadFailed: 'Could not load billing info. Make sure supabase/billing.sql was run.',
         billingNoTrial: 'N/A',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "555-010-0000",
+        phonePlaceholder: "555-010-1234",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: 'Storage guide',
         jsonBackupButton: 'Full data backup',
         csvExportButton: 'Export CSV',
@@ -3195,6 +3293,61 @@
         memberLimitReached: 'Límite Free ({limit}) alcanzado. Actualiza a Pro.',
         billingLoadFailed: 'No se pudo cargar facturación. Ejecuta supabase/billing.sql.',
         billingNoTrial: 'N/D',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "600 000 000",
+        phonePlaceholder: "612 345 678",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: 'Guía de guardado',
         jsonBackupButton: 'Copia completa',
         csvExportButton: 'Exportar CSV',
@@ -3449,6 +3602,61 @@
         memberLimitReached: 'Лимит Free ({limit}) исчерпан. Перейдите на Pro.',
         billingLoadFailed: 'Не удалось загрузить тариф. Выполните supabase/billing.sql.',
         billingNoTrial: 'Н/Д',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "+7 900 000-00-00",
+        phonePlaceholder: "+7 900 123-45-67",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: 'Как хранятся данные',
         jsonBackupButton: 'Полная резервная копия',
         csvExportButton: 'Экспорт CSV',
@@ -3703,6 +3911,61 @@
         memberLimitReached: 'Free хязгаар ({limit}) хүрлээ. Pro руу шилжэнэ үү.',
         billingLoadFailed: 'Төлбөрийн мэдээлэл ачаалагдсангүй. supabase/billing.sql ажиллуулна уу.',
         billingNoTrial: 'Байхгүй',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "9911-0000",
+        phonePlaceholder: "9911-2233",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: 'Хадгалалтын заавар',
         jsonBackupButton: 'Бүх өгөгдөл нөөцлөх',
         csvExportButton: 'CSV экспорт',
@@ -3957,6 +4220,61 @@
         memberLimitReached: '已达 Free 上限（{limit}人），请升级 Pro。',
         billingLoadFailed: '无法加载套餐信息，请确认已执行 supabase/billing.sql。',
         billingNoTrial: '无',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "138-0000-0000",
+        phonePlaceholder: "138-1234-5678",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: '存储方式说明',
         jsonBackupButton: '完整数据备份',
         csvExportButton: '导出 CSV',
@@ -4211,6 +4529,61 @@
         memberLimitReached: 'Free लिमिट ({limit}) पूरी हो गई। Pro में अपग्रेड करें।',
         billingLoadFailed: 'बिलिंग लोड नहीं हुई। supabase/billing.sql चलाएँ।',
         billingNoTrial: 'N/A',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "98765 00000",
+        phonePlaceholder: "98765 43210",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: 'स्टोरेज गाइड',
         jsonBackupButton: 'पूरा डेटा बैकअप',
         csvExportButton: 'CSV निर्यात',
@@ -4465,6 +4838,61 @@
         memberLimitReached: 'Limite Free ({limit}) atteinte. Passez à Pro.',
         billingLoadFailed: 'Impossible de charger la facturation. Exécutez supabase/billing.sql.',
         billingNoTrial: 'N/A',
+        registerHint: "Quick add",
+        memberListHint: "Search and details",
+        authPhonePlaceholder: "06 00 00 00 00",
+        phonePlaceholder: "06 12 34 56 78",
+        installGuideTitle: "📱 Install Re;Member on your phone",
+        installGuideDescription: "Add it to your home screen and open it like an app every day.",
+        installGuideIphoneButton: "iPhone install steps",
+        installGuideAndroidButton: "Android install steps",
+        installGuideLaterButton: "Later",
+        installGuideSettingsButton: "📱 Install it like an app on your phone",
+        installGuideExampleLabel: "Example screen",
+        installGuideBackButton: "Back",
+        installGuideNextButton: "Next",
+        installGuideDoneButton: "Done",
+        installGuideCompleteTitle: "🎉 Installed",
+        installGuideCompleteBody: "Open the Re;Member icon on your home screen to use it.",
+        installGuideIphoneHeading: "Add Re;Member on iPhone",
+        installGuideAndroidHeading: "Add Re;Member on Android",
+        installStepKicker: "STEP {count}",
+        installStepIphone1Title: "Add Re;Member on iPhone",
+        installStepIphone1Copy: "① On Chrome, tap the '…' menu at the bottom right. On Safari, start from the Share button below.",
+        installStepIphone2Title: "Open the share sheet",
+        installStepIphone2Copy: "② Tap Share in the menu.",
+        installStepIphone3Title: "Find Add to Home Screen",
+        installStepIphone3Copy: "③ Scroll down and tap Add to Home Screen.",
+        installStepIphone4Title: "Add it",
+        installStepIphone4Copy: "④ Tap Add at the top right.",
+        installStepAndroid1Title: "Add Re;Member on Android",
+        installStepAndroid1Copy: "① Open Re;Member in Chrome and tap the menu at the top right.",
+        installStepAndroid2Title: "Find the install menu",
+        installStepAndroid2Copy: "② Tap Install app or Add to Home screen.",
+        installStepAndroid3Title: "Confirm install",
+        installStepAndroid3Copy: "③ Tap Install on the confirmation screen.",
+        mockShare: "⇧ Share",
+        mockAddBookmark: "🔖 Add bookmark",
+        mockNewTab: "＋ New tab",
+        mockPrivateTab: "🕶 Private tab",
+        mockShareTargets: "AirDrop · Messages · Mail",
+        mockCopyBookmarkReading: "Copy · Bookmark · Reading list",
+        mockAddFavorite: "Add to Favorites",
+        mockFindOnPage: "Find on page",
+        mockAddToHome: "＋ Add to Home Screen",
+        mockCancel: "Cancel",
+        mockAdd: "Add",
+        mockMessage: "💬 Messages",
+        mockRefresh: "↻ Refresh",
+        mockInstallApp: "📱 Install app",
+        mockSettings: "⚙ Settings",
+        mockInstallTitle: "Install Re;Member",
+        mockInstallBody: "Open it from your home screen.",
+        mockInstallButton: "Install",
+        serviceProfileMissing: "No profile found. Signing up should create the gym record.",
+        serviceGymMissing: "Gym information could not be found.",
+        serviceNotConfigured: "Supabase is not configured.",
+        serviceLoginRequired: "Please sign in.",
         storageInfoButton: 'Guide de stockage',
         jsonBackupButton: 'Sauvegarde complète',
         csvExportButton: 'Exporter CSV',
@@ -4555,6 +4983,7 @@
     let authMode = 'login';
     let recoverySessionReady = false;
     let pendingSignedOutMessage = '';
+    let hadAuthenticatedSession = false;
     let isBootstrapping = true;
     let isSaving = false;
     let billingSummary = null;
@@ -4567,43 +4996,15 @@
 
     const INSTALL_GUIDE_STEPS = {
       iphone: [
-        {
-          title: 'iPhone에 Re;Member 추가하기',
-          copy: "① Chrome이면 오른쪽 아래 '…' 메뉴를 눌러주세요. Safari는 아래 공유 버튼에서 시작하면 됩니다.",
-          mockup: 'iphone-chrome-menu'
-        },
-        {
-          title: '공유 화면 열기',
-          copy: "② 메뉴에서 '공유'를 눌러주세요.",
-          mockup: 'iphone-chrome-share'
-        },
-        {
-          title: '홈 화면에 추가 찾기',
-          copy: "③ 아래로 내려 '홈 화면에 추가'를 눌러주세요.",
-          mockup: 'iphone-ios-share'
-        },
-        {
-          title: '마지막으로 추가하기',
-          copy: "④ 오른쪽 위 '추가'를 눌러주세요.",
-          mockup: 'iphone-add'
-        }
+        { titleKey: 'installStepIphone1Title', copyKey: 'installStepIphone1Copy', mockup: 'iphone-chrome-menu' },
+        { titleKey: 'installStepIphone2Title', copyKey: 'installStepIphone2Copy', mockup: 'iphone-chrome-share' },
+        { titleKey: 'installStepIphone3Title', copyKey: 'installStepIphone3Copy', mockup: 'iphone-ios-share' },
+        { titleKey: 'installStepIphone4Title', copyKey: 'installStepIphone4Copy', mockup: 'iphone-add' }
       ],
       android: [
-        {
-          title: 'Android에 Re;Member 추가하기',
-          copy: '① Chrome에서 Re;Member를 열고 오른쪽 위 메뉴를 눌러주세요.',
-          mockup: 'android-menu-button'
-        },
-        {
-          title: '설치 메뉴 찾기',
-          copy: "② '앱 설치' 또는 '홈 화면에 추가'를 찾아 눌러주세요.",
-          mockup: 'android-menu'
-        },
-        {
-          title: '설치 확인하기',
-          copy: "③ 확인 화면에서 '설치'를 눌러주세요.",
-          mockup: 'android-confirm'
-        }
+        { titleKey: 'installStepAndroid1Title', copyKey: 'installStepAndroid1Copy', mockup: 'android-menu-button' },
+        { titleKey: 'installStepAndroid2Title', copyKey: 'installStepAndroid2Copy', mockup: 'android-menu' },
+        { titleKey: 'installStepAndroid3Title', copyKey: 'installStepAndroid3Copy', mockup: 'android-confirm' }
       ]
     };
 
@@ -4661,9 +5062,9 @@
     }
 
     function t(key, params = {}) {
-      const dictionary = TRANSLATIONS[currentLanguage] || TRANSLATIONS.ko;
-      const fallback = TRANSLATIONS.ko[key] || key;
-      let value = dictionary[key] || fallback;
+      const dictionary = TRANSLATIONS[currentLanguage] || TRANSLATIONS.en || TRANSLATIONS.ko;
+      const fallback = (TRANSLATIONS.en && TRANSLATIONS.en[key]) || (TRANSLATIONS.ko && TRANSLATIONS.ko[key]) || key;
+      let value = (dictionary && dictionary[key]) || fallback;
       if (Array.isArray(value)) return value;
       Object.entries(params).forEach(([name, replacement]) => {
         value = value.replaceAll(`{${name}}`, replacement);
@@ -5033,11 +5434,14 @@
       const steps = INSTALL_GUIDE_STEPS[installGuidePlatform];
       const current = steps[installGuideStep];
       const isLast = installGuideStep === steps.length - 1;
-      document.getElementById('installGuideTitle').textContent =
-        installGuidePlatform === 'iphone' ? 'iPhone에 Re;Member 추가하기' : 'Android에 Re;Member 추가하기';
-      document.getElementById('installStepKicker').textContent = `STEP ${installGuideStep + 1}`;
-      document.getElementById('installStepTitle').textContent = current.title;
-      document.getElementById('installStepCopy').textContent = current.copy;
+      document.getElementById('installGuideTitle').textContent = t(
+        installGuidePlatform === 'iphone' ? 'installGuideIphoneHeading' : 'installGuideAndroidHeading'
+      );
+      document.getElementById('installStepKicker').textContent = t('installStepKicker', {
+        count: installGuideStep + 1
+      });
+      document.getElementById('installStepTitle').textContent = t(current.titleKey);
+      document.getElementById('installStepCopy').textContent = t(current.copyKey);
       document.getElementById('installPhoneMockup').innerHTML = getInstallMockup(current.mockup);
       document.getElementById('installStepBackButton').disabled = installGuideStep === 0;
       document.getElementById('installStepNextButton').textContent = isLast ? t('installGuideDoneButton') : t('installGuideNextButton');
@@ -5069,10 +5473,10 @@
               <span>‹</span><span>▭</span><span>app.re-member.kr</span><span>↻</span><span>…</span>
             </div>
             <div class="browser-menu">
-              <div class="menu-row install-highlight">⇧ 공유</div>
-              <div class="menu-row">🔖 북마크에 추가</div>
-              <div class="menu-row">＋ 새로운 탭</div>
-              <div class="menu-row">🕶 개인 정보 보호 탭</div>
+              <div class="menu-row install-highlight">${t('mockShare')}</div>
+              <div class="menu-row">${t('mockAddBookmark')}</div>
+              <div class="menu-row">${t('mockNewTab')}</div>
+              <div class="menu-row">${t('mockPrivateTab')}</div>
             </div>
           </div>`;
       }
@@ -5084,11 +5488,11 @@
             ${mockReMemberPage()}
             <div class="share-sheet">
               <div class="sheet-handle"></div>
-              <div class="sheet-row">AirDrop · 메시지 · Mail</div>
-              <div class="sheet-row">복사 · 북마크 · 읽기 목록</div>
-              <div class="sheet-row">즐겨찾기에 추가</div>
-              <div class="sheet-row">페이지에서 찾기</div>
-              <div class="sheet-row install-highlight">＋ 홈 화면에 추가</div>
+              <div class="sheet-row">${t('mockShareTargets')}</div>
+              <div class="sheet-row">${t('mockCopyBookmarkReading')}</div>
+              <div class="sheet-row">${t('mockAddFavorite')}</div>
+              <div class="sheet-row">${t('mockFindOnPage')}</div>
+              <div class="sheet-row install-highlight">${t('mockAddToHome')}</div>
             </div>
           </div>`;
       }
@@ -5113,9 +5517,9 @@
             ${mockReMemberPage()}
             <div class="share-sheet">
               <div class="sheet-handle"></div>
-              <div class="sheet-row">💬 메시지</div>
-              <div class="sheet-row install-highlight">➕ 홈 화면에 추가</div>
-              <div class="sheet-row">🔖 즐겨찾기에 추가</div>
+              <div class="sheet-row">${t('mockMessage')}</div>
+              <div class="sheet-row install-highlight">${t('mockAddToHome')}</div>
+              <div class="sheet-row">${t('mockAddFavorite')}</div>
             </div>
           </div>`;
       }
@@ -5125,9 +5529,9 @@
           <div class="phone-screen">
             <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
             <div class="ios-add-bar">
-              <span>취소</span>
-              <span>홈 화면에 추가</span>
-              <span class="install-highlight">추가</span>
+              <span>${t('mockCancel')}</span>
+              <span>${t('mockAddToHome')}</span>
+              <span class="install-highlight">${t('mockAdd')}</span>
             </div>
             <span class="tap-target ios-add-button"></span>
             <div class="ios-add-card">
@@ -5164,10 +5568,10 @@
             </div>
             ${mockReMemberPage()}
             <div class="android-menu">
-              <div class="menu-row">↻ 새로고침</div>
-              <div class="menu-row install-highlight">📱 앱 설치</div>
-              <div class="menu-row install-highlight">➕ 홈 화면에 추가</div>
-              <div class="menu-row">⚙ 설정</div>
+              <div class="menu-row">${t('mockRefresh')}</div>
+              <div class="menu-row install-highlight">${t('mockInstallApp')}</div>
+              <div class="menu-row install-highlight">${t('mockAddToHome')}</div>
+              <div class="menu-row">${t('mockSettings')}</div>
             </div>
           </div>`;
       }
@@ -5177,9 +5581,9 @@
           <div class="phone-status"><span>9:41</span><span>5G 100%</span></div>
           ${mockReMemberPage()}
           <div class="install-confirm">
-            <strong>Re;Member 설치</strong>
-            <p>홈 화면에서 바로 열 수 있습니다.</p>
-            <button type="button" class="btn btn-primary install-highlight">설치</button>
+            <strong>${t('mockInstallTitle')}</strong>
+            <p>${t('mockInstallBody')}</p>
+            <button type="button" class="btn btn-primary install-highlight">${t('mockInstallButton')}</button>
           </div>
         </div>`;
     }
@@ -5218,7 +5622,7 @@
     async function handleSignedOut(message = '') {
       members = [];
       refreshAll();
-      showAuthGate(message || t('authSignedOut'));
+      showAuthGate(message);
     }
 
     async function initAuth() {
@@ -5270,11 +5674,25 @@
         if (isBootstrapping && event === 'INITIAL_SESSION') return;
         if (authMode === 'recovery') return;
         if (session?.user) {
+          hadAuthenticatedSession = true;
           settleLanguage(session.user, true);
           await handleSignedIn(session.user);
         } else {
-          const message = pendingSignedOutMessage;
+          const announce = window.RememberLanguage.shouldAnnounceSignedOut({
+            event,
+            bootstrapping: isBootstrapping,
+            hadSession: hadAuthenticatedSession,
+            pendingMessage: pendingSignedOutMessage
+          });
+          if (!announce) {
+            if (isBootstrapping || authMode === 'recovery') return;
+            pendingSignedOutMessage = '';
+            await handleSignedOut('');
+            return;
+          }
+          const message = pendingSignedOutMessage || t('authSignedOut');
           pendingSignedOutMessage = '';
+          hadAuthenticatedSession = false;
           await handleSignedOut(message);
         }
       });
@@ -5388,9 +5806,17 @@
 
     async function handleSignOut() {
       try {
+        pendingSignedOutMessage = t('authSignedOut');
+        hadAuthenticatedSession = true;
         await SweatManagerDB.signOut();
-        await handleSignedOut(t('authSignedOut'));
+        if (pendingSignedOutMessage) {
+          const message = pendingSignedOutMessage;
+          pendingSignedOutMessage = '';
+          hadAuthenticatedSession = false;
+          await handleSignedOut(message);
+        }
       } catch (error) {
+        pendingSignedOutMessage = '';
         showToast(error.message || String(error), 'warning');
       }
     }
@@ -6871,6 +7297,7 @@
       });
     }
 
+    window.rememberT = t;
     bootstrapLanguage();
     resetRegisterDates();
     applyTranslations();

@@ -76,6 +76,13 @@
     return url.toString();
   }
 
+  function shouldAnnounceSignedOut(options) {
+    const settings = options || {};
+    if (settings.bootstrapping) return false;
+    if (settings.pendingMessage) return true;
+    return settings.event === 'SIGNED_OUT' && settings.hadSession === true;
+  }
+
   function cleanAuthPath(path, search, storedLanguage) {
     const pathname = String(path || '/').split('?')[0].split('#')[0] || '/';
     const lang = languageFromSearch(search) || (isSupportedLanguage(storedLanguage) ? storedLanguage : null);
@@ -91,6 +98,7 @@
     accountLocale,
     resolveLanguage,
     redirectUrl,
-    cleanAuthPath
+    cleanAuthPath,
+    shouldAnnounceSignedOut
   };
 })(typeof window !== 'undefined' ? window : globalThis);

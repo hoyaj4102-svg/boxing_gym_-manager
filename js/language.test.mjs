@@ -122,6 +122,43 @@ test('cleaning an auth URL drops tokens but keeps the chosen language', () => {
   );
 });
 
+test('the signed-out notice appears only after a real sign-out', () => {
+  assert.equal(language.shouldAnnounceSignedOut({
+    event: 'INITIAL_SESSION',
+    bootstrapping: true,
+    hadSession: false,
+    pendingMessage: ''
+  }), false);
+  assert.equal(language.shouldAnnounceSignedOut({
+    event: 'SIGNED_OUT',
+    bootstrapping: true,
+    hadSession: false,
+    pendingMessage: ''
+  }), false);
+  assert.equal(language.shouldAnnounceSignedOut({
+    event: 'SIGNED_OUT',
+    bootstrapping: false,
+    hadSession: false,
+    pendingMessage: ''
+  }), false);
+  assert.equal(language.shouldAnnounceSignedOut({
+    event: 'SIGNED_OUT',
+    bootstrapping: false,
+    hadSession: true,
+    pendingMessage: ''
+  }), true);
+  assert.equal(language.shouldAnnounceSignedOut({
+    event: 'SIGNED_OUT',
+    bootstrapping: false,
+    hadSession: true,
+    pendingMessage: 'Password updated.'
+  }), true);
+
+  const page = readFileSync('index.html', 'utf8');
+  assert.doesNotMatch(page, /message \|\| t\('authSignedOut'\)/);
+  assert.match(page, /shouldAnnounceSignedOut/);
+});
+
 test('the page wires the selector, redirects, and account locale update', () => {
   const page = readFileSync('index.html', 'utf8');
   const service = readFileSync('js/supabase-service.js', 'utf8');
