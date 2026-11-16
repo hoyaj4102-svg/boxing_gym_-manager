@@ -42,6 +42,14 @@ function isSensitiveRequest(url, request) {
   return false;
 }
 
+// Link-preview crawlers and browsers must receive the English share document
+// from the network. This worker does not precache /share and does not answer
+// it with the app shell.
+function isSharePreviewPath(pathname) {
+  const path = String(pathname || '').toLowerCase();
+  return path === '/share' || path.startsWith('/share/');
+}
+
 function isNetworkFirstRequest(request, url) {
   if (request.mode === 'navigate') return true;
   const destination = request.destination;
@@ -68,6 +76,7 @@ function fetchStrategy(request) {
   // so this worker cannot cache, rewrite, or fail the script and its beacon.
   const insightsPath = url.pathname.toLowerCase();
   if (insightsPath === '/_vercel/insights' || insightsPath.startsWith('/_vercel/insights/')) return 'bypass';
+  if (isSharePreviewPath(url.pathname)) return 'bypass';
   if (isSensitiveRequest(url, request)) return 'bypass';
   if (isNetworkFirstRequest(request, url)) return 'network-first';
   return 'stale-while-revalidate';
