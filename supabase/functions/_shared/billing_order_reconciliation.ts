@@ -202,11 +202,13 @@ export function classifyBillingCharge(
     : "";
   const totalAmount = payload.totalAmount;
 
-  if (status && status !== "DONE") {
+  if (status !== "DONE") {
     return {
       action: "lookup",
-      code: "TOSS_CHARGE_STATUS_NOT_DONE",
-      message: `Billing response status is ${status}`,
+      code: status ? "TOSS_CHARGE_STATUS_NOT_DONE" : "TOSS_CHARGE_STATUS_MISSING",
+      message: status
+        ? `Billing response status is ${status}`
+        : "Billing response included paymentKey without status",
       payload,
     };
   }
@@ -421,9 +423,17 @@ export async function settleRecurringBillingCharge(input: {
   charge: () => Promise<TossBillingChargeOutcome>;
   lookupOrder: () => Promise<TossLookupResult>;
   guard?: OrderChargeGuard;
+  lookupBeforePost?: boolean;
 }): Promise<BillingSettlementResult> {
   const guard = input.guard ?? createOrderChargeGuard();
   const expected = { orderId: input.orderId, amountKrw: input.amountKrw };
+
+  if (input.lookupBeforePost) {
+    const preview = classifyOrderLookup(await input.lookupOrder(), expected);
+    if (preview.kind !== "retry_same_order") {
+      return { providerPosts: 0, settlement: preview };
+    }
+  }
 
   if (!guard.claim(input.orderId)) {
     return {
@@ -492,12 +502,14 @@ export async function chargeAndSettleRecurringBilling(input: {
   tossSecret: string;
   fetchImpl?: typeof fetch;
   guard?: OrderChargeGuard;
+  lookupBeforePost?: boolean;
 }): Promise<BillingSettlementResult> {
   const fetchImpl = input.fetchImpl ?? fetch;
   return await settleRecurringBillingCharge({
     orderId: input.orderId,
     amountKrw: input.amountKrw,
     guard: input.guard,
+    lookupBeforePost: input.lookupBeforePost,
     charge: () =>
       chargeTossBilling({
         billingKey: input.billingKey,

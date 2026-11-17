@@ -1,7 +1,10 @@
 import { corsHeaders, jsonResponse, textResponse } from "../_shared/cors.ts";
 import { getAdminClient } from "../_shared/supabase.ts";
 import { retryDispatchDecision } from "../_shared/toss_test_guard.ts";
-import { executeFailureRetryCharge } from "./handler.ts";
+import {
+  executeFailureRetryCharge,
+  failureRetryAttemptUpdate,
+} from "./handler.ts";
 
 function isAuthorizedCron(req: Request, cronSecret: string) {
   if (!cronSecret) return false;
@@ -47,22 +50,48 @@ Deno.serve(async (req) => {
 
   const claims = Array.isArray(claimed.data) ? claimed.data : [];
   let providerCalls = 0;
+  const results: Array<Record<string, unknown>> = [];
   for (const claim of claims) {
     if (!claim || typeof claim !== "object") continue;
     const row = claim as Record<string, unknown>;
     const gymId = String(row.gym_id || "");
+    const attemptId = String(row.payment_attempt_id || "");
+    const orderId = String(row.order_id || "");
     const credential = await admin.rpc("read_gym_billing_credential", { p_gym_id: gymId });
     const billingKey = typeof credential.data === "string" ? credential.data.trim() : "";
     if (!billingKey || credential.error) continue;
-    providerCalls += 1;
-    await executeFailureRetryCharge({
-      orderId: String(row.order_id || ""),
+    const settled = await executeFailureRetryCharge({
+      orderId,
       amountKrw: Number(row.amount_krw || 0),
       customerKey: String(row.customer_key || ""),
       billingKey,
       authorization,
+      tossSecret: secret,
+    });
+    providerCalls += settled.providerPosts;
+    const settlement = settled.settlement;
+    if (attemptId) {
+      await admin.from("payment_attempts").update(failureRetryAttemptUpdate(settlement)).eq(
+        "id",
+        attemptId,
+      );
+      if (settlement.kind === "paid") {
+        await admin.rpc("activate_payment_attempt", { p_attempt_id: attemptId });
+      }
+    }
+    results.push({
+      orderId,
+      paymentAttemptId: attemptId,
+      chargeResult: settlement.kind,
+      providerPosts: settled.providerPosts,
     });
   }
 
-  return jsonResponse({ ok: true, dryRun: false, providerCalls, count: claims.length });
+  return jsonResponse({
+    ok: true,
+    dryRun: false,
+    providerCalls,
+    count: claims.length,
+    results,
+  });
 });
