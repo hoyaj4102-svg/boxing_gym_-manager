@@ -523,7 +523,12 @@ Deno.test("paymentKey save failure after successful charge keeps gym out of past
     tossSecret: "test_secret",
     fetchImpl: async () => {
       fetchCalls += 1;
-      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), {
         status: 200,
       });
     },
@@ -558,7 +563,12 @@ Deno.test("checkout session insert failure after successful charge stops before 
     tossSecret: "test_secret",
     fetchImpl: async () => {
       fetchCalls += 1;
-      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), {
         status: 200,
       });
     },
@@ -612,7 +622,12 @@ Deno.test("activation failure leaves attempt recoverable and keeps gym out of pa
   const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
     tossSecret: "test_secret",
     fetchImpl: async () =>
-      new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+      new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), {
         status: 200,
       }),
     now: () => new Date("2026-01-01T00:10:00.000Z"),
@@ -859,6 +874,8 @@ Deno.test("renewal sends a stable Idempotency-Key for the order", async () => {
       return new Response(JSON.stringify({
         paymentKey: "payment_1",
         orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
       }), { status: 200 });
     },
   });

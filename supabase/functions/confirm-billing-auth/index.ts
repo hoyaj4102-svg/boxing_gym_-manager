@@ -8,7 +8,8 @@ import {
 } from "../_shared/supabase.ts";
 import { interpretConsentGate } from "../_shared/consent_gate.ts";
 import { chargeIdempotencyKey } from "../_shared/toss_idempotency.ts";
-import { chargeTossBilling } from "./charge_outcome.ts";
+import { settleInitialBillingCharge } from "./initial_billing_charge.ts";
+import type { BillingSettlementResult } from "../_shared/billing_order_reconciliation.ts";
 
 const AMOUNT_KRW = 10000;
 
@@ -132,6 +133,168 @@ async function recoverPaymentAttemptActivation(
   }
 
   return null;
+}
+
+async function finishInitialBillingCharge(
+  admin: ReturnType<typeof getAdminClient>,
+  input: {
+    gymId: string;
+    paymentAttemptId: string;
+    orderId: string;
+    checkoutSessionId: string | null;
+    settled: BillingSettlementResult;
+  },
+) {
+  const { gymId, paymentAttemptId, orderId, checkoutSessionId, settled } = input;
+  const settlement = settled.settlement;
+  const updateCheckout = async (values: Record<string, unknown>) => {
+    const query = admin.from("checkout_sessions").update(values);
+    if (checkoutSessionId) await query.eq("id", checkoutSessionId);
+    else await query.eq("order_id", orderId);
+  };
+
+  if (settlement.kind === "failed") {
+    await updateCheckout({
+      status: "failed",
+      raw: sanitizeProviderPayload({
+        error: settlement.message,
+        errorCode: settlement.code,
+        chargeResult: "rejected",
+      }),
+    });
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: "charge_failed",
+      activation_status: "not_started",
+      recovery_status: "none",
+      error_code: settlement.code,
+      error_message: settlement.message,
+      provider_response: {
+        mode: "initial_billing_charge_rejected",
+        billingKeyIssued: true,
+        charge: sanitizeProviderPayload(settlement.payload),
+      },
+    });
+    return textResponse(settlement.message, 400);
+  }
+
+  if (settlement.kind === "retry_same_order") {
+    await updateCheckout({
+      status: "pending",
+      raw: sanitizeProviderPayload({
+        error: settlement.message,
+        errorCode: settlement.code,
+        chargeResult: settlement.kind,
+      }),
+    });
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: "initiated",
+      activation_status: "not_started",
+      recovery_status: "none",
+      error_code: settlement.code,
+      error_message: settlement.message,
+      provider_response: {
+        mode: "initial_billing_retry_same_order",
+        billingKeyIssued: true,
+        orderId,
+        lookup: sanitizeProviderPayload(settlement.payload),
+      },
+    });
+    return jsonResponse({
+      ok: false,
+      action: "retry_same_order",
+      canCharge: true,
+      retryable: true,
+      paymentAttemptId,
+      orderId,
+      providerPosts: settled.providerPosts,
+      message: settlement.code,
+    }, 409);
+  }
+
+  if (settlement.kind !== "paid") {
+    await updateCheckout({
+      status: "pending",
+      raw: sanitizeProviderPayload({
+        error: settlement.message,
+        errorCode: settlement.code,
+        chargeResult: settlement.kind,
+      }),
+    });
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: "charge_failed",
+      activation_status: "not_started",
+      recovery_status: "pending",
+      error_code: settlement.code,
+      error_message: settlement.message,
+      provider_response: {
+        mode: settlement.kind === "pending"
+          ? "initial_billing_charge_pending"
+          : "initial_billing_charge_needs_review",
+        billingKeyIssued: true,
+        orderId,
+        lookup: sanitizeProviderPayload(settlement.payload),
+      },
+    });
+    return jsonResponse({
+      ok: false,
+      action: settlement.kind,
+      canCharge: false,
+      retryable: settlement.kind === "pending",
+      paymentAttemptId,
+      orderId,
+      providerPosts: settled.providerPosts,
+      message: settlement.code,
+    }, 409);
+  }
+
+  const paymentKey = settlement.paymentKey;
+  await updatePaymentAttemptRequired(admin, paymentAttemptId, {
+    status: "charge_succeeded",
+    activation_status: "pending",
+    recovery_status: "none",
+    payment_key: paymentKey,
+    provider_response: sanitizeProviderPayload(settlement.payload),
+  }, "PAYMENT_ATTEMPT_DURABLE_CHARGE_UPDATE_FAILED");
+
+  const activateError = await activatePaymentAttempt(admin, paymentAttemptId);
+  if (activateError) {
+    await updatePaymentAttempt(admin, paymentAttemptId, {
+      status: "activation_failed",
+      activation_status: "failed",
+      recovery_status: "pending",
+      error_message: activateError.message,
+    });
+    return textResponse(activateError.message, 500);
+  }
+
+  await updatePaymentAttempt(admin, paymentAttemptId, {
+    status: "completed",
+    activation_status: "succeeded",
+    recovery_status: "none",
+    activated_at: new Date().toISOString(),
+    error_code: null,
+    error_message: null,
+  });
+  await updateCheckout({
+    status: "completed",
+    provider_session_id: paymentKey,
+    completed_at: new Date().toISOString(),
+    raw: sanitizeProviderPayload({
+      ...settlement.payload,
+      billingKeyIssued: true,
+    }),
+  });
+
+  return jsonResponse({
+    ok: true,
+    provider: "toss",
+    gymId,
+    orderId,
+    paymentKey,
+    interval: "monthly",
+    billingKeyIssued: true,
+    providerPosts: settled.providerPosts,
+  });
 }
 
 async function tossPost(path: string, body: Record<string, unknown>) {
@@ -285,6 +448,65 @@ Deno.serve(async (req) => {
       return textResponse("INITIAL_BILLING_CLAIM_INVALID", 500);
     }
 
+    if (claim.same_order_retry === true) {
+      const stored = await admin.rpc("read_gym_billing_credential", {
+        p_gym_id: gymId,
+      });
+      const storedKey = typeof stored.data === "string" ? stored.data.trim() : "";
+      if (!storedKey || stored.error) {
+        return jsonResponse({
+          ok: false,
+          action: "retry_same_order",
+          canCharge: false,
+          paymentAttemptId,
+          orderId,
+          message: "BILLING_CREDENTIAL_UNAVAILABLE",
+        }, 409);
+      }
+      const retryConsent = await admin.rpc("billing_charge_consent_gate", {
+        p_gym_id: gymId,
+        p_amount_krw: AMOUNT_KRW,
+        p_purpose: "initial",
+      });
+      if (interpretConsentGate(retryConsent) === "deny") {
+        await updatePaymentAttempt(admin, paymentAttemptId, {
+          status: "charge_failed",
+          activation_status: "not_started",
+          recovery_status: "none",
+          error_code: "BILLING_CONSENT_REQUIRED",
+          error_message: "BILLING_CONSENT_REQUIRED",
+        });
+        return jsonResponse({
+          ok: false,
+          action: "consent_required",
+          canCharge: false,
+          paymentAttemptId,
+          orderId,
+          message: "BILLING_CONSENT_REQUIRED",
+        }, 409);
+      }
+      const retrySettled = await settleInitialBillingCharge({
+        orderId,
+        amountKrw: AMOUNT_KRW,
+        billingKey: storedKey,
+        authorization: tossAuthHeader(),
+        customerKey,
+        orderName: "re;member Pro 월간 구독",
+        idempotencyKey: chargeIdempotencyKey(orderId),
+        tossSecret: Deno.env.get("TOSS_SECRET_KEY") || "",
+        customerEmail: user.email || undefined,
+        customerName: gymName || user.email || undefined,
+        lookupBeforePost: true,
+      });
+      return await finishInitialBillingCharge(admin, {
+        gymId,
+        paymentAttemptId,
+        orderId,
+        checkoutSessionId: null,
+        settled: retrySettled,
+      });
+    }
+
     const { error: credentialStoreError } = await admin.rpc(
       "read_gym_billing_credential",
       { p_gym_id: gymId },
@@ -408,139 +630,24 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
-    const chargeOutcome = await chargeTossBilling({
+    const settled = await settleInitialBillingCharge({
+      orderId,
+      amountKrw: AMOUNT_KRW,
       billingKey,
       authorization: tossAuthHeader(),
+      customerKey,
+      orderName: "re;member Pro 월간 구독",
       idempotencyKey: chargeIdempotencyKey(orderId),
-      body: {
-        customerKey,
-        amount: AMOUNT_KRW,
-        orderId,
-        orderName: "re;member Pro 월간 구독",
-        customerEmail: user.email || undefined,
-        customerName: gymName || user.email || undefined,
-      },
+      tossSecret: Deno.env.get("TOSS_SECRET_KEY") || "",
+      customerEmail: user.email || undefined,
+      customerName: gymName || user.email || undefined,
     });
-
-    if (chargeOutcome.kind === "uncertain") {
-      console.error("INITIAL_BILLING_CHARGE_RESULT_UNCERTAIN", {
-        paymentAttemptId,
-        orderId,
-        status: chargeOutcome.status,
-        code: chargeOutcome.code,
-        message: chargeOutcome.message,
-      });
-      await admin
-        .from("checkout_sessions")
-        .update({
-          status: "pending",
-          raw: sanitizeProviderPayload({
-            error: chargeOutcome.message,
-            errorCode: chargeOutcome.code,
-            chargeResult: "uncertain",
-          }),
-        })
-        .eq("id", sessionRow.id);
-      await updatePaymentAttempt(admin, paymentAttemptId, {
-        status: "charge_failed",
-        activation_status: "not_started",
-        recovery_status: "pending",
-        error_code: chargeOutcome.code,
-        error_message: chargeOutcome.message,
-        provider_response: {
-          mode: "initial_billing_charge_uncertain",
-          billingKeyIssued: true,
-          charge: sanitizeProviderPayload(chargeOutcome.payload),
-        },
-      });
-      return jsonResponse({
-        ok: false,
-        action: "initial_billing_charge_uncertain",
-        canCharge: false,
-        retryable: true,
-        paymentAttemptId,
-        orderId,
-        message: "INITIAL_BILLING_CHARGE_RESULT_UNCERTAIN",
-      }, 409);
-    }
-
-    if (chargeOutcome.kind === "rejected") {
-      await admin
-        .from("checkout_sessions")
-        .update({
-          status: "failed",
-          raw: sanitizeProviderPayload({
-            error: chargeOutcome.message,
-            errorCode: chargeOutcome.code,
-            chargeResult: "rejected",
-          }),
-        })
-        .eq("id", sessionRow.id);
-      await updatePaymentAttempt(admin, paymentAttemptId, {
-        status: "charge_failed",
-        activation_status: "not_started",
-        recovery_status: "none",
-        error_code: chargeOutcome.code,
-        error_message: chargeOutcome.message,
-        provider_response: {
-          mode: "initial_billing_charge_rejected",
-          billingKeyIssued: true,
-          charge: sanitizeProviderPayload(chargeOutcome.payload),
-        },
-      });
-      return textResponse(chargeOutcome.message, 400);
-    }
-
-    const charged = chargeOutcome.payload;
-    const paymentKey = chargeOutcome.paymentKey;
-
-    await updatePaymentAttemptRequired(admin, paymentAttemptId, {
-      status: "charge_succeeded",
-      activation_status: "pending",
-      recovery_status: "none",
-      payment_key: paymentKey,
-      provider_response: sanitizeProviderPayload(charged),
-    }, "PAYMENT_ATTEMPT_DURABLE_CHARGE_UPDATE_FAILED");
-
-    const activateError = await activatePaymentAttempt(admin, paymentAttemptId);
-
-    if (activateError) {
-      await updatePaymentAttempt(admin, paymentAttemptId, {
-        status: "activation_failed",
-        activation_status: "failed",
-        recovery_status: "pending",
-        error_message: activateError.message,
-      });
-      return textResponse(activateError.message, 500);
-    }
-
-    await updatePaymentAttempt(admin, paymentAttemptId, {
-      status: "completed",
-      activation_status: "succeeded",
-      recovery_status: "none",
-      activated_at: new Date().toISOString(),
-      error_code: null,
-      error_message: null,
-    });
-
-    await admin
-      .from("checkout_sessions")
-      .update({
-        status: "completed",
-        provider_session_id: paymentKey,
-        completed_at: new Date().toISOString(),
-        raw: sanitizeProviderPayload({ ...charged, billingKeyIssued: true }),
-      })
-      .eq("id", sessionRow.id);
-
-    return jsonResponse({
-      ok: true,
-      provider: "toss",
+    return await finishInitialBillingCharge(admin, {
       gymId,
+      paymentAttemptId,
       orderId,
-      paymentKey,
-      interval: "monthly",
-      billingKeyIssued: true,
+      checkoutSessionId: sessionRow.id,
+      settled,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -44,6 +44,8 @@ type ProcessOptions = {
   now?: () => Date;
   dryRun?: boolean;
   orderChargeGuard?: OrderChargeGuard;
+  dispatchAlreadyClaimed?: boolean;
+  lookupBeforePost?: boolean;
 };
 
 class NonTerminalChargeError extends Error {
@@ -247,20 +249,22 @@ export async function processClaimedSubscriptionCharge(
     }
 
     const authorization = tossAuthHeader(options.tossSecret);
-    const dispatch = await admin.rpc("claim_subscription_charge_dispatch", {
-      p_attempt_id: paymentAttemptId,
-    });
-    if (dispatch.error || dispatch.data !== true) {
-      throw new NonTerminalChargeError(
-        dispatch.error
-          ? "CHARGE_DISPATCH_UNAVAILABLE"
-          : "CHARGE_ALREADY_DISPATCHED",
-        dispatch.error
-          ? "Charge dispatch is unavailable"
-          : "Charge was already dispatched",
-        dispatch.error ? "dispatch_unavailable" : "already_dispatched",
-        false,
-      );
+    if (!options.dispatchAlreadyClaimed) {
+      const dispatch = await admin.rpc("claim_subscription_charge_dispatch", {
+        p_attempt_id: paymentAttemptId,
+      });
+      if (dispatch.error || dispatch.data !== true) {
+        throw new NonTerminalChargeError(
+          dispatch.error
+            ? "CHARGE_DISPATCH_UNAVAILABLE"
+            : "CHARGE_ALREADY_DISPATCHED",
+          dispatch.error
+            ? "Charge dispatch is unavailable"
+            : "Charge was already dispatched",
+          dispatch.error ? "dispatch_unavailable" : "already_dispatched",
+          false,
+        );
+      }
     }
 
     // The billing response settles a clear DONE or a clear rejection.
@@ -277,6 +281,7 @@ export async function processClaimedSubscriptionCharge(
       tossSecret: options.tossSecret,
       fetchImpl: options.fetchImpl,
       guard: options.orderChargeGuard,
+      lookupBeforePost: options.lookupBeforePost,
     });
     const settlement = settled.settlement;
 

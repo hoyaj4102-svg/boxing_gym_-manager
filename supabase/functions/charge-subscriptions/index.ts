@@ -1,6 +1,7 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
 import { isLiveBillingCharge } from './billing_charge_mode.ts';
+import { isMissingRpc } from '../_shared/consent_gate.ts';
 import {
   type AdminClientLike,
   type ClaimedSubscriptionCharge,
@@ -107,14 +108,39 @@ if (trialCleanupError) {
     }
 
     const results: Array<Record<string, unknown>> = [];
+    const tossSecret = Deno.env.get('TOSS_SECRET_KEY') || '';
 
     for (const claim of (claimedCharges || []) as ClaimedSubscriptionCharge[]) {
       const result = await processClaimedSubscriptionCharge(
         admin as unknown as AdminClientLike,
         claim,
         {
-          tossSecret: Deno.env.get('TOSS_SECRET_KEY') || '',
+          tossSecret,
           fetchImpl: fetch
+        }
+      );
+      results.push(result);
+    }
+
+    const retryClaim = await admin.rpc('claim_retryable_same_order_charges', {
+      p_limit: CLAIM_LIMIT
+    });
+    if (retryClaim.error && !isMissingRpc(retryClaim.error)) {
+      results.push({
+        ok: false,
+        chargeResult: 'retry_claim_failed',
+        error: retryClaim.error.message
+      });
+    }
+    for (const claim of ((retryClaim.error ? [] : retryClaim.data) || []) as ClaimedSubscriptionCharge[]) {
+      const result = await processClaimedSubscriptionCharge(
+        admin as unknown as AdminClientLike,
+        claim,
+        {
+          tossSecret,
+          fetchImpl: fetch,
+          dispatchAlreadyClaimed: true,
+          lookupBeforePost: true
         }
       );
       results.push(result);

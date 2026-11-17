@@ -63,6 +63,69 @@ function scriptedFetch(responses: Array<(method: string) => Response | Promise<R
   return { methods, fetchImpl };
 }
 
+Deno.test("paymentKey without status is not paid until the order lookup is DONE", async () => {
+  const { methods, fetchImpl } = scriptedFetch([
+    () =>
+      new Response(JSON.stringify({
+        paymentKey: "payment_missing_status",
+        orderId: ORDER_ID,
+        totalAmount: 10000,
+      }), { status: 200 }),
+    () =>
+      new Response(JSON.stringify({
+        paymentKey: "payment_missing_status",
+        orderId: ORDER_ID,
+        totalAmount: 10000,
+      }), { status: 200 }),
+  ]);
+  const unclear = await chargeAndSettleRecurringBilling(chargeInput(fetchImpl));
+  assertEquals(methods, ["POST", "GET"], "missing status is re-queried and not posted again");
+  assertEquals(unclear.settlement.kind, "needs_review", "an unclear lookup is not paid");
+
+  const confirmed = scriptedFetch([
+    () =>
+      new Response(JSON.stringify({
+        paymentKey: "payment_missing_status",
+        orderId: ORDER_ID,
+        totalAmount: 10000,
+      }), { status: 200 }),
+    () => new Response(JSON.stringify(donePayment("payment_missing_status")), { status: 200 }),
+  ]);
+  const paid = await chargeAndSettleRecurringBilling(chargeInput(confirmed.fetchImpl));
+  assertEquals(confirmed.methods, ["POST", "GET"], "a missing status is confirmed by lookup");
+  assertEquals(paid.settlement.kind, "paid", "lookup DONE is paid");
+});
+
+Deno.test("a released retry looks the order up before posting again", async () => {
+  const { methods, fetchImpl } = scriptedFetch([
+    () => new Response(JSON.stringify({ code: "NOT_FOUND_PAYMENT" }), { status: 404 }),
+    (method) => {
+      assertEquals(method, "POST", "not-found is the only reason to post");
+      return new Response(JSON.stringify(donePayment("payment_retry")), { status: 200 });
+    },
+  ]);
+  const result = await chargeAndSettleRecurringBilling({
+    ...chargeInput(fetchImpl),
+    lookupBeforePost: true,
+  });
+  assertEquals(methods, ["GET", "POST"], "the retry queries before it posts");
+  assertEquals(result.providerPosts, 1, "one post uses the same order");
+  assertEquals(result.settlement.kind, "paid", "the retried approval is paid");
+});
+
+Deno.test("a released retry does not post when the lookup is already DONE", async () => {
+  const { methods, fetchImpl } = scriptedFetch([
+    () => new Response(JSON.stringify(donePayment("payment_already")), { status: 200 }),
+  ]);
+  const result = await chargeAndSettleRecurringBilling({
+    ...chargeInput(fetchImpl),
+    lookupBeforePost: true,
+  });
+  assertEquals(methods, ["GET"], "DONE lookup blocks another charge");
+  assertEquals(result.providerPosts, 0, "no second approval is posted");
+  assertEquals(result.settlement.kind, "paid", "the existing payment is recorded");
+});
+
 Deno.test("DONE billing response is paid by orderId without a lookup or webhook", async () => {
   const { methods, fetchImpl } = scriptedFetch([
     (method) => {
