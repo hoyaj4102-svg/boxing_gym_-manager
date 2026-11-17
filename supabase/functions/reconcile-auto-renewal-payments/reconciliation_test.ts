@@ -235,32 +235,44 @@ Deno.test("lookup_required retryable Toss error is not terminal failed", async (
   );
 });
 
-Deno.test("lookup_required 404 stays blocked and does not allow a new charge", async () => {
+Deno.test("lookup_required 404 releases the same orderId and does not charge again", async () => {
   const { admin, rpcCalls, updates } = createMockAdmin();
+  const methods: string[] = [];
 
   const result = await processReconciliationAttempt(admin, baseAttempt(), {
     tossSecret: "test_secret",
-    fetchImpl: async () =>
-      new Response(JSON.stringify({ code: "NOT_FOUND" }), { status: 404 }),
+    fetchImpl: async (_input, init) => {
+      methods.push(String(init?.method || "GET"));
+      return new Response(JSON.stringify({ code: "NOT_FOUND" }), { status: 404 });
+    },
     now: () => new Date("2026-01-01T00:10:00.000Z"),
   });
 
+  assertEquals(methods, ["GET"], "404 reconciliation must not POST a charge");
   assertEquals(rpcCalls.length, 0, "404 should not recover");
   assertEquals(
+    updates[0].values.status,
+    "initiated",
+    "404 should leave the same attempt retryable",
+  );
+  assertEquals(
+    updates[0].values.charge_dispatched_at,
+    null,
+    "404 should release the dispatch lock for this orderId",
+  );
+  assertEquals(
     updates[0].values.recovery_status,
-    "pending",
-    "404 should stay blocked for retry/manual review",
+    "none",
+    "404 should not stay blocked",
   );
   assertEquals(
     updates[0].values.error_code,
-    "TOSS_PAYMENT_NOT_FOUND_UNCONFIRMED",
-    "404 should not be confirmed safe",
+    "TOSS_ORDER_NOT_FOUND_RETRY_SAME_ORDER",
+    "404 should name the same-order retry",
   );
-  assert(
-    updates[0].values.recovery_status !== "failed",
-    "404 should not be terminal failed",
-  );
-  assertEquals(result.retryable, true, "404 remains retryable/blocking");
+  assertEquals(result.providerPosts, 0, "reconciliation must not charge");
+  assertEquals(result.sameOrderRetry, true, "404 is safe only for the same orderId");
+  assertEquals(result.orderId, "toss_renew_attempt_1", "orderId stays the same");
 });
 
 Deno.test("lookup_required validation mismatch blocks recovery and does not retry a charge", async () => {

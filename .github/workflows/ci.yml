@@ -62,6 +62,7 @@ jobs:
             supabase/functions/create-checkout/handler_test.ts \
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
             supabase/functions/toss-webhook/merchant_validation_test.ts \
+            supabase/functions/_shared/billing_order_reconciliation_test.ts \
             supabase/functions/_shared/sanitize_provider_payload_test.ts \
             supabase/functions/confirm-billing-auth/claim_gate_test.ts \
             supabase/functions/_shared/toss_idempotency_test.ts \

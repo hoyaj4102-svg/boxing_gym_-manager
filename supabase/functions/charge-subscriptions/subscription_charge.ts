@@ -1,6 +1,9 @@
+import {
+  chargeAndSettleRecurringBilling,
+  type OrderChargeGuard,
+} from "../_shared/billing_order_reconciliation.ts";
 import { interpretConsentGate, isMissingRpc } from "../_shared/consent_gate.ts";
 import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
-import { chargeTossBilling } from "../_shared/toss_charge_outcome.ts";
 import { chargeIdempotencyKey } from "../_shared/toss_idempotency.ts";
 
 export type ClaimedSubscriptionCharge = {
@@ -40,6 +43,7 @@ type ProcessOptions = {
   fetchImpl?: typeof fetch;
   now?: () => Date;
   dryRun?: boolean;
+  orderChargeGuard?: OrderChargeGuard;
 };
 
 class NonTerminalChargeError extends Error {
@@ -259,30 +263,74 @@ export async function processClaimedSubscriptionCharge(
       );
     }
 
-    const chargeOutcome = await chargeTossBilling({
+    // The billing response settles a clear DONE or a clear rejection.
+    // Timeout, network, 5xx, and other ambiguous responses are looked up by
+    // this same orderId. A missing webhook is not a failure.
+    const settled = await chargeAndSettleRecurringBilling({
+      orderId,
+      amountKrw,
       billingKey,
       authorization,
+      customerKey,
+      orderName: "re;member Pro 월간 자동결제",
       idempotencyKey: chargeIdempotencyKey(orderId),
-      body: {
-        customerKey,
-        amount: amountKrw,
-        orderId,
-        orderName: "re;member Pro 월간 자동결제",
-      },
+      tossSecret: options.tossSecret,
       fetchImpl: options.fetchImpl,
+      guard: options.orderChargeGuard,
     });
+    const settlement = settled.settlement;
 
-    if (chargeOutcome.kind === "uncertain") {
+    if (settlement.kind === "pending" || settlement.kind === "needs_review") {
       try {
         await updatePaymentAttempt(admin, paymentAttemptId, {
           status: "charge_failed",
           activation_status: "not_started",
           recovery_status: "pending",
-          error_code: chargeOutcome.code,
-          error_message: chargeOutcome.message,
+          error_code: settlement.code,
+          error_message: settlement.message,
           provider_response: sanitizeProviderPayload({
-            mode: "auto_renew_charge_uncertain",
-            charge: chargeOutcome.payload,
+            mode: settlement.kind === "pending"
+              ? "auto_renew_charge_pending"
+              : "auto_renew_charge_needs_review",
+            orderId,
+            priorCode: settlement.priorCode,
+            lookup: settlement.payload,
+          }),
+        }, { throwOnError: true });
+      } catch (error) {
+        throw new NonTerminalChargeError(
+          "AUTO_RENEW_UNCERTAIN_STATE_UPDATE_FAILED",
+          errorMessage(error),
+          "uncertain_persist_failed",
+          false,
+        );
+      }
+      return {
+        gymId,
+        ok: false,
+        orderId,
+        paymentAttemptId,
+        retryable: settlement.kind === "pending",
+        chargeResult: settlement.kind,
+        providerPosts: settled.providerPosts,
+        error: settlement.message,
+      };
+    }
+
+    if (settlement.kind === "retry_same_order") {
+      try {
+        await updatePaymentAttempt(admin, paymentAttemptId, {
+          status: "initiated",
+          activation_status: "not_started",
+          recovery_status: "none",
+          charge_dispatched_at: null,
+          error_code: settlement.code,
+          error_message: settlement.message,
+          provider_response: sanitizeProviderPayload({
+            mode: "auto_renew_retry_same_order",
+            orderId,
+            priorCode: settlement.priorCode,
+            lookup: settlement.payload,
           }),
         }, { throwOnError: true });
       } catch (error) {
@@ -299,22 +347,24 @@ export async function processClaimedSubscriptionCharge(
         orderId,
         paymentAttemptId,
         retryable: true,
-        chargeResult: "uncertain",
-        error: chargeOutcome.message,
+        sameOrderRetry: true,
+        chargeResult: "retry_same_order",
+        providerPosts: settled.providerPosts,
+        error: settlement.message,
       };
     }
 
-    if (chargeOutcome.kind === "rejected") {
+    if (settlement.kind === "failed") {
       try {
         await updatePaymentAttempt(admin, paymentAttemptId, {
           status: "charge_failed",
           activation_status: "not_started",
           recovery_status: "none",
-          error_code: chargeOutcome.code,
-          error_message: chargeOutcome.message,
+          error_code: settlement.code,
+          error_message: settlement.message,
           provider_response: sanitizeProviderPayload({
             mode: "auto_renew_charge_rejected",
-            charge: chargeOutcome.payload,
+            charge: settlement.payload,
           }),
         }, { throwOnError: true });
       } catch (error) {
@@ -330,7 +380,7 @@ export async function processClaimedSubscriptionCharge(
         p_gym_id: gymId,
         p_payment_attempt_id: paymentAttemptId,
         p_failed_at: checkedAt,
-        p_error_code: chargeOutcome.code,
+        p_error_code: settlement.code,
       });
       if (failureRecord.error && !isMissingRpc(failureRecord.error)) {
         console.error("PAYMENT_FAILURE_RECORD_FAILED", {
@@ -343,12 +393,13 @@ export async function processClaimedSubscriptionCharge(
         orderId,
         paymentAttemptId,
         chargeResult: "rejected",
-        error: chargeOutcome.message,
+        providerPosts: settled.providerPosts,
+        error: settlement.message,
       };
     }
 
-    const charged = chargeOutcome.payload;
-    const paymentKey = chargeOutcome.paymentKey;
+    const charged = settlement.payload;
+    const paymentKey = settlement.paymentKey;
     chargeSucceeded = true;
 
     await updatePaymentAttempt(admin, paymentAttemptId, {

@@ -1,6 +1,14 @@
+import {
+  assessDonePayment,
+  classifyOrderLookup,
+  isRecordedPayment,
+  lookupTossPaymentByOrderId,
+  ORDER_NOT_FOUND_RETRY_CODE,
+  type TossLookupResult,
+} from "../_shared/billing_order_reconciliation.ts";
 import { sanitizeProviderPayload } from "../_shared/sanitize_provider_payload.ts";
 
-const TOSS_LOOKUP_TIMEOUT_MS = 10000;
+export { lookupTossPaymentByOrderId };
 
 export type ReconciliationAction = "lookup_required" | "recovery_only";
 
@@ -21,16 +29,6 @@ export type ReconciliationAttempt = {
   created_at: string;
   updated_at: string;
 };
-
-type TossLookupResult =
-  | { kind: "found"; payment: Record<string, unknown> }
-  | { kind: "not_found"; status: number; payload: unknown }
-  | {
-    kind: "retryable_error";
-    status?: number;
-    message: string;
-    payload?: unknown;
-  };
 
 type UpdateQuery = {
   eq(
@@ -57,104 +55,18 @@ type ProcessOptions = {
   now?: () => Date;
 };
 
-function tossAuthHeader(secret: string) {
-  if (!secret) throw new Error("TOSS_SECRET_KEY is missing");
-  return `Basic ${btoa(`${secret}:`)}`;
-}
-
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
-}
-
-async function readJsonResponse(response: Response) {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
-
-export async function lookupTossPaymentByOrderId(
-  orderId: string,
-  tossSecret: string,
-  fetchImpl: typeof fetch = fetch,
-): Promise<TossLookupResult> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(
-    () => controller.abort(),
-    TOSS_LOOKUP_TIMEOUT_MS,
-  );
-
-  try {
-    const response = await fetchImpl(
-      `https://api.tosspayments.com/v1/payments/orders/${
-        encodeURIComponent(orderId)
-      }`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: tossAuthHeader(tossSecret),
-        },
-        signal: controller.signal,
-      },
-    );
-    const payload = await readJsonResponse(response);
-
-    if (
-      response.ok && payload && typeof payload === "object" &&
-      !Array.isArray(payload)
-    ) {
-      return { kind: "found", payment: payload as Record<string, unknown> };
-    }
-
-    if (response.status === 404) {
-      return { kind: "not_found", status: response.status, payload };
-    }
-
-    return {
-      kind: "retryable_error",
-      status: response.status,
-      message: `Unexpected Toss lookup response: ${response.status}`,
-      payload,
-    };
-  } catch (error) {
-    return {
-      kind: "retryable_error",
-      message: errorMessage(error),
-    };
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
 export function validateDonePayment(
   attempt: ReconciliationAttempt,
   payment: Record<string, unknown>,
 ) {
-  const paymentKey = typeof payment.paymentKey === "string"
-    ? payment.paymentKey
-    : "";
-  const orderId = typeof payment.orderId === "string" ? payment.orderId : "";
-  const status = typeof payment.status === "string" ? payment.status : "";
-  const totalAmount = Number(payment.totalAmount);
-
-  const failures: string[] = [];
-  if (!paymentKey) failures.push("paymentKey missing");
-  if (orderId !== attempt.order_id) failures.push("orderId mismatch");
-  if (
-    !Number.isFinite(totalAmount) || totalAmount !== Number(attempt.amount_krw)
-  ) {
-    failures.push("totalAmount mismatch");
-  }
-  if (status !== "DONE") failures.push(`status is ${status || "missing"}`);
-
-  return {
-    ok: failures.length === 0,
-    paymentKey,
-    failures,
-  };
+  return assessDonePayment(
+    { orderId: attempt.order_id, amountKrw: Number(attempt.amount_krw) },
+    payment,
+  );
 }
 
 async function updateAttempt(
@@ -191,6 +103,34 @@ async function markRetryableLookupFailure(
         order_id: attempt.order_id,
         status_code: lookup.status ?? null,
         response: lookup.payload ?? null,
+      },
+    }),
+  });
+}
+
+async function markSameOrderRetry(
+  admin: AdminClientLike,
+  attempt: ReconciliationAttempt,
+  params: {
+    message: string;
+    payload: unknown;
+    checkedAt: string;
+  },
+) {
+  await updateAttempt(admin, attempt.id, {
+    status: "initiated",
+    activation_status: "not_started",
+    recovery_status: "none",
+    charge_dispatched_at: null,
+    error_code: ORDER_NOT_FOUND_RETRY_CODE,
+    error_message: params.message,
+    provider_response: sanitizeProviderPayload({
+      reconciliation: {
+        status: "retry_same_order",
+        checked_at: params.checkedAt,
+        order_id: attempt.order_id,
+        provider_posts: 0,
+        response: params.payload,
       },
     }),
   });
@@ -328,17 +268,38 @@ export async function processReconciliationAttempt(
         orderId: attempt.order_id,
         ok: false,
         action: attempt.reconciliation_action,
+        providerPosts: 0,
         retryable: true,
         error: lookup.message,
       };
     }
 
-    if (lookup.kind === "not_found") {
+    const settlement = classifyOrderLookup(lookup, {
+      orderId: attempt.order_id,
+      amountKrw: Number(attempt.amount_krw),
+    });
+    const recorded = isRecordedPayment({
+      orderId: attempt.order_id,
+      status: attempt.status,
+      paymentKey: attempt.payment_key,
+    });
+    if (recorded && settlement.kind === "paid" &&
+      settlement.paymentKey === attempt.payment_key) {
+      return {
+        paymentAttemptId: attempt.id,
+        orderId: attempt.order_id,
+        ok: true,
+        action: attempt.reconciliation_action,
+        alreadyRecorded: true,
+        providerPosts: 0,
+        paymentKey: attempt.payment_key,
+      };
+    }
+    if (recorded) {
       await markBlockedLookupResult(admin, attempt, {
-        code: "TOSS_PAYMENT_NOT_FOUND_UNCONFIRMED",
-        message:
-          "Toss payment was not found for orderId; keeping attempt blocked for retry/manual review",
-        payload: lookup.payload,
+        code: "TOSS_RECORDED_PAYMENT_CONFLICT",
+        message: "Recorded payment was not replaced by a later lookup",
+        payload: lookup.kind === "found" ? lookup.payment : lookup.payload,
         checkedAt,
       });
       return {
@@ -346,17 +307,16 @@ export async function processReconciliationAttempt(
         orderId: attempt.order_id,
         ok: false,
         action: attempt.reconciliation_action,
-        retryable: true,
-        error: "Toss payment not found; not confirmed safe for a new charge",
+        providerPosts: 0,
+        retryable: false,
+        error: "Recorded payment was not replaced",
       };
     }
 
-    const validation = validateDonePayment(attempt, lookup.payment);
-    if (!validation.ok) {
-      await markBlockedLookupResult(admin, attempt, {
-        code: "TOSS_PAYMENT_VALIDATION_FAILED",
-        message: validation.failures.join("; "),
-        payload: lookup.payment,
+    if (settlement.kind === "retry_same_order") {
+      await markSameOrderRetry(admin, attempt, {
+        message: settlement.message,
+        payload: settlement.payload,
         checkedAt,
       });
       return {
@@ -364,16 +324,38 @@ export async function processReconciliationAttempt(
         orderId: attempt.order_id,
         ok: false,
         action: attempt.reconciliation_action,
+        providerPosts: 0,
+        retryable: true,
+        sameOrderRetry: true,
+        error: settlement.message,
+      };
+    }
+
+    if (settlement.kind !== "paid") {
+      await markBlockedLookupResult(admin, attempt, {
+        code: settlement.code,
+        message: settlement.message,
+        payload: settlement.payload,
+        checkedAt,
+      });
+      return {
+        paymentAttemptId: attempt.id,
+        orderId: attempt.order_id,
+        ok: false,
+        action: attempt.reconciliation_action,
+        providerPosts: 0,
         retryable: false,
-        error: validation.failures,
+        error: settlement.kind === "needs_review"
+          ? settlement.message.split("; ")
+          : settlement.message,
       };
     }
 
     await storeDonePaymentBeforeRecovery(
       admin,
       attempt,
-      lookup.payment,
-      validation.paymentKey,
+      settlement.payload,
+      settlement.paymentKey,
       checkedAt,
     );
 
@@ -384,7 +366,7 @@ export async function processReconciliationAttempt(
         status: "activation_pending",
         activation_status: "pending",
         recovery_status: "none",
-        payment_key: validation.paymentKey,
+        payment_key: settlement.paymentKey,
       },
       checkedAt,
     );
