@@ -1,10 +1,13 @@
 import {
   chargeAndSettleRecurringBilling,
+  classifyOrderLookup,
   createOrderChargeGuard,
+  lookupTossPaymentByOrderId,
   ORDER_NOT_FOUND_RETRY_CODE,
   planAttemptWrite,
   reconcilePendingBillingOrder,
 } from "./billing_order_reconciliation.ts";
+import { REDACTED, sanitizeProviderPayload } from "./sanitize_provider_payload.ts";
 import { processClaimedSubscriptionCharge } from "../charge-subscriptions/subscription_charge.ts";
 import { processReconciliationAttempt } from "../reconcile-auto-renewal-payments/reconciliation.ts";
 
@@ -534,4 +537,51 @@ Deno.test("reconciliation attempt pass queries orderId and does not charge on re
   assertEquals(first.sameOrderRetry, true, "not-found retries the same order");
   assertEquals(updates[0].charge_dispatched_at, null, "dispatch stays released");
   assertEquals(updates[1].status, "initiated", "replay does not open a new order");
+});
+
+Deno.test("unparsed order lookup body is masked before it can be stored", async () => {
+  const secretBody =
+    "not-json paymentKey=synthetic-payment-key billingKey=synthetic-billing-key cardNumber=4111111111111111";
+  const fetchImpl: typeof fetch = async () =>
+    new Response(secretBody, {
+      status: 200,
+      headers: { "content-type": "text/plain" },
+    });
+
+  const lookup = await lookupTossPaymentByOrderId(
+    ORDER_ID,
+    "synthetic-toss-secret",
+    fetchImpl,
+  );
+  const settlement = classifyOrderLookup(lookup, {
+    orderId: ORDER_ID,
+    amountKrw: 10000,
+  });
+  const stored = JSON.stringify(sanitizeProviderPayload(settlement.payload));
+
+  assertEquals(settlement.kind, "needs_review", "unparsed 200 stays in review");
+  assert(stored.includes(REDACTED), "stored fallback uses the shared mask");
+  assert(!stored.includes("synthetic-payment-key"), "payment key was stored");
+  assert(!stored.includes("synthetic-billing-key"), "billing key was stored");
+  assert(!stored.includes("4111111111111111"), "card number was stored");
+  assert(!stored.includes("not-json"), "raw provider body was stored");
+});
+
+Deno.test("unparsed lookup error body is masked before it can be stored", async () => {
+  const secretBody = "gateway paymentKey=synthetic-payment-key";
+  const lookup = await lookupTossPaymentByOrderId(
+    ORDER_ID,
+    "synthetic-toss-secret",
+    async () => new Response(secretBody, { status: 502 }),
+  );
+  const settlement = classifyOrderLookup(lookup, {
+    orderId: ORDER_ID,
+    amountKrw: 10000,
+  });
+  const stored = JSON.stringify(sanitizeProviderPayload(settlement.payload));
+
+  assertEquals(settlement.kind, "pending", "unparsed 502 stays pending");
+  assert(stored.includes(REDACTED), "stored error fallback uses the shared mask");
+  assert(!stored.includes("synthetic-payment-key"), "payment key was stored");
+  assert(!stored.includes("gateway"), "raw error body was stored");
 });

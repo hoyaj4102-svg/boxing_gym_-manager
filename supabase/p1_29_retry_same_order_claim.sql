@@ -10,7 +10,7 @@ create or replace function public.claim_initial_billing_attempt(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_gym public.gyms%rowtype;
@@ -27,7 +27,7 @@ begin
     raise exception 'GYM_ID_REQUIRED';
   end if;
 
-  if p_customer_key is null or length(trim(p_customer_key)) = 0 then
+  if p_customer_key is null or pg_catalog.length(pg_catalog.btrim(p_customer_key)) = 0 then
     raise exception 'CUSTOMER_KEY_REQUIRED';
   end if;
 
@@ -73,7 +73,7 @@ begin
   -- Complimentary Pro is not charged, even when a credential remains
   -- and even when auto_renew is true.
   if coalesce(v_gym.complimentary_pro, false) then
-    return jsonb_build_object(
+    return pg_catalog.jsonb_build_object(
       'ok', true,
       'action', 'already_completed',
       'can_charge', false,
@@ -92,8 +92,8 @@ begin
   -- an expired period must reach the auto-renewal and recovery guards below.
   if v_gym.plan_code = 'pro'
      and v_gym.current_period_end is not null
-     and v_gym.current_period_end > now() then
-    return jsonb_build_object(
+     and v_gym.current_period_end > pg_catalog.now() then
+    return pg_catalog.jsonb_build_object(
       'ok', true,
       'action', 'already_completed',
       'can_charge', false,
@@ -127,7 +127,7 @@ begin
   if found then
     if v_auto_renewal_attempt.status in ('charge_succeeded', 'activation_pending', 'activation_failed', 'recovery_pending')
        and v_auto_renewal_attempt.payment_key is not null then
-      return jsonb_build_object(
+      return pg_catalog.jsonb_build_object(
         'ok', true,
         'action', 'needs_recovery',
         'can_charge', false,
@@ -142,7 +142,7 @@ begin
       );
     end if;
 
-    return jsonb_build_object(
+    return pg_catalog.jsonb_build_object(
       'ok', true,
       'action', 'do_not_charge',
       'can_charge', false,
@@ -174,7 +174,7 @@ begin
 
   if found then
     if v_attempt.recovery_status = 'failed' then
-      return jsonb_build_object(
+      return pg_catalog.jsonb_build_object(
         'ok', true,
         'action', 'do_not_charge',
         'can_charge', false,
@@ -190,7 +190,7 @@ begin
 
     if v_attempt.status = 'completed'
        and v_attempt.activation_status = 'succeeded' then
-      return jsonb_build_object(
+      return pg_catalog.jsonb_build_object(
         'ok', true,
         'action', 'already_completed',
         'can_charge', false,
@@ -207,7 +207,7 @@ begin
 
     if v_attempt.status in ('charge_succeeded', 'activation_pending', 'activation_failed', 'recovery_pending')
        and v_attempt.payment_key is not null then
-      return jsonb_build_object(
+      return pg_catalog.jsonb_build_object(
         'ok', true,
         'action', 'needs_recovery',
         'can_charge', false,
@@ -222,7 +222,7 @@ begin
     end if;
 
     if v_attempt.status = 'charge_failed' then
-      return jsonb_build_object(
+      return pg_catalog.jsonb_build_object(
         'ok', true,
         'action', 'do_not_charge',
         'can_charge', false,
@@ -240,7 +240,7 @@ begin
        and v_attempt.payment_key is null
        and v_attempt.error_code = 'TOSS_ORDER_NOT_FOUND_RETRY_SAME_ORDER'
        and v_attempt.recovery_status = 'none' then
-      return jsonb_build_object(
+      return pg_catalog.jsonb_build_object(
         'ok', true,
         'action', 'charge',
         'can_charge', true,
@@ -258,7 +258,7 @@ begin
       );
     end if;
 
-    return jsonb_build_object(
+    return pg_catalog.jsonb_build_object(
       'ok', true,
       'action', 'processing',
       'can_charge', false,
@@ -272,8 +272,8 @@ begin
     );
   end if;
 
-  v_attempt_id := gen_random_uuid();
-  v_order_id := 'toss_bill_' || replace(v_attempt_id::text, '-', '');
+  v_attempt_id := pg_catalog.gen_random_uuid();
+  v_order_id := 'toss_bill_' || pg_catalog.replace(v_attempt_id::text, '-', '');
   v_period := public.billing_period_bounds('monthly');
   v_period_start := (v_period->>'period_start')::timestamptz;
   v_period_end := (v_period->>'period_end')::timestamptz;
@@ -312,10 +312,10 @@ begin
     'initiated',
     'not_started',
     'none',
-    jsonb_build_object('mode', 'initial_billing_claim')
+    pg_catalog.jsonb_build_object('mode', 'initial_billing_claim')
   );
 
-  return jsonb_build_object(
+  return pg_catalog.jsonb_build_object(
     'ok', true,
     'action', 'charge',
     'can_charge', true,
@@ -352,7 +352,7 @@ returns table (
 )
 language plpgsql
 security invoker
-set search_path = public
+set search_path = ''
 as $$
 begin
   return query
@@ -372,7 +372,7 @@ begin
   ),
   claimed as (
     update public.payment_attempts pa
-    set charge_dispatched_at = now()
+    set charge_dispatched_at = pg_catalog.now()
     from locked
     where pa.id = locked.id
     returning

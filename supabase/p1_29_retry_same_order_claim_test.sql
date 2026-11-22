@@ -179,6 +179,127 @@ cross join lateral public.claim_initial_billing_attempt(
   ctx.initial_gym_id, ctx.initial_user_id, 'p1_29_customer', 10000
 ) as result;
 
+insert into p1_29_results (test_name, status, detail)
+select
+  'claim_initial_billing_attempt pins an empty search_path',
+  case
+    when count(*) = 1
+     and bool_and(p.prosecdef)
+     and bool_and(exists (
+       select 1
+       from unnest(coalesce(p.proconfig, array[]::text[])) as cfg
+       where cfg in ('search_path=', 'search_path=""')
+     ))
+     and bool_and(position('pg_catalog.gen_random_uuid()' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.billing_period_bounds(' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.payment_attempts' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.gyms' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.profiles' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('set search_path = public' in lower(pg_get_functiondef(p.oid))) = 0)
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(string_agg(array_to_string(p.proconfig, ','), ' | '), 'missing')
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'claim_initial_billing_attempt'
+  and pg_get_function_identity_arguments(p.oid) =
+    'p_gym_id uuid, p_user_id uuid, p_customer_key text, p_amount_krw integer';
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'claim_retryable_same_order_charges pins an empty search_path',
+  case
+    when count(*) = 1
+     and bool_and(not p.prosecdef)
+     and bool_and(exists (
+       select 1
+       from unnest(coalesce(p.proconfig, array[]::text[])) as cfg
+       where cfg in ('search_path=', 'search_path=""')
+     ))
+     and bool_and(position('public.payment_attempts' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('pg_catalog.now()' in pg_get_functiondef(p.oid)) > 0)
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(string_agg(array_to_string(p.proconfig, ','), ' | '), 'missing')
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'claim_retryable_same_order_charges';
+
+create schema p1_29_shadow;
+create or replace function p1_29_shadow.gen_random_uuid()
+returns uuid
+language sql
+as $$ select '11111111-1111-4111-8111-111111111111'::uuid $$;
+
+create or replace function p1_29_shadow.billing_period_bounds(text)
+returns jsonb
+language sql
+as $$
+  select jsonb_build_object(
+    'period_start', '1999-01-01T00:00:00Z',
+    'period_end', '1999-02-01T00:00:00Z'
+  )
+$$;
+
+create temp table p1_29_shadow_ids on commit drop as
+select gen_random_uuid() as gym_id, gen_random_uuid() as user_id;
+
+insert into public.gyms (
+  id, name, owner_name, phone, plan_code, subscription_status
+)
+select gym_id, 'P1-29 Shadow Gym', 'Owner', '010-0000-0000', 'free', 'expired'
+from p1_29_shadow_ids;
+
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data
+)
+select
+  user_id,
+  '00000000-0000-0000-0000-000000000000'::uuid,
+  'authenticated',
+  'authenticated',
+  'p1_29_shadow_' || replace(user_id::text, '-', '') || '@example.invalid',
+  '',
+  now(), now(), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb
+from p1_29_shadow_ids;
+
+insert into public.profiles (id, gym_id, name)
+select user_id, gym_id, 'P1-29 Shadow User'
+from p1_29_shadow_ids
+on conflict (id) do update
+set gym_id = excluded.gym_id, name = excluded.name;
+
+select set_config('search_path', 'p1_29_shadow', true);
+
+create temp table p1_29_shadow_claim on commit drop as
+select public.claim_initial_billing_attempt(
+  gym_id, user_id, 'p1_29_shadow_customer', 10000
+) as result
+from p1_29_shadow_ids;
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'pinned definer ignores a caller search_path shadow',
+  case
+    when claim.result->>'can_charge' = 'true'
+     and claim.result->>'action' = 'charge'
+     and claim.result->>'order_id' like 'toss_bill_%'
+     and claim.result->>'order_id' not like '%111111111111%'
+     and pa.target_period_start is distinct from '1999-01-01T00:00:00Z'::timestamptz
+     and pa.order_id = claim.result->>'order_id'
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(claim.result->>'order_id', 'none')
+from p1_29_shadow_claim claim
+join public.payment_attempts pa on pa.id = (claim.result->>'payment_attempt_id')::uuid;
+
+select set_config('search_path', 'public', true);
+
 select test_name, status, detail
 from p1_29_results
 order by test_name;

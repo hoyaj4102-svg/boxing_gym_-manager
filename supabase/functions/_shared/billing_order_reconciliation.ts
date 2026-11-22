@@ -1,4 +1,8 @@
 import {
+  REDACTED,
+  sanitizeProviderPayload,
+} from "./sanitize_provider_payload.ts";
+import {
   chargeTossBilling,
   type TossBillingChargeOutcome,
 } from "./toss_charge_outcome.ts";
@@ -117,7 +121,10 @@ async function readJsonResponse(response: Response) {
   try {
     return JSON.parse(text);
   } catch {
-    return { raw: text };
+    // The body is not JSON, so key-based redaction cannot see a payment key,
+    // billing key, or card number embedded in the text. Drop the body and
+    // keep the shared mask. Callers store this object.
+    return sanitizeProviderPayload({ raw: REDACTED });
   }
 }
 
