@@ -1,6 +1,7 @@
 import Stripe from 'https://esm.sh/stripe@14.25.0?target=deno';
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
+import { reportEdgeException, serveWithSentry } from '../_shared/sentry.ts';
 
 async function activateFromStripeSession(admin: ReturnType<typeof getAdminClient>, session: Stripe.Checkout.Session) {
   const gymId = session.metadata?.gym_id || session.client_reference_id;
@@ -93,7 +94,7 @@ async function markCanceled(admin: ReturnType<typeof getAdminClient>, subscripti
   });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -190,7 +191,8 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ received: true });
   } catch (error) {
+    await reportEdgeException(error);
     const message = error instanceof Error ? error.message : String(error);
     return textResponse(message, 400);
   }
-});
+}));

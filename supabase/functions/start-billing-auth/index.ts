@@ -1,12 +1,13 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient, getGymIdForUser, requireUser } from '../_shared/supabase.ts';
+import { reportEdgeException, serveWithSentry } from '../_shared/sentry.ts';
 
 function customerKeyForGym(gymId: string) {
   // Toss: 2~300 chars, alphanumeric + some symbols. Stable per gym.
   return `gym_${gymId.replace(/-/g, '')}`;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -51,8 +52,9 @@ Deno.serve(async (req) => {
       interval: 'monthly'
     });
   } catch (error) {
+    await reportEdgeException(error);
     const message = error instanceof Error ? error.message : String(error);
     const status = message === 'UNAUTHORIZED' ? 401 : 400;
     return textResponse(message, status);
   }
-});
+}));

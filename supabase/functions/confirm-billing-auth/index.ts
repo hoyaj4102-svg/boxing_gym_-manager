@@ -7,6 +7,7 @@ import {
   requireUser,
 } from "../_shared/supabase.ts";
 import { chargeTossBilling } from "./charge_outcome.ts";
+import { reportEdgeException, serveWithSentry } from "../_shared/sentry.ts";
 
 const AMOUNT_KRW = 10000;
 
@@ -151,7 +152,7 @@ async function tossPost(path: string, body: Record<string, unknown>) {
   return json;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -517,8 +518,9 @@ Deno.serve(async (req) => {
       billingKeyIssued: true,
     });
   } catch (error) {
+    await reportEdgeException(error);
     const message = error instanceof Error ? error.message : String(error);
     const status = message === "UNAUTHORIZED" ? 401 : 400;
     return textResponse(message, status);
   }
-});
+}));

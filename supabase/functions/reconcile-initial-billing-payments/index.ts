@@ -1,6 +1,7 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { sanitizeProviderPayload } from '../_shared/sanitize_provider_payload.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
+import { reportEdgeException, serveWithSentry } from '../_shared/sentry.ts';
 
 const DEFAULT_STALE_MINUTES = 10;
 const MAX_BATCH_SIZE = 50;
@@ -287,7 +288,7 @@ async function markRecoveryFailure(
   });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -460,7 +461,8 @@ Deno.serve(async (req) => {
       results
     });
   } catch (error) {
+    await reportEdgeException(error);
     const message = errorMessage(error);
     return jsonResponse({ ok: false, error: message || 'Unknown error' }, 400);
   }
-});
+}));

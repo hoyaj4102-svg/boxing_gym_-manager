@@ -9,6 +9,7 @@ const THIRD_PARTY_HOSTS = new Set([
   'fonts.googleapis.com',
   'fonts.gstatic.com',
   'cdn.jsdelivr.net',
+  'browser.sentry-cdn.com',
 ]);
 
 function shellFile(shellPath) {
@@ -241,6 +242,9 @@ test('manifest and in-app URLs stay relative or canonical', () => {
     'js/billing-config.js',
     'js/billing.js',
     'js/supabase-service.js',
+    'js/sentry.js',
+    'js/sentry-public-env.js',
+    'js/sentry-privacy.mjs',
   ];
   for (const file of files) {
     assertAppUrlsAreRelativeOrCanonical(file, readFileSync(file, 'utf8'));
