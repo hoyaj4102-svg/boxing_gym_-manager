@@ -37,12 +37,18 @@ Deno.test("deno beforeSend removes the same fake secrets", () => {
   if (!result.exception.values[0].value.includes(FILTERED)) throw new Error("exception message was not masked");
 });
 
-Deno.test("deno environment tagging matches the preview and production hosts", () => {
-  if (environmentFromOrigin("https://app.re-member.kr", "") !== "production") {
-    throw new Error("production host was not tagged production");
+Deno.test("deno environment tagging matches the exact production origins first", () => {
+  if (environmentFromOrigin("https://boxing-gym-manager.vercel.app", "") !== "production") {
+    throw new Error("boxing-gym-manager.vercel.app was not tagged production");
   }
-  if (environmentFromOrigin("https://boxing-gym-manager.vercel.app", "") !== "preview") {
-    throw new Error("vercel.app host was not tagged preview");
+  if (environmentFromOrigin("https://remember-gym.vercel.app/share", "") !== "production") {
+    throw new Error("remember-gym.vercel.app was not tagged production");
+  }
+  if (environmentFromOrigin("https://app.re-member.kr", "") !== "production") {
+    throw new Error("app.re-member.kr was not tagged production");
+  }
+  if (environmentFromOrigin("https://branch-name.vercel.app", "https://remember-gym.vercel.app") !== "preview") {
+    throw new Error("other vercel.app host was not tagged preview");
   }
   if (environmentFromOrigin("", "") !== "unknown") throw new Error("missing origin was not unknown");
 });

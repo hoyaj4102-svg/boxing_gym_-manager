@@ -4,9 +4,13 @@
 export const FILTERED = "[Filtered]";
 export const TRACES_SAMPLE_RATE = 0.1;
 
-// Custom production host. *.vercel.app is classified as preview, including the
-// current canonical alias boxing-gym-manager.vercel.app. See the PR notes.
-export const PRODUCTION_HOSTS = ["app.re-member.kr"];
+// Exact production hosts are matched before the *.vercel.app preview rule.
+// app.re-member.kr is included if a request presents it; it is not a confirmed live origin.
+export const PRODUCTION_HOSTS = [
+  "boxing-gym-manager.vercel.app",
+  "remember-gym.vercel.app",
+  "app.re-member.kr",
+];
 
 const SENSITIVE_OBJECT_KEYS = new Set([
   "password",

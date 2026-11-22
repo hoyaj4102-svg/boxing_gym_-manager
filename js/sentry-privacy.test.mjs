@@ -195,12 +195,17 @@ test("beforeSend drops the event if it cannot be cloned", () => {
   assert.equal(beforeSend(event), null);
 });
 
-test("edge environment follows the production host and vercel.app preview rule", () => {
+test("edge environment matches exact production origins before the vercel.app preview rule", () => {
+  assert.equal(environmentFromOrigin("https://boxing-gym-manager.vercel.app", ""), "production");
+  assert.equal(environmentFromOrigin("https://boxing-gym-manager.vercel.app/signup", ""), "production");
+  assert.equal(environmentFromOrigin("https://remember-gym.vercel.app", ""), "production");
+  assert.equal(environmentFromOrigin("https://remember-gym.vercel.app/share", ""), "production");
+  assert.equal(environmentFromOrigin("", "https://remember-gym.vercel.app/share"), "production");
   assert.equal(environmentFromOrigin("https://app.re-member.kr", ""), "production");
   assert.equal(environmentFromOrigin("", "https://app.re-member.kr/members"), "production");
-  assert.equal(environmentFromOrigin("https://boxing-gym-manager.vercel.app", "https://app.re-member.kr"), "preview");
-  assert.equal(environmentFromOrigin("https://remember-gym.vercel.app/share", ""), "preview");
-  assert.equal(environmentFromOrigin("https://branch-name.vercel.app", ""), "preview");
+  assert.equal(environmentFromOrigin("https://branch-name.vercel.app", "https://boxing-gym-manager.vercel.app"), "preview");
+  assert.equal(environmentFromOrigin("https://boxing-gym-manager-git-feature-team.vercel.app", ""), "preview");
+  assert.equal(environmentFromOrigin("https://not-boxing-gym-manager.vercel.app", ""), "preview");
   assert.equal(environmentFromOrigin("", ""), "unknown");
   assert.equal(environmentFromOrigin("https://tosspayments.com", "https://app.re-member.kr"), "unknown");
 });
