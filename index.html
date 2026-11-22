@@ -2791,6 +2791,7 @@
   <script src="./js/billing.js"></script>
   <script src="./js/language.js"></script>
   <script src="./js/month-picker.js"></script>
+  <script src="./js/acquisition.js"></script>
   <script>
     const STORAGE_KEY = 'boxing_gym_members'; // legacy local-only migration source
     const LANGUAGE_KEY = 'boxing_gym_language';
@@ -5401,6 +5402,18 @@
       return window.RememberLanguage.isSupportedLanguage(saved) ? saved : null;
     }
 
+    function captureSignupAcquisition() {
+      if (!window.RememberAcquisition || !window.sessionStorage) return;
+      window.RememberAcquisition.captureFirstVisit({
+        search: window.location.search,
+        referrer: document.referrer,
+        pathname: window.location.pathname,
+        pageHost: window.location.hostname,
+        now: Date.now(),
+        storage: window.sessionStorage
+      });
+    }
+
     function bootstrapLanguage() {
       const search = window.location.search;
       const resolved = window.RememberLanguage.resolveLanguage({
@@ -6159,14 +6172,24 @@
             setAuthMessage(getPasswordValidation().message, 'error');
             return;
           }
+          const acquisition = window.RememberAcquisition && window.sessionStorage
+            ? window.RememberAcquisition.readForSignup({
+              storage: window.sessionStorage,
+              now: Date.now()
+            })
+            : null;
           await SweatManagerDB.signUp({
             email,
             password,
             gymName,
             ownerName,
             phone,
-            locale: currentLanguage
+            locale: currentLanguage,
+            acquisition
           });
+          if (window.RememberAcquisition && window.sessionStorage) {
+            window.RememberAcquisition.clear(window.sessionStorage);
+          }
           setAuthMessage(t('authSignupSuccess'), 'success');
           showToast(t('authSignupSuccess'));
           return;
@@ -8125,6 +8148,7 @@
 
     window.rememberT = t;
     bootstrapLanguage();
+    captureSignupAcquisition();
     resetRegisterDates();
     applyTranslations();
     setAuthMode(getInitialAuthMode());
