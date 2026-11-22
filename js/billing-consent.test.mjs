@@ -4,7 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('./billing-consent.js', import.meta.url), 'utf8');
-const sql = readFileSync(new URL('../supabase/p1_17_billing_consent.sql', import.meta.url), 'utf8');
+const sql = readFileSync(new URL('../supabase/p1_20_billing_consent.sql', import.meta.url), 'utf8');
 const sandbox = { window: {} };
 vm.createContext(sandbox);
 vm.runInContext(source, sandbox);

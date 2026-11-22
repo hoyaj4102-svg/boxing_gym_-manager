@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const identity = readFileSync('js/business-identity.js', 'utf8');
 const consent = readFileSync('js/billing-consent.js', 'utf8');
-const migration = readFileSync('supabase/p1_17_billing_consent.sql', 'utf8');
+const migration = readFileSync('supabase/p1_20_billing_consent.sql', 'utf8');
 const index = readFileSync('index.html', 'utf8');
 const pages = ['legal/terms.html', 'legal/privacy.html', 'legal/refund.html']
   .map((file) => readFileSync(file, 'utf8'));
