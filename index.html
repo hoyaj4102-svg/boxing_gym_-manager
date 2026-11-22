@@ -6573,7 +6573,10 @@
     function formatConsentKrw(value) {
       const amount = Number(value);
       if (!Number.isFinite(amount)) return '';
-      return amount.toLocaleString('ko-KR');
+      const negative = amount < 0;
+      const digits = String(Math.trunc(Math.abs(amount)));
+      const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return (negative ? '-' : '') + grouped;
     }
 
     function renderBillingReadiness(readiness) {
