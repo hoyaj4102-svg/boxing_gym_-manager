@@ -1,4 +1,8 @@
 {
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "node scripts/inject-sentry-public-env.mjs",
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/signup",

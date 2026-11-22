@@ -1,5 +1,6 @@
 import { corsHeaders, jsonResponse, textResponse } from "../_shared/cors.ts";
 import { getAdminClient } from "../_shared/supabase.ts";
+import { reportEdgeException, serveWithSentry } from "../_shared/sentry.ts";
 import {
   type AdminClientLike,
   processReconciliationAttempt,
@@ -20,7 +21,7 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -74,7 +75,8 @@ Deno.serve(async (req) => {
       results,
     });
   } catch (error) {
+    await reportEdgeException(error);
     const message = errorMessage(error);
     return jsonResponse({ ok: false, error: message || "Unknown error" }, 400);
   }
-});
+}));

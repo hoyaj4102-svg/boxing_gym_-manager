@@ -1,6 +1,7 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
 import { isLiveBillingCharge } from './billing_charge_mode.ts';
+import { reportEdgeException, serveWithSentry } from '../_shared/sentry.ts';
 import {
   type AdminClientLike,
   type ClaimedSubscriptionCharge,
@@ -28,7 +29,7 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -127,6 +128,7 @@ if (trialCleanupError) {
       results
     });
   } catch (error) {
+    await reportEdgeException(error);
     const message = error instanceof Error
       ? error.message
       : (error && typeof error === 'object' && 'message' in error)
@@ -134,4 +136,4 @@ if (trialCleanupError) {
         : JSON.stringify(error);
     return jsonResponse({ ok: false, error: message || 'Unknown error' }, 400);
   }
-});
+}));

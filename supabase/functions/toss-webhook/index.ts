@@ -1,6 +1,7 @@
 import { corsHeaders, jsonResponse, textResponse } from '../_shared/cors.ts';
 import { sanitizeProviderPayload as sanitizePayload } from '../_shared/sanitize_provider_payload.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
+import { reportEdgeException, serveWithSentry } from '../_shared/sentry.ts';
 import {
   expectedTossMerchantId,
   isDuplicateWebhookTerminal,
@@ -242,7 +243,7 @@ function isRecoverableAttempt(attempt: PaymentAttempt) {
   ].includes(attempt.status);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(serveWithSentry(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -491,7 +492,8 @@ Deno.serve(async (req) => {
       recovery: recoveryResult
     });
   } catch (error) {
+    await reportEdgeException(error);
     const message = errorMessage(error);
     return jsonResponse({ ok: false, error: message || 'Unknown error' }, 500);
   }
-});
+}));
