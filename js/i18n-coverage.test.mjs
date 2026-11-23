@@ -66,17 +66,44 @@ test('every locale has the newly translated keys', () => {
   }
 });
 
-test('non-Korean locales use English for the install guide instead of Korean', () => {
+test('the install guide follows each app language', () => {
+  const installKeys = addedKeys.filter((key) => key.startsWith('install') || key.startsWith('mock'));
+  const seen = new Set();
   for (const language of Object.keys(dictionaries)) {
-    if (language === 'ko') continue;
-    assert.equal(dictionaries[language].installGuideSettingsButton, dictionaries.en.installGuideSettingsButton);
-    assert.equal(dictionaries[language].installStepIphone1Copy, dictionaries.en.installStepIphone1Copy);
-    assert.doesNotMatch(dictionaries[language].registerHint, /[가-힣]/);
+    for (const key of installKeys) {
+      const value = dictionaries[language][key];
+      assert.equal(typeof value, 'string', `${language}.${key}`);
+      assert.notEqual(value, '', `${language}.${key}`);
+      if (language !== 'ko') assert.doesNotMatch(value, /[가-힣]/, `${language}.${key}`);
+    }
+    assert.equal(dictionaries[language].installStepKicker.includes('{count}'), true, language);
+    seen.add(dictionaries[language].installGuideSettingsButton);
+    if (language !== 'ko') assert.doesNotMatch(dictionaries[language].registerHint, /[가-힣]/);
   }
+  assert.equal(seen.size, Object.keys(dictionaries).length);
+  assert.equal(dictionaries.ko.installGuideSettingsButton, '📱 휴대폰에 앱처럼 설치하기');
+  assert.equal(dictionaries.ko.installGuideLaterButton, '나중에 하기');
+  assert.equal(dictionaries.ko.installStepKicker, 'STEP {count}');
+  assert.equal(dictionaries.en.installGuideSettingsButton, '📱 Install it like an app on your phone');
+  assert.equal(dictionaries.en.installStepKicker, 'STEP {count}');
+  assert.equal(dictionaries.es.installGuideLaterButton, 'Más tarde');
+  assert.equal(dictionaries.es.installStepKicker, 'PASO {count}');
+  assert.equal(dictionaries.ru.installGuideLaterButton, 'Позже');
+  assert.equal(dictionaries.ru.installStepKicker, 'ШАГ {count}');
+  assert.equal(dictionaries.mn.installGuideLaterButton, 'Дараа');
+  assert.equal(dictionaries.mn.mockShare, '⇧ Хуваалцах');
+  assert.equal(dictionaries.zh.installGuideExampleLabel, '示例画面');
+  assert.equal(dictionaries.zh.installStepKicker, '步骤 {count}');
+  assert.equal(dictionaries.hi.installGuideSettingsButton, '📱 फ़ोन पर ऐप की तरह इंस्टॉल करें');
+  assert.equal(dictionaries.fr.installGuideLaterButton, 'Plus tard');
+  assert.equal(dictionaries.fr.installStepKicker, 'ÉTAPE {count}');
   assert.equal(dictionaries.ko.registerHint, '빠른 등록');
   assert.equal(dictionaries.ko.memberListHint, '검색 및 상세');
   assert.equal(dictionaries.en.registerHint, 'Quick add');
   assert.equal(dictionaries.en.memberListHint, 'Search and details');
+  assert.match(page, /if \(installSteps && !installSteps\.hidden\) renderInstallGuideStep\(\)/);
+  assert.match(page, /\.install-guide-intro\[hidden\],\s*\.install-guide-step\[hidden\]\s*\{[^}]*display:\s*none;/);
+  assert.equal(page.includes('① 아래 공유 버튼을 눌러주세요.'), false);
 });
 
 test('a missing locale key falls back to English before Korean', () => {
