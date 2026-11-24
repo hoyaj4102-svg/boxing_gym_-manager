@@ -5402,6 +5402,11 @@
       return window.RememberLanguage.isSupportedLanguage(saved) ? saved : null;
     }
 
+    function browserLanguages() {
+      if (typeof navigator === 'undefined' || !navigator.languages) return [];
+      return Array.from(navigator.languages);
+    }
+
     function captureSignupAcquisition() {
       if (!window.RememberAcquisition || !window.sessionStorage) return;
       window.RememberAcquisition.captureFirstVisit({
@@ -5419,7 +5424,8 @@
       const resolved = window.RememberLanguage.resolveLanguage({
         search,
         stored: storedLanguage(),
-        sessionKnown: false
+        sessionKnown: false,
+        browserLanguages: browserLanguages()
       });
       currentLanguage = resolved.language;
       if (resolved.persist) localStorage.setItem(LANGUAGE_KEY, resolved.language);
@@ -5432,7 +5438,8 @@
         search: languageDecision.search,
         stored: storedLanguage(),
         accountLocale: window.RememberLanguage.accountLocale(user),
-        sessionKnown: true
+        sessionKnown: true,
+        browserLanguages: browserLanguages()
       });
       if (resolved.persist) localStorage.setItem(LANGUAGE_KEY, resolved.language);
       if (resolved.language === currentLanguage) return;
