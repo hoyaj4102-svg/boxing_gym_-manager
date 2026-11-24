@@ -175,3 +175,93 @@ done
 
 total_passed="$(awk '{s+=$1} END {print s+0}' "$summary_file")"
 echo "SQL tests passed: ${#test_files[@]} files, ${total_passed} assertions"
+
+normalize_schema_dump() {
+  python3 - "$1" <<'PY'
+import sys
+path = sys.argv[1]
+lines = []
+with open(path, encoding="utf-8", errors="replace") as handle:
+    for line in handle:
+        stripped = line.rstrip("\n")
+        if stripped.startswith("\\restrict") or stripped.startswith("\\unrestrict"):
+            continue
+        if stripped.startswith("SET transaction_timeout"):
+            continue
+        lines.append(stripped)
+sys.stdout.write("\n".join(lines) + "\n")
+PY
+}
+
+apply_schema_except() {
+  local db="$1"
+  local skip_migration="$2"
+  local file
+  declare -A applied=()
+  for file in "${schema_files[@]}"; do
+    psql_db "$db" -q -c "set client_min_messages to warning" -f "$file" >/dev/null
+    applied["$file"]=1
+  done
+  while IFS= read -r file; do
+    if [[ -n "${applied[$file]:-}" || "$file" == "$skip_migration" ]]; then
+      continue
+    fi
+    case "$file" in
+      *_test.sql|*rollback*)
+        continue
+        ;;
+    esac
+    psql_db "$db" -q -c "set client_min_messages to warning" -f "$file" >/dev/null
+  done < <(find supabase -maxdepth 1 -type f -name '*.sql' | sort)
+}
+
+dump_schema() {
+  local db="$1"
+  local out="$2"
+  if [[ -n "${DATABASE_URL:-}" ]]; then
+    local admin="${DATABASE_URL%/*}"
+    admin="${admin%%\?*}"
+    pg_dump "${admin}/${db}" --schema-only --no-owner --no-tablespaces >"$out"
+  else
+    sudo -u postgres pg_dump -d "$db" --schema-only --no-owner --no-tablespaces >"$out"
+  fi
+  local normalized="${out}.norm"
+  normalize_schema_dump "$out" >"$normalized"
+  mv "$normalized" "$out"
+}
+
+roundtrip_db="ci_sql_rollback"
+rollback_pairs=(
+  "supabase/p1_20_billing_consent.sql|supabase/p1_20_billing_consent_rollback.sql"
+  "supabase/p1_21_payment_ops.sql|supabase/p1_21_payment_ops_rollback.sql"
+  "supabase/p1_29_retry_same_order_claim.sql|supabase/p1_29_retry_same_order_claim_rollback.sql"
+)
+for pair in "${rollback_pairs[@]}"; do
+  migration="${pair%%|*}"
+  rollback="${pair##*|}"
+  if [[ ! -f "$migration" || ! -f "$rollback" ]]; then
+    continue
+  fi
+  echo "Rollback roundtrip: ${migration}"
+  psql_admin -c "select pg_terminate_backend(pid) from pg_stat_activity where datname = '${roundtrip_db}' and pid <> pg_backend_pid();" >/dev/null || true
+  psql_admin -c "drop database if exists ${roundtrip_db};" >/dev/null
+  psql_admin -c "create database ${roundtrip_db};" >/dev/null
+  apply_schema_except "$roundtrip_db" "$migration"
+  before="$(mktemp)"
+  after="$(mktemp)"
+  dump_schema "$roundtrip_db" "$before"
+  psql_db "$roundtrip_db" -q -v ON_ERROR_STOP=1 -c "set client_min_messages to warning" -f "$migration" >/dev/null
+  psql_db "$roundtrip_db" -q -v ON_ERROR_STOP=1 -c "set client_min_messages to warning" -f "$rollback" >/dev/null
+  psql_db "$roundtrip_db" -q -v ON_ERROR_STOP=1 -c "set client_min_messages to warning" -f "$rollback" >/dev/null
+  dump_schema "$roundtrip_db" "$after"
+  if ! diff -u "$before" "$after"; then
+    echo "Rollback schema drift: ${migration}" >&2
+    rm -f "$before" "$after"
+    exit 1
+  fi
+  psql_db "$roundtrip_db" -q -v ON_ERROR_STOP=1 -c "set client_min_messages to warning" -f "$migration" >/dev/null
+  rm -f "$before" "$after"
+  echo "Rollback roundtrip passed: ${migration}"
+done
+psql_admin -c "select pg_terminate_backend(pid) from pg_stat_activity where datname = '${roundtrip_db}' and pid <> pg_backend_pid();" >/dev/null || true
+psql_admin -c "drop database if exists ${roundtrip_db};" >/dev/null || true
