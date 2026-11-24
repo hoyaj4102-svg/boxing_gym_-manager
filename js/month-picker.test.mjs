@@ -212,7 +212,8 @@ test('member dates use the app date picker and keep YYYY-MM-DD ids', () => {
   assert.match(page, /getElementById\('expireDate'\)\.value = addDays\(e\.target\.value \|\| getTodayDateOnly\(\), 30\)/);
   assert.match(page, /getElementById\('editStartDate'\)\.value = member\.startDate/);
   assert.match(page, /getElementById\('editExpireDate'\)\.value = member\.expireDate/);
-  assert.doesNotMatch(page, /toLocaleDateString|toLocaleString|navigator\.language/);
+  // navigator.languages is used only to resolve the app language, not dates.
+  assert.doesNotMatch(page, /toLocaleDateString|toLocaleString|navigator\.language(?!s)/);
 
   const found = [];
   for (const file of walk('.')) {

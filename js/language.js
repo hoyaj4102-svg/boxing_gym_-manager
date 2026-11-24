@@ -7,7 +7,10 @@
  * 2. A saved localStorage choice.
  * 3. The signed-in user's user_metadata.locale, only when nothing is saved locally.
  * 4. utm_source=x when nothing is saved: English, then save.
- * 5. Otherwise Korean. Threads and every other source stay Korean.
+ * 5. The browser language when nothing is saved: English if the preferred
+ *    language is English. This is not saved, so an explicit choice still wins later.
+ * 6. Otherwise Korean. Threads and every other source stay Korean unless the
+ *    browser's preferred language is English.
  */
 (function (global) {
   const SUPPORTED_LANGUAGES = ['ko', 'en', 'es', 'ru', 'mn', 'zh', 'hi', 'fr'];
@@ -40,12 +43,33 @@
     return isSupportedLanguage(normalized) ? normalized : null;
   }
 
+  function browserLanguageTags(input) {
+    if (input == null || input === '') return [];
+    const parts = Array.isArray(input) ? input : String(input).split(',');
+    const tags = [];
+    for (const part of parts) {
+      const tag = String(part || '').trim().split(';')[0].trim().toLowerCase();
+      if (tag) tags.push(tag);
+    }
+    return tags;
+  }
+
+  // Only English is auto-selected from the browser. Other supported languages
+  // still need ?lang=, a saved choice, or the language selector.
+  function languageFromBrowser(input) {
+    const tags = browserLanguageTags(input);
+    if (!tags.length) return null;
+    const primary = tags[0].split('-')[0];
+    return primary === 'en' ? 'en' : null;
+  }
+
   function resolveLanguage(options) {
     const settings = options || {};
     const search = settings.search || '';
     const stored = isSupportedLanguage(settings.stored) ? settings.stored : null;
     const account = isSupportedLanguage(settings.accountLocale) ? settings.accountLocale : null;
     const sessionKnown = settings.sessionKnown === true;
+    const browser = languageFromBrowser(settings.browserLanguages);
 
     const queryLang = languageFromSearch(search);
     if (queryLang) {
@@ -59,13 +83,16 @@
     }
     if (!sessionKnown) {
       return {
-        language: utmSourceIsX(search) ? 'en' : 'ko',
+        language: utmSourceIsX(search) || browser === 'en' ? 'en' : 'ko',
         persist: false,
         source: 'pending'
       };
     }
     if (utmSourceIsX(search)) {
       return { language: 'en', persist: true, source: 'utm' };
+    }
+    if (browser === 'en') {
+      return { language: 'en', persist: false, source: 'browser' };
     }
     return { language: 'ko', persist: false, source: 'default' };
   }
@@ -94,6 +121,7 @@
     SUPPORTED_LANGUAGES,
     isSupportedLanguage,
     languageFromSearch,
+    languageFromBrowser,
     utmSourceIsX,
     accountLocale,
     resolveLanguage,

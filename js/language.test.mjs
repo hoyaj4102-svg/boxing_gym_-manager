@@ -80,15 +80,93 @@ test('utm_source=x selects English and saves only after the session is known', (
   );
 });
 
-test('Threads and every other visit stay Korean and are not saved', () => {
+test('Threads and other visits stay Korean when the browser is not English', () => {
   for (const search of ['', '?utm_source=threads', '?utm_source=twitter', '?utm_source=instagram']) {
-    assert.deepEqual(
-      plain(language.resolveLanguage({ search, sessionKnown: true })),
-      { language: 'ko', persist: false, source: 'default' },
-      search || '(no query)'
-    );
-    assert.equal(language.resolveLanguage({ search, sessionKnown: false }).persist, false);
+    for (const browserLanguages of [undefined, [], ['ko-KR', 'ko'], ['es-ES'], 'ko-KR,ko;q=0.9,en;q=0.8']) {
+      assert.deepEqual(
+        plain(language.resolveLanguage({ search, sessionKnown: true, browserLanguages })),
+        { language: 'ko', persist: false, source: 'default' },
+        `${search || '(no query)'} ${String(browserLanguages)}`
+      );
+      assert.equal(
+        language.resolveLanguage({ search, sessionKnown: false, browserLanguages }).persist,
+        false
+      );
+    }
   }
+});
+
+test('an English browser preference selects English and is not saved', () => {
+  for (const browserLanguages of [
+    ['en-US', 'en'],
+    ['en'],
+    ['en-GB'],
+    'en-US,en;q=0.9,ko;q=0.8',
+    'en-us'
+  ]) {
+    assert.deepEqual(
+      plain(language.resolveLanguage({ search: '', sessionKnown: true, browserLanguages })),
+      { language: 'en', persist: false, source: 'browser' },
+      String(browserLanguages)
+    );
+    assert.deepEqual(
+      plain(language.resolveLanguage({ search: '', sessionKnown: false, browserLanguages })),
+      { language: 'en', persist: false, source: 'pending' },
+      `pending ${String(browserLanguages)}`
+    );
+  }
+  assert.equal(language.languageFromBrowser(['en-US', 'ko']), 'en');
+  assert.equal(language.languageFromBrowser('ko-KR,en;q=0.8'), null);
+  assert.equal(language.languageFromBrowser(['fr-FR']), null);
+  assert.equal(language.languageFromBrowser(null), null);
+});
+
+test('an English browser does not override query, storage, account locale, or X', () => {
+  assert.deepEqual(
+    plain(language.resolveLanguage({
+      search: '?lang=ko',
+      browserLanguages: ['en-US'],
+      sessionKnown: true
+    })),
+    { language: 'ko', persist: true, source: 'query' }
+  );
+  assert.deepEqual(
+    plain(language.resolveLanguage({
+      search: '',
+      stored: 'ko',
+      browserLanguages: ['en-US'],
+      sessionKnown: true
+    })),
+    { language: 'ko', persist: false, source: 'storage' }
+  );
+  assert.deepEqual(
+    plain(language.resolveLanguage({
+      search: '',
+      accountLocale: 'fr',
+      browserLanguages: ['en-US'],
+      sessionKnown: true
+    })),
+    { language: 'fr', persist: false, source: 'account' }
+  );
+  assert.deepEqual(
+    plain(language.resolveLanguage({
+      search: '?utm_source=x',
+      browserLanguages: ['ko-KR'],
+      sessionKnown: true
+    })),
+    { language: 'en', persist: true, source: 'utm' }
+  );
+});
+
+test('an English browser from Threads still sees English, without saving', () => {
+  assert.deepEqual(
+    plain(language.resolveLanguage({
+      search: '?utm_source=threads',
+      browserLanguages: ['en-US', 'en'],
+      sessionKnown: true
+    })),
+    { language: 'en', persist: false, source: 'browser' }
+  );
 });
 
 test('auth redirects keep the chosen language on the current origin', () => {
@@ -166,6 +244,9 @@ test('the page wires the selector, redirects, and account locale update', () => 
 
   assert.match(page, /id="authLanguageSelect"/);
   assert.match(page, /RememberLanguage\.resolveLanguage/);
+  assert.match(page, /browserLanguages:\s*browserLanguages\(\)/);
+  assert.match(page, /function browserLanguages\(\)/);
+  assert.match(page, /navigator\.languages/);
   assert.match(page, /RememberLanguage\.cleanAuthPath/);
   assert.match(page, /locale:\s*currentLanguage/);
   assert.match(page, /resetPassword\(email,\s*currentLanguage\)/);
