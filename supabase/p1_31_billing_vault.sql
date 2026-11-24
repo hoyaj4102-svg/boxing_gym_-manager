@@ -3,9 +3,16 @@
 --
 -- requires Founder approval before applying to production
 --
--- Number: p1_31. Main stops at p1_28. Open drafts already use p1_20, p1_21,
--- p1_23, p1_24, p1_25, p1_29, and p1_30. Do not apply draft #76 (p1_23
--- through p1_25) in the same database as this file.
+-- Number: p1_31. Apply p1_31_prebackup_billing_credentials_20261125
+-- (version 20261124231918) first. Do not apply draft #76 (p1_23 through
+-- p1_25) in the same database as this file.
+--
+-- Hosted Vault internals are owned by supabase_admin. This migration revokes
+-- only grants the current role owns or granted. A revoke it cannot perform
+-- is skipped with a notice and does not roll the migration back. On hosted
+-- Supabase, service_role keeps direct select on vault.decrypted_secrets.
+-- anon and authenticated do not. Edge functions read through the security
+-- definer function.
 --
 -- The copy and the decrypt check run in one function call. A mismatch raises
 -- BILLING_VAULT_COPY_MISMATCH and rolls that call back. The plaintext column
@@ -19,6 +26,15 @@
 -- =============================================================================
 
 create schema if not exists private;
+
+do $require_prebackup$
+begin
+  if to_regclass('private.billing_credentials_backup_20261125') is null then
+    raise exception
+      'Apply p1_31_prebackup_billing_credentials_20261125 (version 20261124231918) before p1_31';
+  end if;
+end
+$require_prebackup$;
 
 revoke all on schema private from public;
 revoke all on schema private from anon, authenticated;
@@ -48,33 +64,117 @@ begin
 end
 $require_vault$;
 
-do $vault_access$
-declare
-  v_proc regprocedure;
-begin
-  begin
-    execute 'alter view vault.decrypted_secrets set (security_invoker = true)';
-  exception
-    when others then
-      null;
-  end;
+create or replace function private.current_role_can_revoke(
+  p_owner oid,
+  p_acl aclitem[]
+)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = ''
+as $can_revoke$
+  select p_owner = (
+      select oid
+      from pg_catalog.pg_roles
+      where rolname = current_user
+    )
+    or exists (
+      select 1
+      from pg_catalog.aclexplode(p_acl) as acl
+      where acl.grantor = (
+        select oid
+        from pg_catalog.pg_roles
+        where rolname = current_user
+      )
+    );
+$can_revoke$;
 
-  revoke all on schema vault from public, anon, authenticated, service_role;
-  revoke all on all tables in schema vault from public, anon, authenticated, service_role;
+revoke all on function private.current_role_can_revoke(oid, aclitem[]) from public;
+revoke all on function private.current_role_can_revoke(oid, aclitem[]) from anon, authenticated;
+revoke all on function private.current_role_can_revoke(oid, aclitem[]) from service_role;
+
+create or replace function private.revoke_hosted_vault_privileges()
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $revoke_hosted$
+declare
+  v_schema record;
+  v_rel record;
+  v_proc record;
+begin
+  select n.nspowner, n.nspacl
+  into v_schema
+  from pg_catalog.pg_namespace n
+  where n.nspname = 'vault';
+
+  if v_schema.nspowner is null then
+    raise notice 'vault revoke skipped for schema vault';
+  elsif private.current_role_can_revoke(v_schema.nspowner, v_schema.nspacl) then
+    begin
+      execute 'revoke all on schema vault from public, anon, authenticated, service_role';
+    exception
+      when insufficient_privilege then
+        raise notice 'vault revoke skipped for schema vault';
+    end;
+  else
+    raise notice 'vault revoke skipped for schema vault';
+  end if;
+
+  for v_rel in
+    select c.relname, c.relowner, c.relacl
+    from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'vault'
+      and c.relkind in ('r', 'v', 'm', 'p')
+  loop
+    if not private.current_role_can_revoke(v_rel.relowner, v_rel.relacl) then
+      raise notice 'vault revoke skipped for vault.%', v_rel.relname;
+      continue;
+    end if;
+
+    begin
+      execute format(
+        'revoke all on table vault.%I from public, anon, authenticated, service_role',
+        v_rel.relname
+      );
+    exception
+      when insufficient_privilege then
+        raise notice 'vault revoke skipped for vault.%', v_rel.relname;
+    end;
+  end loop;
 
   for v_proc in
-    select p.oid::regprocedure
+    select p.oid::regprocedure as signature, p.proowner, p.proacl
     from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'vault'
   loop
-    execute format(
-      'revoke all on function %s from public, anon, authenticated, service_role',
-      v_proc
-    );
+    if not private.current_role_can_revoke(v_proc.proowner, v_proc.proacl) then
+      raise notice 'vault revoke skipped for function %', v_proc.signature;
+      continue;
+    end if;
+
+    begin
+      execute format(
+        'revoke all on function %s from public, anon, authenticated, service_role',
+        v_proc.signature
+      );
+    exception
+      when insufficient_privilege then
+        raise notice 'vault revoke skipped for function %', v_proc.signature;
+    end;
   end loop;
-end
-$vault_access$;
+end;
+$revoke_hosted$;
+
+revoke all on function private.revoke_hosted_vault_privileges() from public;
+revoke all on function private.revoke_hosted_vault_privileges() from anon, authenticated;
+revoke all on function private.revoke_hosted_vault_privileges() from service_role;
+
+select private.revoke_hosted_vault_privileges();
 
 alter table private.billing_credentials
   alter column billing_key drop not null;

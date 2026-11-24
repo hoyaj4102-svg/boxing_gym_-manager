@@ -222,6 +222,10 @@ $call_state$;
 
 revoke all on function pg_temp.p1_31_call_state(text, text) from public;
 
+grant usage on schema private to postgres_migrator;
+grant execute on function private.current_role_can_revoke(oid, aclitem[]) to postgres_migrator;
+grant execute on function private.revoke_hosted_vault_privileges() to postgres_migrator;
+
 insert into p1_31_results (test_name, status, detail)
 select
   'anon and authenticated cannot read the vault billing key',
@@ -258,7 +262,7 @@ select
 
 insert into p1_31_results (test_name, status, detail)
 select
-  'service role reads through the function and not the vault table',
+  'service role reads through the definer function',
   case
     when pg_temp.p1_31_call_state(
       'service_role',
@@ -268,14 +272,84 @@ select
         primary_key
       )
     ) = 'call returned'
-     and pg_temp.p1_31_call_state(
+     and has_table_privilege(
       'service_role',
-      'select decrypted_secret from vault.decrypted_secrets'
-    ) = '42501'
+      'vault.decrypted_secrets',
+      'select'
+    )
     then 'PASS' else 'FAIL'
   end,
   'compared'
 from p1_31_context;
+
+insert into p1_31_results (test_name, status, detail)
+select
+  'hosted vault ownership does not fail the revoke',
+  case
+    when pg_catalog.pg_get_userbyid(p.proowner) = 'supabase_admin'
+     and has_table_privilege(
+      'service_role',
+      'vault.decrypted_secrets',
+      'select'
+    )
+     and pg_temp.p1_31_call_state(
+      'postgres_migrator',
+      'do $r$ begin perform private.revoke_hosted_vault_privileges(); end $r$'
+    ) = 'call returned'
+     and has_table_privilege(
+      'service_role',
+      'vault.decrypted_secrets',
+      'select'
+    )
+    then 'PASS' else 'FAIL'
+  end,
+  'compared'
+from pg_catalog.pg_proc p
+join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'vault'
+  and p.proname = '_crypto_aead_det_noncegen';
+
+insert into p1_31_results (test_name, status, detail)
+select
+  'prebackup table is owner-only and has no vault id',
+  case
+    when c.relrowsecurity
+     and not exists (
+       select 1
+       from information_schema.columns col
+       where col.table_schema = 'private'
+         and col.table_name = 'billing_credentials_backup_20261125'
+         and col.column_name = 'vault_secret_id'
+     )
+     and exists (
+       select 1
+       from information_schema.columns col
+       where col.table_schema = 'private'
+         and col.table_name = 'billing_credentials_backup_20261125'
+         and col.column_name = 'billing_key'
+     )
+     and not has_table_privilege(
+      'anon',
+      'private.billing_credentials_backup_20261125',
+      'select'
+    )
+     and not has_table_privilege(
+      'authenticated',
+      'private.billing_credentials_backup_20261125',
+      'select'
+    )
+     and not has_table_privilege(
+      'service_role',
+      'private.billing_credentials_backup_20261125',
+      'select'
+    )
+    then 'PASS' else 'FAIL'
+  end,
+  'compared'
+from pg_catalog.pg_class c
+join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'private'
+  and c.relname = 'billing_credentials_backup_20261125';
 
 insert into p1_31_results (test_name, status, detail)
 select
