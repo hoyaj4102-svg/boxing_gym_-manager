@@ -56,6 +56,10 @@ function createMockAdmin(options: {
   billingCredentialError?: null | { message: string; code?: string };
   dispatchResult?: boolean;
   dispatchError?: null | { message: string; code?: string };
+  rpcByName?: Record<string, {
+    data: unknown;
+    error: null | { message: string; code?: string };
+  }>;
 } = {}) {
   const updates: Array<{
     table: string;
@@ -100,6 +104,13 @@ function createMockAdmin(options: {
           data: options.dispatchResult ?? true,
           error: options.dispatchError ?? null,
         };
+      }
+      if (options.rpcByName?.[name]) return options.rpcByName[name];
+      if (
+        name === "billing_charge_consent_gate" ||
+        name === "record_payment_failure"
+      ) {
+        return { data: { ok: true }, error: null };
       }
       return {
         data: options.rpcData ??
@@ -337,92 +348,101 @@ Deno.test("invalid claim data is an internal retryable error and does not mark p
   );
 });
 
-async function assertUncertainOutcome(
+async function assertAmbiguousOutcome(
   name: string,
   fetchImpl: typeof fetch,
-  expectedCode: string,
+  expected: { code: string; chargeResult: string },
 ) {
   await Deno.test(name, async () => {
     const { admin, updates, inserts, rpcCalls } = createMockAdmin();
-    let fetchCalls = 0;
+    const methods: string[] = [];
 
     const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
       tossSecret: "test_secret",
       fetchImpl: async (input, init) => {
-        fetchCalls += 1;
+        methods.push(String(init?.method || "GET"));
         return fetchImpl(input, init);
       },
       now: () => new Date("2026-01-01T00:10:00.000Z"),
     });
 
     const attemptUpdate = updatesFor(updates, "payment_attempts")[0];
-    assertEquals(fetchCalls, 1, "uncertain outcome must not retry POST");
-    assertEquals(result.ok, false, "uncertain outcome should fail safely");
+    assertEquals(
+      methods.filter((method) => method === "POST"),
+      ["POST"],
+      "ambiguous outcome must not retry POST",
+    );
+    assertEquals(
+      methods.filter((method) => method === "GET"),
+      ["GET"],
+      "ambiguous outcome should look the order up once",
+    );
+    assertEquals(result.ok, false, "unresolved lookup should not be paid");
     assertEquals(
       result.chargeResult,
-      "uncertain",
-      "result should be uncertain",
+      expected.chargeResult,
+      "result should name the lookup settlement",
     );
     assertEquals(
       activationRpcCount(rpcCalls),
       0,
-      "uncertain outcome should not recover yet",
+      "unresolved lookup should not recover yet",
     );
     assertEquals(
       inserts.length,
       0,
-      "uncertain outcome should not insert checkout session",
+      "unresolved lookup should not insert checkout session",
     );
     assertEquals(
       attemptUpdate.values.recovery_status,
       "pending",
-      "uncertain outcome should remain recovery pending",
+      "unresolved lookup should remain pending review",
     );
     assertEquals(
       attemptUpdate.values.error_code,
-      expectedCode,
-      "uncertain outcome should keep a distinct error code",
+      expected.code,
+      "unresolved lookup should keep a distinct error code",
     );
     assertEquals(
       updatesFor(updates, "gyms").length,
       0,
-      "uncertain outcome must not mark gym past_due or disable auto_renew",
+      "unresolved lookup must not mark gym past_due or disable auto_renew",
     );
   });
 }
 
-await assertUncertainOutcome(
-  "network error is uncertain and does not mark gym past_due",
+await assertAmbiguousOutcome(
+  "network error is looked up and does not mark gym past_due",
   async () => {
     throw new TypeError("network dropped after approval");
   },
-  "TOSS_CHARGE_NETWORK_UNCERTAIN",
+  { code: "TOSS_LOOKUP_RETRYABLE", chargeResult: "pending" },
 );
 
-await assertUncertainOutcome(
-  "5xx is uncertain and does not mark gym past_due",
+await assertAmbiguousOutcome(
+  "5xx is looked up and does not mark gym past_due",
   async () =>
     new Response(JSON.stringify({ code: "SERVER_ERROR" }), { status: 500 }),
-  "TOSS_CHARGE_HTTP_UNCERTAIN",
+  { code: "TOSS_LOOKUP_500", chargeResult: "pending" },
 );
 
-await assertUncertainOutcome(
-  "429 is uncertain and does not mark gym past_due",
+await assertAmbiguousOutcome(
+  "429 is looked up and does not mark gym past_due",
   async () =>
     new Response(JSON.stringify({ code: "TOO_MANY_REQUESTS" }), {
       status: 429,
     }),
-  "TOSS_CHARGE_HTTP_UNCERTAIN",
+  { code: "TOSS_LOOKUP_429", chargeResult: "pending" },
 );
 
-await assertUncertainOutcome(
-  "malformed success JSON is uncertain and does not mark gym past_due",
+await assertAmbiguousOutcome(
+  "malformed success JSON is looked up and does not mark gym past_due",
   async () => new Response("{", { status: 200 }),
-  "TOSS_CHARGE_RESPONSE_UNCERTAIN",
+  { code: "TOSS_PAYMENT_VALIDATION_FAILED", chargeResult: "needs_review" },
 );
 
-await assertUncertainOutcome(
-  "missing paymentKey is uncertain and does not use orderId fallback",
+await assertAmbiguousOutcome(
+  "missing paymentKey is looked up and does not use orderId fallback",
   async () =>
     new Response(
       JSON.stringify({
@@ -432,7 +452,7 @@ await assertUncertainOutcome(
       }),
       { status: 200 },
     ),
-  "TOSS_CHARGE_PAYMENT_KEY_MISSING_UNCERTAIN",
+  { code: "TOSS_PAYMENT_VALIDATION_FAILED", chargeResult: "needs_review" },
 );
 
 Deno.test("uncertain recovery-state write failure is reported without marking past_due", async () => {
@@ -444,18 +464,18 @@ Deno.test("uncertain recovery-state write failure is reported without marking pa
         ? { message: "pending write failed", code: "XX000" }
         : null,
   });
-  let fetchCalls = 0;
+  const methods: string[] = [];
 
   const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
     tossSecret: "test_secret",
-    fetchImpl: async () => {
-      fetchCalls += 1;
+    fetchImpl: async (_input, init) => {
+      methods.push(String(init?.method || "GET"));
       throw new TypeError("network dropped after approval");
     },
     now: () => new Date("2026-01-01T00:10:00.000Z"),
   });
 
-  assertEquals(fetchCalls, 1, "uncertain charge must not retry POST");
+  assertEquals(methods, ["POST", "GET"], "uncertain charge must not retry POST");
   assertEquals(result.ok, false, "failed pending write should be reported");
   assertEquals(
     result.chargeResult,
@@ -503,7 +523,12 @@ Deno.test("paymentKey save failure after successful charge keeps gym out of past
     tossSecret: "test_secret",
     fetchImpl: async () => {
       fetchCalls += 1;
-      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), {
         status: 200,
       });
     },
@@ -538,7 +563,12 @@ Deno.test("checkout session insert failure after successful charge stops before 
     tossSecret: "test_secret",
     fetchImpl: async () => {
       fetchCalls += 1;
-      return new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), {
         status: 200,
       });
     },
@@ -592,7 +622,12 @@ Deno.test("activation failure leaves attempt recoverable and keeps gym out of pa
   const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
     tossSecret: "test_secret",
     fetchImpl: async () =>
-      new Response(JSON.stringify({ paymentKey: "payment_1" }), {
+      new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), {
         status: 200,
       }),
     now: () => new Date("2026-01-01T00:10:00.000Z"),
@@ -826,4 +861,57 @@ Deno.test("dispatch unavailable does not call the provider", async () => {
   assertEquals(fetchCalls, 0, "unavailable dispatch must not call the provider");
   assertEquals(result.chargeResult, "dispatch_unavailable", "failure stays distinct");
   assertEquals(updates.length, 0, "unavailable dispatch must not rewrite the attempt");
+});
+
+Deno.test("renewal sends a stable Idempotency-Key for the order", async () => {
+  const { admin } = createMockAdmin();
+  let idempotencyKey: string | null = null;
+
+  await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async (_input, init) => {
+      idempotencyKey = new Headers(init?.headers).get("Idempotency-Key");
+      return new Response(JSON.stringify({
+        paymentKey: "payment_1",
+        orderId: "toss_renew_attempt_1",
+        status: "DONE",
+        totalAmount: 10000,
+      }), { status: 200 });
+    },
+  });
+
+  assertEquals(
+    idempotencyKey,
+    "charge_toss_renew_attempt_1",
+    "the charge reuses the order idempotency key",
+  );
+});
+
+Deno.test("a denied price gate does not call Toss or mark past_due", async () => {
+  const { admin, updates } = createMockAdmin({
+    rpcByName: {
+      billing_charge_consent_gate: {
+        data: { allowed: false, code: "PRICE_NOT_AUTHORIZED" },
+        error: null,
+      },
+    },
+  });
+  let fetchCalls = 0;
+
+  const result = await processClaimedSubscriptionCharge(admin, baseClaim(), {
+    tossSecret: "test_secret",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response(JSON.stringify({ paymentKey: "payment_1" }), { status: 200 });
+    },
+  });
+
+  assertEquals(fetchCalls, 0, "denied consent must not call Toss");
+  assertEquals(result.chargeResult, "consent_blocked", "the charge result names the gate");
+  assertEquals(updatesFor(updates, "gyms").length, 0, "a consent block is not a card failure");
+  assertEquals(
+    updatesFor(updates, "payment_attempts")[0].values.error_code,
+    "PRICE_NOT_AUTHORIZED",
+    "the attempt keeps the gate code",
+  );
 });

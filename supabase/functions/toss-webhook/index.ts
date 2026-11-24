@@ -8,6 +8,10 @@ import {
   validateTossPaymentForAttempt
 } from './merchant_validation.ts';
 
+// DONE billing approvals do not emit PAYMENT_STATUS_CHANGED in test or live.
+// Recurring charges are settled from the billing response and, when that
+// response is ambiguous, from GET /v1/payments/orders/{orderId}. This webhook
+// is an optional extra signal only.
 const SUPPORTED_EVENT_TYPE = 'PAYMENT_STATUS_CHANGED';
 const TOSS_LOOKUP_TIMEOUT_MS = 10000;
 

@@ -9,6 +9,9 @@ on:
   push:
     branches:
       - main
+      # Stacked PR branches are not main. A push still runs CI when GitHub
+      # has not built the pull request merge ref that pull_request needs.
+      - "cursor/**"
 
 permissions:
   contents: read
@@ -58,12 +61,25 @@ jobs:
             supabase/functions/charge-subscriptions/billing_charge_mode_test.ts \
             supabase/functions/charge-subscriptions/subscription_charge_test.ts \
             supabase/functions/confirm-billing-auth/charge_outcome_test.ts \
+            supabase/functions/confirm-billing-auth/initial_billing_charge_test.ts \
             supabase/functions/confirm-toss-payment/handler_test.ts \
             supabase/functions/create-checkout/handler_test.ts \
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
             supabase/functions/toss-webhook/merchant_validation_test.ts \
+            supabase/functions/_shared/billing_order_reconciliation_test.ts \
             supabase/functions/_shared/sanitize_provider_payload_test.ts \
-            supabase/functions/confirm-billing-auth/claim_gate_test.ts
+            supabase/functions/confirm-billing-auth/claim_gate_test.ts \
+            supabase/functions/_shared/toss_idempotency_test.ts \
+            supabase/functions/_shared/toss_test_guard_test.ts \
+            supabase/functions/_shared/refund_policy_test.ts \
+            supabase/functions/_shared/payment_failure_plan_test.ts \
+            supabase/functions/_shared/toss_receipt_test.ts \
+            supabase/functions/payment-receipt/handler_test.ts \
+            supabase/functions/_shared/outbound_notice_test.ts \
+            supabase/functions/_shared/consent_gate_test.ts \
+            supabase/functions/_shared/toss_cancel_test.ts \
+            supabase/functions/cancel-payment/handler_test.ts \
+            supabase/functions/retry-failed-payments/handler_test.ts
 
   node-checks:
     name: Node checks

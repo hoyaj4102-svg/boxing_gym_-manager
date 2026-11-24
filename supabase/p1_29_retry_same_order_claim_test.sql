@@ -1,0 +1,307 @@
+-- Same-order retry claim. Synthetic rows only. Rolls back. Does not call Toss.
+
+begin;
+
+create temp table p1_29_results (
+  test_name text not null,
+  status text not null,
+  detail text
+) on commit drop;
+
+create temp table p1_29_context (
+  gym_id uuid not null,
+  initial_gym_id uuid not null,
+  user_id uuid not null,
+  initial_user_id uuid not null,
+  retry_attempt_id uuid not null,
+  fresh_attempt_id uuid not null,
+  paid_attempt_id uuid not null,
+  initial_attempt_id uuid not null,
+  blocked_initial_id uuid not null
+) on commit drop;
+
+insert into p1_29_context
+values (
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid(),
+  gen_random_uuid()
+);
+
+insert into public.gyms (
+  id, name, owner_name, phone, plan_code, subscription_status
+)
+select gym_id, 'P1-29 Retry Gym', 'Owner', '010-0000-0000', 'free', 'expired'
+from p1_29_context
+union all
+select initial_gym_id, 'P1-29 Initial Gym', 'Owner', '010-0000-0000', 'free', 'expired'
+from p1_29_context;
+
+create temp table p1_29_users on commit drop as
+select user_id, gym_id
+from p1_29_context
+union all
+select initial_user_id, initial_gym_id
+from p1_29_context;
+
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data
+)
+select
+  user_id,
+  '00000000-0000-0000-0000-000000000000'::uuid,
+  'authenticated',
+  'authenticated',
+  'p1_29_' || replace(user_id::text, '-', '') || '@example.invalid',
+  '',
+  now(), now(), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb
+from p1_29_users;
+
+insert into public.profiles (id, gym_id, name)
+select user_id, gym_id, 'P1-29 Test User'
+from p1_29_users
+on conflict (id) do update
+set gym_id = excluded.gym_id, name = excluded.name;
+
+insert into public.payment_attempts (
+  id, gym_id, user_id, provider, payment_type, amount_krw, order_id,
+  customer_key, status, activation_status, recovery_status, error_code, payment_key
+)
+select
+  retry_attempt_id, gym_id, user_id, 'toss', 'auto_renewal', 10000,
+  'p1_29_retry_order', 'p1_29_customer', 'initiated', 'not_started', 'none',
+  'TOSS_ORDER_NOT_FOUND_RETRY_SAME_ORDER', null
+from p1_29_context
+union all
+select
+  fresh_attempt_id, gym_id, user_id, 'toss', 'auto_renewal', 10000,
+  'p1_29_fresh_order', 'p1_29_customer', 'initiated', 'not_started', 'none',
+  null, null
+from p1_29_context
+union all
+select
+  paid_attempt_id, gym_id, user_id, 'toss', 'auto_renewal', 10000,
+  'p1_29_paid_order', 'p1_29_customer', 'initiated', 'not_started', 'none',
+  'TOSS_ORDER_NOT_FOUND_RETRY_SAME_ORDER', 'p1_29_payment_key'
+from p1_29_context
+union all
+select
+  initial_attempt_id, initial_gym_id, initial_user_id, 'toss', 'initial_billing', 10000,
+  'p1_29_initial_order', 'p1_29_customer', 'initiated', 'not_started', 'none',
+  'TOSS_ORDER_NOT_FOUND_RETRY_SAME_ORDER', null
+from p1_29_context
+union all
+select
+  blocked_initial_id, initial_gym_id, initial_user_id, 'toss', 'initial_billing', 10000,
+  'p1_29_blocked_initial_order', 'p1_29_customer', 'charge_failed', 'not_started', 'none',
+  'REJECT_CARD_COMPANY', null
+from p1_29_context;
+
+-- The blocked initial row is a second initial attempt for the same gym.
+-- claim_initial returns the newest open attempt, so give the retry row the later time.
+update public.payment_attempts
+set created_at = now()
+where id = (select initial_attempt_id from p1_29_context);
+
+update public.payment_attempts
+set created_at = now() - interval '1 minute'
+where id = (select blocked_initial_id from p1_29_context);
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'released auto-renewal attempt is claimed once',
+  case
+    when count(*) = 1
+     and bool_and(order_id = 'p1_29_retry_order')
+     and bool_and(payment_attempt_id = (select retry_attempt_id from p1_29_context))
+    then 'PASS' else 'FAIL'
+  end,
+  'claimed=' || count(*)::text
+from public.claim_retryable_same_order_charges(10);
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'claimed attempt keeps its order and holds the dispatch lock',
+  case
+    when pa.order_id = 'p1_29_retry_order'
+     and pa.charge_dispatched_at is not null
+     and pa.payment_key is null
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(pa.order_id, 'none')
+from public.payment_attempts pa
+join p1_29_context ctx on pa.id = ctx.retry_attempt_id;
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'second claim does not charge the same order again',
+  case when count(*) = 0 then 'PASS' else 'FAIL' end,
+  'rows=' || count(*)::text
+from public.claim_retryable_same_order_charges(10);
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'fresh initiated attempt is not treated as a released retry',
+  case when pa.charge_dispatched_at is null then 'PASS' else 'FAIL' end,
+  'fresh dispatch stays empty'
+from public.payment_attempts pa
+join p1_29_context ctx on pa.id = ctx.fresh_attempt_id;
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'attempt that already has a payment key is not claimed',
+  case when pa.charge_dispatched_at is null then 'PASS' else 'FAIL' end,
+  'paid key stays unclaimed'
+from public.payment_attempts pa
+join p1_29_context ctx on pa.id = ctx.paid_attempt_id;
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'initial same-order retry can charge the original order',
+  case
+    when result->>'can_charge' = 'true'
+     and result->>'same_order_retry' = 'true'
+     and result->>'order_id' = 'p1_29_initial_order'
+     and result->>'payment_attempt_id' = ctx.initial_attempt_id::text
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(result->>'action', 'none') || ' ' || coalesce(result->>'order_id', 'none')
+from p1_29_context ctx
+cross join lateral public.claim_initial_billing_attempt(
+  ctx.initial_gym_id, ctx.initial_user_id, 'p1_29_customer', 10000
+) as result;
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'claim_initial_billing_attempt pins an empty search_path',
+  case
+    when count(*) = 1
+     and bool_and(p.prosecdef)
+     and bool_and(exists (
+       select 1
+       from unnest(coalesce(p.proconfig, array[]::text[])) as cfg
+       where cfg in ('search_path=', 'search_path=""')
+     ))
+     and bool_and(position('pg_catalog.gen_random_uuid()' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.billing_period_bounds(' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.payment_attempts' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.gyms' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('public.profiles' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('set search_path = public' in lower(pg_get_functiondef(p.oid))) = 0)
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(string_agg(array_to_string(p.proconfig, ','), ' | '), 'missing')
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'claim_initial_billing_attempt'
+  and pg_get_function_identity_arguments(p.oid) =
+    'p_gym_id uuid, p_user_id uuid, p_customer_key text, p_amount_krw integer';
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'claim_retryable_same_order_charges pins an empty search_path',
+  case
+    when count(*) = 1
+     and bool_and(not p.prosecdef)
+     and bool_and(exists (
+       select 1
+       from unnest(coalesce(p.proconfig, array[]::text[])) as cfg
+       where cfg in ('search_path=', 'search_path=""')
+     ))
+     and bool_and(position('public.payment_attempts' in pg_get_functiondef(p.oid)) > 0)
+     and bool_and(position('pg_catalog.now()' in pg_get_functiondef(p.oid)) > 0)
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(string_agg(array_to_string(p.proconfig, ','), ' | '), 'missing')
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'claim_retryable_same_order_charges';
+
+create schema p1_29_shadow;
+create or replace function p1_29_shadow.gen_random_uuid()
+returns uuid
+language sql
+as $$ select '11111111-1111-4111-8111-111111111111'::uuid $$;
+
+create or replace function p1_29_shadow.billing_period_bounds(text)
+returns jsonb
+language sql
+as $$
+  select jsonb_build_object(
+    'period_start', '1999-01-01T00:00:00Z',
+    'period_end', '1999-02-01T00:00:00Z'
+  )
+$$;
+
+create temp table p1_29_shadow_ids on commit drop as
+select gen_random_uuid() as gym_id, gen_random_uuid() as user_id;
+
+insert into public.gyms (
+  id, name, owner_name, phone, plan_code, subscription_status
+)
+select gym_id, 'P1-29 Shadow Gym', 'Owner', '010-0000-0000', 'free', 'expired'
+from p1_29_shadow_ids;
+
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data
+)
+select
+  user_id,
+  '00000000-0000-0000-0000-000000000000'::uuid,
+  'authenticated',
+  'authenticated',
+  'p1_29_shadow_' || replace(user_id::text, '-', '') || '@example.invalid',
+  '',
+  now(), now(), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb
+from p1_29_shadow_ids;
+
+insert into public.profiles (id, gym_id, name)
+select user_id, gym_id, 'P1-29 Shadow User'
+from p1_29_shadow_ids
+on conflict (id) do update
+set gym_id = excluded.gym_id, name = excluded.name;
+
+select set_config('search_path', 'p1_29_shadow', true);
+
+create temp table p1_29_shadow_claim on commit drop as
+select public.claim_initial_billing_attempt(
+  gym_id, user_id, 'p1_29_shadow_customer', 10000
+) as result
+from p1_29_shadow_ids;
+
+insert into p1_29_results (test_name, status, detail)
+select
+  'pinned definer ignores a caller search_path shadow',
+  case
+    when claim.result->>'can_charge' = 'true'
+     and claim.result->>'action' = 'charge'
+     and claim.result->>'order_id' like 'toss_bill_%'
+     and claim.result->>'order_id' not like '%111111111111%'
+     and pa.target_period_start is distinct from '1999-01-01T00:00:00Z'::timestamptz
+     and pa.order_id = claim.result->>'order_id'
+    then 'PASS' else 'FAIL'
+  end,
+  coalesce(claim.result->>'order_id', 'none')
+from p1_29_shadow_claim claim
+join public.payment_attempts pa on pa.id = (claim.result->>'payment_attempt_id')::uuid;
+
+select set_config('search_path', 'public', true);
+
+select test_name, status, detail
+from p1_29_results
+order by test_name;
+
+rollback;
