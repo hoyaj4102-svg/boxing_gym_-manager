@@ -1,7 +1,15 @@
+import { chargeIdempotencyKey } from "./toss_idempotency.ts";
+
 export type TossBillingChargeRequest = {
   billingKey: string;
   authorization: string;
   body: Record<string, unknown>;
+  /**
+   * Optional explicit key. When omitted, the key is derived from `body.orderId`.
+   * A provided key must equal that derived key; approval is not sent otherwise.
+   * The same payment attempt keeps one orderId, so a retry reuses this key.
+   */
+  idempotencyKey?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -56,6 +64,43 @@ function isUncertainHttpStatus(status: number) {
     status >= 500;
 }
 
+function unresolvedKey(code: string): TossBillingChargeOutcome {
+  return {
+    kind: "uncertain",
+    status: null,
+    code,
+    message: code,
+    payload: null,
+  };
+}
+
+function resolveChargeIdempotencyKey(
+  request: TossBillingChargeRequest,
+): { key: string } | { error: string } {
+  const orderId = request.body.orderId;
+  if (typeof orderId !== "string" || orderId.trim() === "") {
+    return { error: "IDEMPOTENCY_KEY_INVALID" };
+  }
+
+  let derived: string;
+  try {
+    derived = chargeIdempotencyKey(orderId);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "IDEMPOTENCY_KEY_INVALID",
+    };
+  }
+
+  if (
+    request.idempotencyKey !== undefined &&
+    request.idempotencyKey !== derived
+  ) {
+    return { error: "IDEMPOTENCY_KEY_MISMATCH" };
+  }
+
+  return { key: derived };
+}
+
 async function readJsonPayload(response: Response) {
   const text = await response.text();
   if (!text) return { payload: null, malformed: false };
@@ -71,6 +116,10 @@ export async function chargeTossBilling(
   request: TossBillingChargeRequest,
 ): Promise<TossBillingChargeOutcome> {
   const fetchImpl = request.fetchImpl ?? fetch;
+  const resolvedKey = resolveChargeIdempotencyKey(request);
+  if ("error" in resolvedKey) {
+    return unresolvedKey(resolvedKey.error);
+  }
 
   let response: Response;
   try {
@@ -83,6 +132,7 @@ export async function chargeTossBilling(
         headers: {
           Authorization: request.authorization,
           "Content-Type": "application/json",
+          "Idempotency-Key": resolvedKey.key,
         },
         body: JSON.stringify(request.body),
       },

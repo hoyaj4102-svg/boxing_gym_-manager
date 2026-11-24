@@ -196,22 +196,32 @@
     return url.toString();
   }
 
-  async function signUp({ email, password, gymName, ownerName, phone, locale }) {
+  function signupAcquisition(acquisition) {
+    const helper = global.RememberAcquisition;
+    if (!helper || typeof helper.forSignup !== 'function') return null;
+    return helper.forSignup(acquisition);
+  }
+
+  async function signUp({ email, password, gymName, ownerName, phone, locale, acquisition }) {
     if (!STATE.client) throw serviceError('serviceNotConfigured');
     const language = locale || 'ko';
+    const metadata = {
+      gym_name: gymName,
+      owner_name: ownerName || '',
+      phone: phone || '',
+      // Display language only. Never used for authorization.
+      locale: language
+    };
+    // Sanitized attribution only. The helper drops raw queries and contact fields.
+    const source = signupAcquisition(acquisition);
+    if (source) metadata.acquisition = source;
 
     const { data, error } = await STATE.client.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: authRedirectTo('/login', language),
-        data: {
-          gym_name: gymName,
-          owner_name: ownerName || '',
-          phone: phone || '',
-          // Display language only. Never used for authorization.
-          locale: language
-        }
+        data: metadata
       }
     });
 
