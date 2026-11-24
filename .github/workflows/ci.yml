@@ -49,12 +49,14 @@ jobs:
       - name: Run Deno tests
         run: |
           set -euo pipefail
+          # Loopback only, so the mock Toss server can listen. No other host is allowed.
           deno test \
             --no-prompt \
             --no-remote \
             --no-npm \
             --no-lock \
             --cached-only \
+            --allow-net=127.0.0.1 \
             supabase/functions/charge-subscriptions/billing_charge_mode_test.ts \
             supabase/functions/charge-subscriptions/subscription_charge_test.ts \
             supabase/functions/confirm-billing-auth/charge_outcome_test.ts \
@@ -63,6 +65,7 @@ jobs:
             supabase/functions/reconcile-auto-renewal-payments/reconciliation_test.ts \
             supabase/functions/toss-webhook/merchant_validation_test.ts \
             supabase/functions/_shared/sanitize_provider_payload_test.ts \
+            supabase/functions/_shared/toss_billing_idempotency_server_test.ts \
             supabase/functions/confirm-billing-auth/claim_gate_test.ts
 
   node-checks:

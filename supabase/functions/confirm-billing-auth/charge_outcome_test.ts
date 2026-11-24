@@ -28,10 +28,16 @@ function baseRequest(fetchImpl: typeof fetch) {
   };
 }
 
+function idempotencyKey(init: RequestInit | undefined) {
+  return new Headers(init?.headers).get("Idempotency-Key");
+}
+
 Deno.test("successful billing charge returns paymentKey", async () => {
   const methods: string[] = [];
+  const keys: Array<string | null> = [];
   const result = await chargeTossBilling(baseRequest(async (_input, init) => {
     methods.push(String(init?.method || "GET"));
+    keys.push(idempotencyKey(init));
     return new Response(
       JSON.stringify({
         paymentKey: "payment_1",
@@ -44,6 +50,11 @@ Deno.test("successful billing charge returns paymentKey", async () => {
   }));
 
   assertEquals(methods, ["POST"], "charge should use one POST");
+  assertEquals(
+    keys,
+    ["charge_toss_bill_attempt_1"],
+    "approval should send the order attempt key",
+  );
   assertEquals(result.kind, "success", "successful charge should be success");
   assertEquals(
     result.kind === "success" ? result.paymentKey : null,
@@ -54,12 +65,19 @@ Deno.test("successful billing charge returns paymentKey", async () => {
 
 Deno.test("network failure is uncertain and not a rejected charge", async () => {
   let calls = 0;
-  const result = await chargeTossBilling(baseRequest(async () => {
+  const keys: Array<string | null> = [];
+  const result = await chargeTossBilling(baseRequest(async (_input, init) => {
     calls += 1;
+    keys.push(idempotencyKey(init));
     throw new TypeError("network dropped after approval");
   }));
 
   assertEquals(calls, 1, "charge helper must not retry POST");
+  assertEquals(
+    keys,
+    ["charge_toss_bill_attempt_1"],
+    "a dropped approval still uses the attempt key",
+  );
   assertEquals(result.kind, "uncertain", "network failure should be uncertain");
   assert(
     result.kind !== "rejected",
@@ -140,5 +158,44 @@ Deno.test("successful HTTP response without paymentKey is uncertain", async () =
     result.kind === "uncertain" ? result.code : null,
     "TOSS_CHARGE_PAYMENT_KEY_MISSING_UNCERTAIN",
     "missing paymentKey should have a distinct uncertain code",
+  );
+});
+
+Deno.test("missing orderId does not call Toss", async () => {
+  let calls = 0;
+  const request = baseRequest(async () => {
+    calls += 1;
+    return new Response("{}", { status: 200 });
+  });
+  const result = await chargeTossBilling({
+    ...request,
+    body: { amount: 10000 },
+  });
+
+  assertEquals(calls, 0, "invalid attempt key must not approve");
+  assertEquals(result.kind, "uncertain", "missing orderId is uncertain");
+  assertEquals(
+    result.kind === "uncertain" ? result.code : null,
+    "IDEMPOTENCY_KEY_INVALID",
+    "missing orderId should not be sent",
+  );
+});
+
+Deno.test("a different explicit idempotency key does not call Toss", async () => {
+  let calls = 0;
+  const request = baseRequest(async () => {
+    calls += 1;
+    return new Response("{}", { status: 200 });
+  });
+  const result = await chargeTossBilling({
+    ...request,
+    idempotencyKey: "charge_other_attempt",
+  });
+
+  assertEquals(calls, 0, "mismatched key must not approve");
+  assertEquals(
+    result.kind === "uncertain" ? result.code : null,
+    "IDEMPOTENCY_KEY_MISMATCH",
+    "explicit key must match the attempt order id",
   );
 });
