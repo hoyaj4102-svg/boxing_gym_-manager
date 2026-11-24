@@ -20,6 +20,15 @@
     return error;
   }
 
+  function assertNewPassword(password, email) {
+    const policy = global.RememberPasswordPolicy;
+    if (!policy || typeof policy.validate !== 'function') {
+      throw serviceError('serviceNotConfigured');
+    }
+    const result = policy.validate(password, { email });
+    if (!result.ok) throw serviceError(result.key);
+  }
+
   function getConfig() {
     return global.SWEAT_MANAGER_SUPABASE || {};
   }
@@ -204,6 +213,7 @@
 
   async function signUp({ email, password, gymName, ownerName, phone, locale, acquisition }) {
     if (!STATE.client) throw serviceError('serviceNotConfigured');
+    assertNewPassword(password, email);
     const language = locale || 'ko';
     const metadata = {
       gym_name: gymName,
@@ -263,6 +273,8 @@
 
   async function updatePassword(newPassword) {
     if (!STATE.client) throw serviceError('serviceNotConfigured');
+    const email = STATE.user && STATE.user.email;
+    assertNewPassword(newPassword, email);
     const { data, error } = await STATE.client.auth.updateUser({ password: newPassword });
     if (error) throw error;
     return data;
