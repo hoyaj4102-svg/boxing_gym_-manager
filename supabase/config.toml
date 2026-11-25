@@ -21,3 +21,15 @@ verify_jwt = false
 
 [functions.toss-webhook]
 verify_jwt = false
+
+# Local `supabase start` only. Hosted Supabase does not read this file.
+# Do not run `supabase config push`. Production templates stay on the
+# default English mail until custom SMTP is enabled and a person pastes
+# the copies in docs/auth-email-templates.md into the dashboard.
+[auth.email.template.confirmation]
+subject = '{{ if eq .Data.locale "en" }}Confirm your email address{{ else }}이메일 주소를 확인해 주세요{{ end }}'
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = '{{ if eq .Data.locale "en" }}Reset your password{{ else }}비밀번호를 다시 설정해 주세요{{ end }}'
+content_path = "./supabase/templates/recovery.html"

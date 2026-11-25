@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ko">
+<body>
+{{ if eq .Data.locale "en" }}
+<h2>Confirm your email address</h2>
+<p>Confirm this address to finish signing up for re;member.</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm email address</a></p>
+{{ else }}
+<h2>이메일 주소를 확인해 주세요</h2>
+<p>re;member 가입을 마치려면 이 주소를 확인해 주세요.</p>
+<p><a href="{{ .ConfirmationURL }}">이메일 주소 확인</a></p>
+{{ end }}
+</body>
+</html>
