@@ -81,6 +81,13 @@ select
   true
 from p0_2_claim_test_context;
 
+select public.upsert_gym_billing_credential(
+  gym_id,
+  'p0_2_test_billing_key_' || replace(gym_id::text, '-', ''),
+  'toss'
+)
+from p0_2_claim_test_context;
+
 create temp table p0_2_first_claim on commit drop as
 select c.*
 from p0_2_claim_test_context ctx

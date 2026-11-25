@@ -156,7 +156,7 @@ begin
       ('owner cannot read attempt payload', 'select provider_response from public.payment_attempts'),
       ('owner cannot read checkout payload', 'select raw from public.checkout_sessions'),
       ('owner cannot read subscription payload', 'select raw from public.subscriptions'),
-      ('owner cannot read private storage', 'select billing_key from private.billing_credentials'),
+      ('owner cannot read private storage', 'select vault_secret_id from private.billing_credentials'),
       ('owner cannot execute credential read', 'select public.read_gym_billing_credential(null)'),
       ('owner cannot execute credential write', 'select public.upsert_gym_billing_credential(null, ''x'', ''toss'')')
     ) as checks(test_name, statement)
@@ -306,6 +306,10 @@ cross join lateral (values
   (diverge_gym, 'integrate_match_order', 'integrate_kept_key'),
   (diverge_gym, 'integrate_other_order', 'integrate_stale_key')
 ) as rows(gym_id, order_id, credential);
+
+-- Re-applying the older payment SQL needs the plaintext column. Restore it
+-- from Vault for this check only; the script rolls the restore back.
+select private.rollback_billing_vault_drop();
 
 \ir p0_payment_data_protection.sql
 \ir p1_15a_expired_pro_billing_claim.sql
