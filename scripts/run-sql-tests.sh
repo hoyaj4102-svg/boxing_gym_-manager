@@ -94,6 +94,20 @@ while IFS= read -r file; do
       continue
       ;;
   esac
+  # p1_31_billing_vault sorts before the prebackup filename. Hosted history
+  # recorded the prebackup first (version 20261124231918).
+  if [[ "$file" == "supabase/p1_31_billing_vault.sql" ]]; then
+    prebackup="supabase/p1_31_prebackup_billing_credentials_20261125.sql"
+    if [[ -z "${applied_schema[$prebackup]:-}" ]]; then
+      if [[ ! -f "$prebackup" ]]; then
+        echo "Missing schema file: ${prebackup}" >&2
+        exit 1
+      fi
+      echo "Applying additional SQL file: ${prebackup}"
+      psql_db "$DB_NAME" -q -c "set client_min_messages to warning" -f "$prebackup" >/dev/null
+      applied_schema["$prebackup"]=1
+    fi
+  fi
   echo "Applying additional SQL file: ${file}"
   psql_db "$DB_NAME" -q -c "set client_min_messages to warning" -f "$file" >/dev/null
 done < <(find supabase -maxdepth 1 -type f -name '*.sql' | sort)

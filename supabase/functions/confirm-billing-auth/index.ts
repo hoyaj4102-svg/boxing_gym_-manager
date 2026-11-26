@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
     }
 
     const { error: credentialStoreError } = await admin.rpc(
-      "read_gym_billing_credential",
+      "read_gym_billing_vault_credential",
       { p_gym_id: gymId },
     );
     if (credentialStoreError) {

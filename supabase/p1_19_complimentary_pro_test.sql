@@ -1133,8 +1133,7 @@ select
      and again.result->>'already_applied' = 'true'
      and before.billing_subscription_id is null
      and before.auto_renew = false
-     and stored.billing_key is not null
-     and length(btrim(stored.billing_key)) > 0
+     and private.read_billing_vault_secret(c.vault_secret_id) = 'synthetic-private-billing-key'
      and g.complimentary_pro = true
      and g.complimentary_pro_reason = 'synthetic-decision-ref'
      and g.billing_subscription_id is null
@@ -1143,8 +1142,8 @@ select
      and g.member_limit = before.member_limit
      and g.subscription_status = before.subscription_status
      and g.current_period_end = before.current_period_end
-     and c.billing_key = stored.billing_key
-     and convert_to(c.billing_key, 'UTF8') = convert_to(stored.billing_key, 'UTF8')
+     and c.billing_key is not distinct from stored.billing_key
+     and convert_to(c.billing_key, 'UTF8') is not distinct from convert_to(stored.billing_key, 'UTF8')
      and c.created_at = stored.created_at
      and c.updated_at = stored.updated_at
      and c.provider = stored.provider
@@ -1238,8 +1237,8 @@ select
      and g.complimentary_pro = true
      and g.auto_renew = true
      and g.billing_subscription_id is null
-     and c.billing_key = stored.billing_key
-     and convert_to(c.billing_key, 'UTF8') = convert_to(stored.billing_key, 'UTF8')
+     and c.billing_key is not distinct from stored.billing_key
+     and convert_to(c.billing_key, 'UTF8') is not distinct from convert_to(stored.billing_key, 'UTF8')
      and c.updated_at = stored.updated_at
      and (
        select count(*)
