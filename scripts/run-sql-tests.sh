@@ -90,7 +90,9 @@ while IFS= read -r file; do
     continue
   fi
   case "$file" in
-    *_test.sql|*rollback*)
+    # *_once.sql is a one-time production data change. Its test runs it on
+    # synthetic rows inside a rolled-back transaction instead.
+    *_test.sql|*rollback*|*_once.sql)
       continue
       ;;
   esac
