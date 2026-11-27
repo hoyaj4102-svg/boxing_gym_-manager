@@ -2220,7 +2220,7 @@
         <div class="field" id="authPasswordField">
           <label for="authPassword" id="authPasswordLabel" data-i18n="authPasswordLabel">비밀번호</label>
           <div class="password-input-wrap">
-            <input type="password" id="authPassword" autocomplete="current-password" placeholder="6자 이상" data-i18n-placeholder="authPasswordPlaceholder">
+            <input type="password" id="authPassword" autocomplete="current-password" placeholder="비밀번호" data-i18n-placeholder="authPasswordLoginPlaceholder">
             <button type="button" class="password-toggle" data-toggle-password="authPassword" data-i18n-aria-label="authPasswordShow">👁</button>
           </div>
         </div>
@@ -2787,6 +2787,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./js/config.js"></script>
   <script src="./js/billing-config.js"></script>
+  <script src="./js/password-policy.js"></script>
   <script src="./js/supabase-service.js"></script>
   <script src="./js/billing.js"></script>
   <script src="./js/language.js"></script>
@@ -2888,7 +2889,7 @@
         authSignedOut: '로그아웃되었습니다.',
         authNeedFields: '필수 항목을 입력해 주세요.',
         authInvalidEmail: '올바른 이메일 주소를 입력해 주세요.',
-        authPasswordTooShort: '비밀번호는 6자 이상이어야 합니다.',
+        authPasswordTooShort: '비밀번호는 10자 이상이어야 합니다.',
         authPasswordMismatch: '비밀번호가 일치하지 않습니다.',
         authPasswordMatch: '비밀번호가 일치합니다.',
         authRecoveryReady: '새 비밀번호를 설정해 주세요.',
@@ -2919,13 +2920,18 @@
         smsExpired: '안녕하세요 [re;member] 체육관 만기일이 {days}일 지났습니다. 재등록 안내드립니다.',
         smsDueToday: '안녕하세요 [re;member] 체육관 만기일 당일 알림드립니다.',
         smsDueSoon: '안녕하세요 [re;member] 체육관 만기일 {days}일 전 알림드립니다.',
-        newPasswordPrompt: '새 비밀번호를 입력하세요 (6자 이상)',
+        newPasswordPrompt: '새 비밀번호를 입력하세요 (10자 이상, 글자와 숫자 포함)',
         passwordUpdated: '비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.',
         gymFallbackName: '체육관',
         authGymNamePlaceholder: '예: 강남 복싱짐',
         authOwnerNamePlaceholder: '홍길동',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '6자 이상',
+        authPasswordPlaceholder: '10자 이상, 글자와 숫자 포함',
+        authPasswordContainsEmail: '비밀번호에 이메일 주소를 넣지 마세요.',
+        authPasswordTooCommon: '너무 흔한 비밀번호입니다. 다른 비밀번호를 사용해 주세요.',
+        authPasswordNeedLetterNumber: '비밀번호에 글자와 숫자를 모두 넣어 주세요.',
+        authPasswordTooLong: '비밀번호는 200자를 넘을 수 없습니다.',
+        authPasswordLoginPlaceholder: '비밀번호',
         authPasswordConfirmPlaceholder: '비밀번호를 다시 입력',
         authPasswordShow: '비밀번호 표시',
         authPasswordHide: '비밀번호 숨기기',
@@ -3225,7 +3231,7 @@
         authSignedOut: 'Signed out.',
         authNeedFields: 'Please fill in required fields.',
         authInvalidEmail: 'Please enter a valid email address.',
-        authPasswordTooShort: 'Password must be at least 6 characters.',
+        authPasswordTooShort: 'Password must be at least 10 characters.',
         authPasswordMismatch: 'Passwords do not match.',
         authPasswordMatch: 'Passwords match.',
         authRecoveryReady: 'Set your new password.',
@@ -3256,13 +3262,18 @@
         smsExpired: 'Hello from [re;member] gym — your membership expired {days} days ago. Please renew.',
         smsDueToday: 'Hello from [re;member] gym — your membership expires today.',
         smsDueSoon: 'Hello from [re;member] gym — your membership expires in {days} days.',
-        newPasswordPrompt: 'Enter a new password (6+ characters)',
+        newPasswordPrompt: 'Enter a new password (10+ characters, with a letter and a number)',
         passwordUpdated: 'Password updated. Please sign in with the new password.',
         gymFallbackName: 'Gym',
         authGymNamePlaceholder: 'e.g. Downtown Boxing',
         authOwnerNamePlaceholder: 'Owner name',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '6+ characters',
+        authPasswordPlaceholder: '10+ characters, with a letter and a number',
+        authPasswordContainsEmail: 'Do not use your email address in your password.',
+        authPasswordTooCommon: 'That password is too common. Please choose another.',
+        authPasswordNeedLetterNumber: 'Use both letters and numbers in your password.',
+        authPasswordTooLong: 'Password must be 200 characters or fewer.',
+        authPasswordLoginPlaceholder: 'Password',
         authPasswordConfirmPlaceholder: 'Enter password again',
         authPasswordShow: 'Show password',
         authPasswordHide: 'Hide password',
@@ -3576,13 +3587,19 @@
         smsExpired: 'Hola desde el gimnasio [re;member]: tu membresía venció hace {days} días. Renueva por favor.',
         smsDueToday: 'Hola desde el gimnasio [re;member]: tu membresía vence hoy.',
         smsDueSoon: 'Hola desde el gimnasio [re;member]: tu membresía vence en {days} días.',
-        newPasswordPrompt: 'Introduce una nueva contraseña (6+ caracteres)',
+        newPasswordPrompt: 'Introduce una nueva contraseña (10+ caracteres, con letra y número)',
         passwordUpdated: 'Contraseña actualizada.',
         gymFallbackName: 'Gimnasio',
         authGymNamePlaceholder: 'ej. Boxeo Centro',
         authOwnerNamePlaceholder: 'Nombre del dueño',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '6+ caracteres',
+        authPasswordPlaceholder: '10+ caracteres, con letra y número',
+        authPasswordContainsEmail: 'No uses tu correo en la contraseña.',
+        authPasswordTooCommon: 'Esa contraseña es demasiado común. Elige otra.',
+        authPasswordNeedLetterNumber: 'Usa letras y números en tu contraseña.',
+        authPasswordTooLong: 'La contraseña no puede superar los 200 caracteres.',
+        authPasswordTooShort: 'La contraseña debe tener al menos 10 caracteres.',
+        authPasswordLoginPlaceholder: 'Contraseña',
         billingTitle: 'Suscripción',
         billingSubtitle: 'Free 20 · Pro mensual (Toss)',
         billingSubtitlePromo: 'Gratis y sin límite de miembros hasta el 31 de diciembre de 2026',
@@ -3889,13 +3906,19 @@
         smsExpired: 'Здравствуйте! Зал [re;member]: абонемент истёк {days} дн. назад. Продлите, пожалуйста.',
         smsDueToday: 'Здравствуйте! Зал [re;member]: абонемент заканчивается сегодня.',
         smsDueSoon: 'Здравствуйте! Зал [re;member]: абонемент заканчивается через {days} дн.',
-        newPasswordPrompt: 'Введите новый пароль (от 6 символов)',
+        newPasswordPrompt: 'Введите новый пароль (от 10 символов, буквы и цифры)',
         passwordUpdated: 'Пароль обновлён.',
         gymFallbackName: 'Зал',
         authGymNamePlaceholder: 'напр. Boxing Club',
         authOwnerNamePlaceholder: 'Имя владельца',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: 'от 6 символов',
+        authPasswordPlaceholder: 'от 10 символов, буквы и цифры',
+        authPasswordContainsEmail: 'Не используйте адрес почты в пароле.',
+        authPasswordTooCommon: 'Этот пароль слишком распространён. Выберите другой.',
+        authPasswordNeedLetterNumber: 'В пароле должны быть и буквы, и цифры.',
+        authPasswordTooLong: 'Пароль не может быть длиннее 200 символов.',
+        authPasswordTooShort: 'Пароль должен содержать не менее 10 символов.',
+        authPasswordLoginPlaceholder: 'Пароль',
         billingTitle: 'Тариф',
         billingSubtitle: 'Free 20 · Pro месяц (Toss)',
         billingSubtitlePromo: 'Бесплатно и без лимита участников до 31 декабря 2026',
@@ -4202,13 +4225,19 @@
         smsExpired: 'Сайн байна уу [re;member] гимнази: эрх {days} хоногийн өмнө дууссан. дахин бүртгүүлнэ үү.',
         smsDueToday: 'Сайн байна уу [re;member] гимнази: эрх өнөөдөр дуусна.',
         smsDueSoon: 'Сайн байна уу [re;member] гимнази: эрх {days} хоногийн дараа дуусна.',
-        newPasswordPrompt: 'Шинэ нууц үг оруулна уу (6+ тэмдэгт)',
+        newPasswordPrompt: 'Шинэ нууц үг оруулна уу (10+ тэмдэгт, үсэг болон тоо)',
         passwordUpdated: 'Нууц үг шинэчлэгдлээ.',
         gymFallbackName: 'Гимнази',
         authGymNamePlaceholder: 'ж: Downtown Boxing',
         authOwnerNamePlaceholder: 'Эзэмшигчийн нэр',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '6+ тэмдэгт',
+        authPasswordPlaceholder: '10+ тэмдэгт, үсэг болон тоо',
+        authPasswordContainsEmail: 'Нууц үгэнд имэйл хаягаа битгий оруулаарай.',
+        authPasswordTooCommon: 'Энэ нууц үг хэтэрхий түгээмэл байна. Өөр нууц үг сонгоно уу.',
+        authPasswordNeedLetterNumber: 'Нууц үгэнд үсэг болон тоо хоёулаа байх ёстой.',
+        authPasswordTooLong: 'Нууц үг 200 тэмдэгтээс хэтрэх ёсгүй.',
+        authPasswordTooShort: 'Нууц үг хамгийн багадаа 10 тэмдэгт байх ёстой.',
+        authPasswordLoginPlaceholder: 'Нууц үг',
         billingTitle: 'Төлбөрийн төлөвлөгөө',
         billingSubtitle: 'Free 20 · Pro сар (Toss)',
         billingSubtitlePromo: '2026 оны 12-р сарын 31 хүртэл гишүүний хязгааргүй үнэгүй',
@@ -4515,13 +4544,19 @@
         smsExpired: '您好，[re;member] 健身房：会员已过期 {days} 天，请续费。',
         smsDueToday: '您好，[re;member] 健身房：会员今天到期。',
         smsDueSoon: '您好，[re;member] 健身房：会员将在 {days} 天后到期。',
-        newPasswordPrompt: '请输入新密码（至少6位）',
+        newPasswordPrompt: '请输入新密码（至少10位，需同时包含字母和数字）',
         passwordUpdated: '密码已更新。',
         gymFallbackName: '健身房',
         authGymNamePlaceholder: '例如：市中心拳馆',
         authOwnerNamePlaceholder: '负责人姓名',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '至少6位',
+        authPasswordPlaceholder: '至少10位，需同时包含字母和数字',
+        authPasswordContainsEmail: '请不要在密码中使用电子邮箱。',
+        authPasswordTooCommon: '这个密码太常见，请换一个。',
+        authPasswordNeedLetterNumber: '密码需同时包含字母和数字。',
+        authPasswordTooLong: '密码不能超过200个字符。',
+        authPasswordTooShort: '密码至少需要10个字符。',
+        authPasswordLoginPlaceholder: '密码',
         billingTitle: '套餐',
         billingSubtitle: 'Free 20人 · Pro 月付（Toss）',
         billingSubtitlePromo: '2026年12月31日前免费，不限会员人数',
@@ -4828,13 +4863,19 @@
         smsExpired: 'नमस्ते [re;member] जिम — मेंबरशिप {days} दिन पहले खत्म हो गई। कृपया रिन्यू करें।',
         smsDueToday: 'नमस्ते [re;member] जिम — मेंबरशिप आज खत्म हो रही है।',
         smsDueSoon: 'नमस्ते [re;member] जिम — मेंबरशिप {days} दिन में खत्म होगी।',
-        newPasswordPrompt: 'नया पासवर्ड दर्ज करें (6+ अक्षर)',
+        newPasswordPrompt: 'नया पासवर्ड दर्ज करें (10+ अक्षर, अक्षर और अंक दोनों)',
         passwordUpdated: 'पासवर्ड अपडेट हो गया।',
         gymFallbackName: 'जिम',
         authGymNamePlaceholder: 'उदा. Downtown Boxing',
         authOwnerNamePlaceholder: 'मालिक का नाम',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '6+ अक्षर',
+        authPasswordPlaceholder: '10+ अक्षर, अक्षर और अंक दोनों',
+        authPasswordContainsEmail: 'पासवर्ड में अपना ईमेल न लिखें।',
+        authPasswordTooCommon: 'यह पासवर्ड बहुत आम है। कृपया दूसरा चुनें।',
+        authPasswordNeedLetterNumber: 'पासवर्ड में अक्षर और अंक दोनों लिखें।',
+        authPasswordTooLong: 'पासवर्ड 200 अक्षर से लंबा नहीं हो सकता।',
+        authPasswordTooShort: 'पासवर्ड कम से कम 10 अक्षर का होना चाहिए।',
+        authPasswordLoginPlaceholder: 'पासवर्ड',
         billingTitle: 'प्लान',
         billingSubtitle: 'Free 20 · Pro मासिक (Toss)',
         billingSubtitlePromo: '31 दिसंबर 2026 तक मुफ्त, सदस्य सीमा नहीं',
@@ -5141,13 +5182,19 @@
         smsExpired: 'Bonjour [re;member] : l’abonnement a expiré il y a {days} jours. Merci de renouveler.',
         smsDueToday: 'Bonjour [re;member] : l’abonnement expire aujourd’hui.',
         smsDueSoon: 'Bonjour [re;member] : l’abonnement expire dans {days} jours.',
-        newPasswordPrompt: 'Entrez un nouveau mot de passe (6+ caractères)',
+        newPasswordPrompt: 'Entrez un nouveau mot de passe (10+ caractères, avec une lettre et un chiffre)',
         passwordUpdated: 'Mot de passe mis à jour.',
         gymFallbackName: 'Salle',
         authGymNamePlaceholder: 'ex. Boxing Centre',
         authOwnerNamePlaceholder: 'Nom du responsable',
         authEmailPlaceholder: 'owner@example.com',
-        authPasswordPlaceholder: '6+ caractères',
+        authPasswordPlaceholder: '10+ caractères, avec une lettre et un chiffre',
+        authPasswordContainsEmail: 'N’utilisez pas votre e-mail dans le mot de passe.',
+        authPasswordTooCommon: 'Ce mot de passe est trop courant. Choisissez-en un autre.',
+        authPasswordNeedLetterNumber: 'Utilisez des lettres et des chiffres dans votre mot de passe.',
+        authPasswordTooLong: 'Le mot de passe ne peut pas dépasser 200 caractères.',
+        authPasswordTooShort: 'Le mot de passe doit contenir au moins 10 caractères.',
+        authPasswordLoginPlaceholder: 'Mot de passe',
         billingTitle: 'Formule',
         billingSubtitle: 'Free 20 · Pro mensuel (Toss)',
         billingSubtitlePromo: 'Gratuit sans limite de membres jusqu’au 31 décembre 2026',
@@ -5609,9 +5656,13 @@
       if (message.includes('invalid login') || message.includes('invalid credentials')) {
         return t('authInvalidLogin');
       }
+      if (typeof error?.code === 'string' && error.code.startsWith('authPassword')) {
+        return t(error.code);
+      }
       if (message.includes('password') && (
         message.includes('weak') ||
         message.includes('short') ||
+        message.includes('10') ||
         message.includes('6')
       )) {
         return t('authPasswordTooShort');
@@ -5626,9 +5677,11 @@
     function getPasswordValidation() {
       const password = document.getElementById('authPassword').value;
       const confirm = document.getElementById('authPasswordConfirm').value;
+      const email = document.getElementById('authEmail').value.trim();
+      const result = window.RememberPasswordPolicy.validate(password, { email });
 
-      if (password.length < 6) {
-        return { ok: false, message: t('authPasswordTooShort') };
+      if (!result.ok) {
+        return { ok: false, message: t(result.key) };
       }
       if (password !== confirm) {
         return { ok: false, message: t('authPasswordMismatch') };
@@ -5712,6 +5765,12 @@
       passwordField.autocomplete = mode === 'login' ? 'current-password' : 'new-password';
       passwordLabel.textContent = mode === 'recovery' ? t('authNewPasswordLabel') : t('authPasswordLabel');
       confirmLabel.textContent = mode === 'recovery' ? t('authNewPasswordConfirmLabel') : t('authPasswordConfirmLabel');
+      const passwordPlaceholderKey = mode === 'login' ? 'authPasswordLoginPlaceholder' : 'authPasswordPlaceholder';
+      passwordField.dataset.i18nPlaceholder = passwordPlaceholderKey;
+      passwordField.placeholder = t(passwordPlaceholderKey);
+      if (mode === 'login') passwordField.removeAttribute('minlength');
+      else passwordField.minLength = 10;
+      passwordConfirmField.minLength = 10;
 
       const submit = document.getElementById('authSubmitButton');
       if (mode === 'signup') submit.textContent = t('authSubmitSignup');

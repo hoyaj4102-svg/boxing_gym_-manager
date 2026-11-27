@@ -107,9 +107,31 @@ test('the install guide follows each app language', () => {
 });
 
 test('a missing locale key falls back to English before Korean', () => {
-  const value = lookup(dictionaries, 'es', 'authPasswordTooShort');
-  assert.equal(value, dictionaries.en.authPasswordTooShort);
-  assert.notEqual(value, dictionaries.ko.authPasswordTooShort);
+  const value = lookup(dictionaries, 'es', 'cancelPendingNote');
+  assert.equal(value, dictionaries.en.cancelPendingNote);
+  assert.notEqual(value, dictionaries.ko.cancelPendingNote);
+});
+
+test('every locale has the new password rule messages', () => {
+  const keys = [
+    'authPasswordPlaceholder',
+    'authPasswordLoginPlaceholder',
+    'authPasswordTooShort',
+    'authPasswordTooLong',
+    'authPasswordNeedLetterNumber',
+    'authPasswordTooCommon',
+    'authPasswordContainsEmail',
+    'newPasswordPrompt'
+  ];
+  for (const language of Object.keys(dictionaries)) {
+    for (const key of keys) {
+      assert.equal(typeof dictionaries[language][key], 'string', `${language}.${key}`);
+      assert.notEqual(dictionaries[language][key], '', `${language}.${key}`);
+      if (key !== 'authPasswordLoginPlaceholder') {
+        assert.equal(dictionaries[language][key].includes('6'), false, `${language}.${key}`);
+      }
+    }
+  }
 });
 
 test('phone placeholders follow the language', () => {
