@@ -112,14 +112,16 @@ assert(
   "renewal charge must resolve the credential before charging",
 );
 assert(
-  chargeSource.includes("read_gym_billing_credential"),
-  "renewal charge must read the private credential",
+  chargeSource.includes("read_gym_billing_vault_credential"),
+  "renewal charge must read the billing key through the Vault function",
 );
 assert(
   chargeSource.includes("BILLING_CREDENTIAL_UNAVAILABLE"),
   "renewal charge must stop when the credential read fails",
 );
-const credentialReadAt = confirmSource.indexOf("read_gym_billing_credential");
+const credentialReadAt = confirmSource.indexOf(
+  "read_gym_billing_vault_credential",
+);
 const providerIssueAt = confirmSource.indexOf(
   'tossPost("/v1/billing/authorizations/issue"',
 );

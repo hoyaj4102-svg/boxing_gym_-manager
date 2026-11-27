@@ -559,8 +559,8 @@ select
       join public.payment_attempts pa on pa.order_id = 'synthetic-attempt-order'
       where g.billing_subscription_id = b.billing_subscription_id
         and g.cmin::text = b.gym_cmin
-        and c.billing_key = b.billing_key
-        and convert_to(c.billing_key, 'UTF8') = convert_to(b.billing_key, 'UTF8')
+        and c.billing_key is not distinct from b.billing_key
+        and convert_to(c.billing_key, 'UTF8') is not distinct from convert_to(b.billing_key, 'UTF8')
         and c.cmin::text = b.credential_cmin
         and pa.billing_key_ref = b.billing_key_ref
         and convert_to(pa.billing_key_ref, 'UTF8') = convert_to(b.billing_key_ref, 'UTF8')
@@ -795,8 +795,8 @@ select
      and g.subscription_status = b.subscription_status
      and g.current_period_end = b.current_period_end
      and g.cmin::text = b.gym_cmin
-     and c.billing_key = b.billing_key
-     and convert_to(c.billing_key, 'UTF8') = convert_to(b.billing_key, 'UTF8')
+     and c.billing_key is not distinct from b.billing_key
+     and convert_to(c.billing_key, 'UTF8') is not distinct from convert_to(b.billing_key, 'UTF8')
      and c.created_at = b.credential_created_at
      and c.updated_at = b.credential_updated_at
      and c.cmin::text = b.credential_cmin

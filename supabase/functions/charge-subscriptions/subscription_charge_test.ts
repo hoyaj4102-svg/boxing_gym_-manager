@@ -87,7 +87,7 @@ function createMockAdmin(options: {
     },
     async rpc(name: string, args: Record<string, unknown>) {
       rpcCalls.push({ name, args });
-      if (name === "read_gym_billing_credential") {
+      if (name === "read_gym_billing_vault_credential") {
         return {
           data: options.billingCredentialError
             ? null
@@ -621,19 +621,35 @@ Deno.test("renewal charges the private credential and stores a sanitized payload
   const legacy = "legacy-claim-value";
   const cardNumber = "4111111111111111";
   const email = "member@example.test";
-  const { admin, inserts, updates } = createMockAdmin({
+  const { admin, inserts, updates, rpcCalls } = createMockAdmin({
     billingCredential: stored,
   });
   let chargedUrl = "";
   let chargedBody: Record<string, unknown> = {};
+  const logs: string[] = [];
+  const originalError = console.error;
+  const originalLog = console.log;
+  console.error = (...args: unknown[]) => {
+    logs.push(args.map((item) => JSON.stringify(item)).join(" "));
+  };
+  console.log = (...args: unknown[]) => {
+    logs.push(args.map((item) => JSON.stringify(item)).join(" "));
+  };
 
-  const result = await processClaimedSubscriptionCharge(
+  let result: Record<string, unknown>;
+  try {
+    result = await processClaimedSubscriptionCharge(
     admin,
     baseClaim({ billing_key_ref: legacy }),
     {
       tossSecret: "test_secret",
       fetchImpl: async (input, init) => {
         chargedUrl = String(input);
+        assertEquals(
+          new URL(chargedUrl).hostname,
+          "api.tosspayments.com",
+          "the mock stands in for the billing API and is not a live call",
+        );
         chargedBody = JSON.parse(String(init?.body || "{}"));
         return new Response(JSON.stringify({
           paymentKey: "payment_1",
@@ -648,7 +664,11 @@ Deno.test("renewal charges the private credential and stores a sanitized payload
       },
       now: () => new Date("2026-01-01T00:10:00.000Z"),
     },
-  );
+    );
+  } finally {
+    console.error = originalError;
+    console.log = originalLog;
+  }
 
   const raw = JSON.stringify(inserts[0]?.values.raw ?? null);
   const providerResponse = JSON.stringify(
@@ -656,6 +676,23 @@ Deno.test("renewal charges the private credential and stores a sanitized payload
       null,
   );
   assertEquals(result.ok, true, "private credential should still charge");
+  assertEquals(
+    rpcCalls.some((call) => call.name === "read_gym_billing_vault_credential"),
+    true,
+    "charge reads the billing key through the vault function",
+  );
+  assert(
+    rpcCalls.every((call) => !JSON.stringify(call.args).includes(stored)),
+    "the vault read is by gym id and does not send the billing key",
+  );
+  assert(
+    !logs.join("\n").includes(stored),
+    "logs must not include the billing key",
+  );
+  assert(
+    !JSON.stringify(result).includes(stored),
+    "the charge result must not include the billing key",
+  );
   assert(
     chargedUrl.includes(encodeURIComponent(stored)),
     "charge uses the private credential",
